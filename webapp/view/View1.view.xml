@@ -1,0 +1,89 @@
+<mvc:View controllerName="vcp.vcplannerdashboard.controller.View1"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:card="sap.ui.integration.widgets">
+    <Page id="page" title="{i18n>title}" showHeader="false">
+    <content>
+
+            <!-- HEADER SECTION -->
+            <VBox class="header">
+                <HBox class="header-top" alignItems="Center" justifyContent="SpaceBetween">
+
+                    <!-- Logo & Title -->
+                    <HBox class="logo-section" alignItems="Center">
+                        <Image class="logo" id="idHeaderImage" />
+                        <VBox class="title-section">
+                            <Title text="VC Planner Dashboard" level="H1" />
+                            <Text text="Sales &amp; Operations Planning for Configurable Products" />
+                        </VBox>
+                    </HBox>
+
+                    <!-- Controls -->
+                    <HBox class="controls" alignItems="Center" justifyContent="End">
+
+                        <VBox class="control-group">
+                            <Label text="Location" />
+                            <ComboBox id="LocationSelect" items="{locModel>/results1}" showSecondaryValues="true"
+                                selectionChange=".onLocationChange" placeholder="Select Location">
+                                <core:ListItem key="{locModel>DEMAND_LOC}" text="{locModel>DEMAND_DESC}"
+                                    additionalText="{locModel>DEMAND_LOC}" />
+                            </ComboBox>
+                        </VBox>
+
+                        <VBox class="control-group">
+                            <Label text="Product" />
+                            <ComboBox id="productSelect" items="{prodModel>/results2}" showSecondaryValues="true"
+                                selectionChange=".onProductChange" placeholder="Select Product">
+                                <core:ListItem key="{prodModel>PRODUCT_ID}" text="{prodModel>PROD_DESC}"
+                                    additionalText="{prodModel>PRODUCT_ID}" />
+                            </ComboBox>
+                        </VBox>
+
+                        <VBox class="control-group">
+                            <Label text="Version" />
+                            <Select id="idver" forceSelection="true">
+                                <core:Item key="v1" text="_BASELINE" />
+                            </Select>
+                        </VBox>
+
+                        <VBox class="control-group">
+                            <Label text="Scenario" />
+                            <Select id="idser" forceSelection="true">
+                                <core:Item key="s1" text="_PLAN" />
+                            </Select>
+                        </VBox>
+                        <VBox>
+                            <Label text="" />
+                            <Button id="idBtnPD" press="onGetData" text="Go" type="Emphasized" />
+                        </VBox>
+                        <VBox>
+                            <Label text="" />
+                            <Button id="idResetPD" press="onResetData" text="Reset" />
+                        </VBox>
+                    </HBox>
+                </HBox>
+            </VBox>
+
+            <!-- MAIN CONTENT: 3 CARDS -->
+            <VBox class="main-dashboard">
+    <!-- Row 1 -->
+    <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
+        <items>
+            <card:Card id="MyCardId" width="350px" height="400px"/>
+            <card:Card id="MyCardId1" width="700px" height="400px"/>
+            <card:Card id="MyCardId3" width="300px" height="400px"/>
+            <Button id="quickHelpRibbon" text="Quick Help" icon="sap-icon://sys-help"
+                    press="onOpenQuickHelp" class="quickHelpRibbon"/>
+        </items>
+    </HBox>
+
+    <!-- Row 2 -->
+    <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
+        <items>
+            <card:Card id="MyCardId2" width="800px" height="500px"/>
+        </items>
+    </HBox>
+</VBox>
+
+        </content>
+    </Page>
+</mvc:View>

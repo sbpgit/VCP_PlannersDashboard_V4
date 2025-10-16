@@ -1,0 +1,522 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="4.0" xmlns:edmx="http://docs.oasis-open.org/odata/ns/edmx">
+    <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Capabilities.V1.xml">
+        <edmx:Include Alias="Capabilities" Namespace="Org.OData.Capabilities.V1"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/Common.xml">
+        <edmx:Include Alias="Common" Namespace="com.sap.vocabularies.Common.v1"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://oasis-tcs.github.io/odata-vocabularies/vocabularies/Org.OData.Core.V1.xml">
+        <edmx:Include Alias="Core" Namespace="Org.OData.Core.V1"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/HTML5.xml">
+        <edmx:Include Alias="HTML5" Namespace="com.sap.vocabularies.HTML5.v1"/>
+    </edmx:Reference>
+    <edmx:Reference Uri="https://sap.github.io/odata-vocabularies/vocabularies/UI.xml">
+        <edmx:Include Alias="UI" Namespace="com.sap.vocabularies.UI.v1"/>
+    </edmx:Reference>
+    <edmx:DataServices>
+        <Schema Namespace="CatalogInterface" xmlns="http://docs.oasis-open.org/odata/ns/edm">
+            <Annotation Term="Core.Links">
+                <Collection>
+                    <Record>
+                        <PropertyValue Property="rel" String="author"/>
+                        <PropertyValue Property="href" String="https://cap.cloud.sap"/>
+                    </Record>
+                </Collection>
+            </Annotation>
+            <EntityContainer Name="EntityContainer">
+                <EntitySet Name="getForecastSnapshotLag" EntityType="CatalogInterface.getForecastSnapshotLag"/>
+                <EntitySet Name="getAssemblySnapshotLag" EntityType="CatalogInterface.getAssemblySnapshotLag"/>
+                <EntitySet Name="getfactorylocdesc" EntityType="CatalogInterface.getfactorylocdesc"/>
+                <FunctionImport Name="getAlertToken" Function="CatalogInterface.getAlertToken"/>
+            </EntityContainer>
+            <EntityType Name="getForecastSnapshotLag">
+                <Key>
+                    <PropertyRef Name="LOCATION_ID"/>
+                    <PropertyRef Name="PRODUCT_ID"/>
+                    <PropertyRef Name="UNIQUE_ID"/>
+                    <PropertyRef Name="YEAR_MONTH"/>
+                </Key>
+                <Property Name="LOCATION_ID" Type="Edm.String" MaxLength="4" Nullable="false"/>
+                <Property Name="PRODUCT_ID" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="UNIQUE_ID" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="YEAR_MONTH" Type="Edm.String" MaxLength="7" Nullable="false"/>
+                <Property Name="LAG1_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG2_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG3_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG4_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG5_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG6_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG1_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG2_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG3_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG4_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG5_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG6_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG1_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG2_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG3_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG4_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG5_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG6_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG1_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG2_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG3_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG4_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG5_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG6_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+            </EntityType>
+            <EntityType Name="getAssemblySnapshotLag">
+                <Key>
+                    <PropertyRef Name="LOCATION_ID"/>
+                    <PropertyRef Name="PRODUCT_ID"/>
+                    <PropertyRef Name="COMPONENT"/>
+                    <PropertyRef Name="UNIQUE_ID"/>
+                    <PropertyRef Name="YEAR_MONTH"/>
+                </Key>
+                <Property Name="LOCATION_ID" Type="Edm.String" MaxLength="4" Nullable="false"/>
+                <Property Name="PRODUCT_ID" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="COMPONENT" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="UNIQUE_ID" Type="Edm.Int32" Nullable="false"/>
+                <Property Name="YEAR_MONTH" Type="Edm.String" MaxLength="7" Nullable="false"/>
+                <Property Name="LAG1_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG2_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG3_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG4_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG5_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG6_CIR" Type="Edm.Int32"/>
+                <Property Name="LAG1_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG2_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG3_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG4_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG5_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG6_CIR_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG1_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG2_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG3_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG4_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG5_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG6_ACT" Type="Edm.Int32"/>
+                <Property Name="LAG1_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG2_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG3_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG4_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG5_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+                <Property Name="LAG6_ACT_PCT" Type="Edm.Decimal" Precision="15" Scale="3"/>
+            </EntityType>
+            <EntityType Name="getfactorylocdesc">
+                <Key>
+                    <PropertyRef Name="FACTORY_LOC"/>
+                    <PropertyRef Name="LOCATION_DESC"/>
+                    <PropertyRef Name="PLAN_LOC"/>
+                    <PropertyRef Name="PLANLOC_DESC"/>
+                    <PropertyRef Name="DEMAND_LOC"/>
+                    <PropertyRef Name="DEMAND_DESC"/>
+                    <PropertyRef Name="PRODUCT_ID"/>
+                    <PropertyRef Name="PROD_DESC"/>
+                </Key>
+                <Property Name="FACTORY_LOC" Type="Edm.String" MaxLength="4" Nullable="false"/>
+                <Property Name="LOCATION_DESC" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="PLAN_LOC" Type="Edm.String" MaxLength="4" Nullable="false"/>
+                <Property Name="PLANLOC_DESC" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="DEMAND_LOC" Type="Edm.String" MaxLength="4" Nullable="false"/>
+                <Property Name="DEMAND_DESC" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="PRODUCT_ID" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="PROD_DESC" Type="Edm.String" MaxLength="40" Nullable="false"/>
+                <Property Name="REF_PRODID" Type="Edm.String" MaxLength="40"/>
+                <Property Name="REFPROD_DESC" Type="Edm.String" MaxLength="100"/>
+            </EntityType>
+            <Function Name="getAlertToken" IsBound="false" IsComposable="false">
+                <ReturnType Type="Edm.String"/>
+            </Function>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LOCATION_ID">
+                <Annotation Term="Common.Label" String="Location ID"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/PRODUCT_ID">
+                <Annotation Term="Common.Label" String="Product ID"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/UNIQUE_ID">
+                <Annotation Term="Common.Label" String="Unique ID"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/YEAR_MONTH">
+                <Annotation Term="Common.Label" String="Year-Month"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG1_CIR">
+                <Annotation Term="Common.Label" String="Lag 1 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG2_CIR">
+                <Annotation Term="Common.Label" String="Lag 2 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG3_CIR">
+                <Annotation Term="Common.Label" String="Lag 3 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG4_CIR">
+                <Annotation Term="Common.Label" String="Lag 4 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG5_CIR">
+                <Annotation Term="Common.Label" String="Lag 5 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG6_CIR">
+                <Annotation Term="Common.Label" String="Lag 6 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG1_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 1 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG2_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 2 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG3_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 3 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG4_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 4 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG5_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 5 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG6_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 6 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG1_ACT">
+                <Annotation Term="Common.Label" String="Lag 1 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG2_ACT">
+                <Annotation Term="Common.Label" String="Lag 2 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG3_ACT">
+                <Annotation Term="Common.Label" String="Lag 3 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG4_ACT">
+                <Annotation Term="Common.Label" String="Lag 4 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG5_ACT">
+                <Annotation Term="Common.Label" String="Lag 5 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG6_ACT">
+                <Annotation Term="Common.Label" String="Lag 6 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG1_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 1 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG2_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 2 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG3_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 3 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG4_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 4 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG5_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 5 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getForecastSnapshotLag/LAG6_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 6 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LOCATION_ID">
+                <Annotation Term="Common.Label" String="Location ID"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/PRODUCT_ID">
+                <Annotation Term="Common.Label" String="Product ID"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/COMPONENT">
+                <Annotation Term="Common.Label" String="Component"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/UNIQUE_ID">
+                <Annotation Term="Common.Label" String="Unique ID"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/YEAR_MONTH">
+                <Annotation Term="Common.Label" String="Year-Month"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG1_CIR">
+                <Annotation Term="Common.Label" String="Lag 1 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG2_CIR">
+                <Annotation Term="Common.Label" String="Lag 2 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG3_CIR">
+                <Annotation Term="Common.Label" String="Lag 3 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG4_CIR">
+                <Annotation Term="Common.Label" String="Lag 4 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG5_CIR">
+                <Annotation Term="Common.Label" String="Lag 5 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG6_CIR">
+                <Annotation Term="Common.Label" String="Lag 6 CIR"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG1_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 1 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG2_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 2 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG3_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 3 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG4_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 4 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG5_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 5 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG6_CIR_PCT">
+                <Annotation Term="Common.Label" String="Lag 6 CIR %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG1_ACT">
+                <Annotation Term="Common.Label" String="Lag 1 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG2_ACT">
+                <Annotation Term="Common.Label" String="Lag 2 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG3_ACT">
+                <Annotation Term="Common.Label" String="Lag 3 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG4_ACT">
+                <Annotation Term="Common.Label" String="Lag 4 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG5_ACT">
+                <Annotation Term="Common.Label" String="Lag 5 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG6_ACT">
+                <Annotation Term="Common.Label" String="Lag 6 ACT"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG1_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 1 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG2_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 2 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG3_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 3 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG4_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 4 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG5_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 5 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getAssemblySnapshotLag/LAG6_ACT_PCT">
+                <Annotation Term="Common.Label" String="Lag 6 ACT %"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc">
+                <Annotation Term="UI.SelectionFields">
+                    <Collection>
+                        <PropertyPath>DEMAND_LOC</PropertyPath>
+                        <PropertyPath>FACTORY_LOC</PropertyPath>
+                        <PropertyPath>PRODUCT_ID</PropertyPath>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.LineItem">
+                    <Collection>
+                        <Record Type="UI.DataFieldForAnnotation">
+                            <PropertyValue Property="Label" String="Location/ Desc."/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#column1"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record Type="HTML5.CssDefaultsType">
+                                    <PropertyValue Property="width" String="auto"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataFieldForAnnotation">
+                            <PropertyValue Property="Label" String="Product/ Desc."/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#column2"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record Type="HTML5.CssDefaultsType">
+                                    <PropertyValue Property="width" String="auto"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataFieldForAnnotation">
+                            <PropertyValue Property="Label" String="Planning Location/ Desc."/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#column3"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record Type="HTML5.CssDefaultsType">
+                                    <PropertyValue Property="width" String="auto"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                        <Record Type="UI.DataFieldForAnnotation">
+                            <PropertyValue Property="Label" String="Factory Location/ Desc."/>
+                            <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#column4"/>
+                            <Annotation Term="HTML5.CssDefaults">
+                                <Record Type="HTML5.CssDefaultsType">
+                                    <PropertyValue Property="width" String="auto"/>
+                                </Record>
+                            </Annotation>
+                        </Record>
+                    </Collection>
+                </Annotation>
+                <Annotation Term="UI.HeaderInfo">
+                    <Record Type="UI.HeaderInfoType">
+                        <PropertyValue Property="Title">
+                            <Record Type="UI.DataField">
+                                <PropertyValue Property="Value" Path="DEMAND_DESC"/>
+                            </Record>
+                        </PropertyValue>
+                        <PropertyValue Property="Description">
+                            <Record Type="UI.DataField">
+                                <PropertyValue Property="Value" Path="PROD_DESC"/>
+                            </Record>
+                        </PropertyValue>
+                        <PropertyValue Property="TypeName" String="Demand, Planning , Factory Location w.r.t Product"/>
+                        <PropertyValue Property="TypeNamePlural" String="Demand, Planning , Factory Location w.r.t Product"/>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="Details">
+                    <Record Type="UI.FieldGroupType">
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="DEMAND_LOC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="DEMAND_DESC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PLAN_LOC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PLANLOC_DESC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PRODUCT_ID"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PROD_DESC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="FACTORY_LOC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="LOCATION_DESC"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="column1">
+                    <Record Type="UI.FieldGroupType">
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="DEMAND_LOC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="DEMAND_DESC"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="column2">
+                    <Record Type="UI.FieldGroupType">
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PRODUCT_ID"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PROD_DESC"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="column3">
+                    <Record Type="UI.FieldGroupType">
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PLAN_LOC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="PLANLOC_DESC"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.FieldGroup" Qualifier="column4">
+                    <Record Type="UI.FieldGroupType">
+                        <PropertyValue Property="Data">
+                            <Collection>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="FACTORY_LOC"/>
+                                </Record>
+                                <Record Type="UI.DataField">
+                                    <PropertyValue Property="Value" Path="LOCATION_DESC"/>
+                                </Record>
+                            </Collection>
+                        </PropertyValue>
+                    </Record>
+                </Annotation>
+                <Annotation Term="UI.Facets">
+                    <Collection>
+                        <Record Type="UI.CollectionFacet">
+                            <PropertyValue Property="ID" String="FactoryLocation"/>
+                            <PropertyValue Property="Label" String="Demand, Planning , Factory Location w.r.t Product"/>
+                            <PropertyValue Property="Facets">
+                                <Collection>
+                                    <Record Type="UI.ReferenceFacet">
+                                        <PropertyValue Property="Label" String="Demand, Planning , Factory Location w.r.t Product Details"/>
+                                        <PropertyValue Property="Target" AnnotationPath="@UI.FieldGroup#Details"/>
+                                    </Record>
+                                </Collection>
+                            </PropertyValue>
+                        </Record>
+                    </Collection>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="CatalogInterface.EntityContainer/getfactorylocdesc">
+                <Annotation Term="Capabilities.DeleteRestrictions">
+                    <Record Type="Capabilities.DeleteRestrictionsType">
+                        <PropertyValue Property="Deletable" Bool="false"/>
+                    </Record>
+                </Annotation>
+                <Annotation Term="Capabilities.InsertRestrictions">
+                    <Record Type="Capabilities.InsertRestrictionsType">
+                        <PropertyValue Property="Insertable" Bool="false"/>
+                    </Record>
+                </Annotation>
+                <Annotation Term="Capabilities.UpdateRestrictions">
+                    <Record Type="Capabilities.UpdateRestrictionsType">
+                        <PropertyValue Property="Updatable" Bool="false"/>
+                    </Record>
+                </Annotation>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/FACTORY_LOC">
+                <Annotation Term="Common.Label" String="Factory Location "/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/LOCATION_DESC">
+                <Annotation Term="Common.Label" String="Factory Loc Description"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/PLAN_LOC">
+                <Annotation Term="Common.Label" String="Planning Location "/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/PLANLOC_DESC">
+                <Annotation Term="Common.Label" String="Planning Location Description"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/DEMAND_LOC">
+                <Annotation Term="Common.Label" String="Demand Location "/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/DEMAND_DESC">
+                <Annotation Term="Common.Label" String="Demand Location Description"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/PRODUCT_ID">
+                <Annotation Term="Common.Label" String="Product"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/PROD_DESC">
+                <Annotation Term="Common.Label" String="Product Description"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/REF_PRODID">
+                <Annotation Term="Common.Label" String="Reference Product Id"/>
+            </Annotations>
+            <Annotations Target="CatalogInterface.getfactorylocdesc/REFPROD_DESC">
+                <Annotation Term="Common.Label" String="Reference Product Description"/>
+            </Annotations>
+        </Schema>
+    </edmx:DataServices>
+</edmx:Edmx>
