@@ -13,7 +13,7 @@ sap.ui.define([
             this.locationData = [];
             this.prodData = [];
 
-            var sRootPath = jQuery.sap.getModulePath("vcp/vcplanner", "/");
+            var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
         
     
@@ -459,7 +459,7 @@ _processAlertsDataV4: function(oData) {
         return a.MSGGRP === "EXCEPTIONAL";
     });
 
-    console.log("[V4 Alerts] Filtered - Data:", dataAlerts.length, "System:", systemAlerts.length, "Exceptional:", exceptionalAlerts.length);
+    console.log("[V4 Alerts] Filtered - Data:", dataAlerts.length, "System:", systemAlerts.length, "Exception:", exceptionalAlerts.length);
 
     // Process DATA ALERTS card data - show individual messages
     var dataAlertsCardData = dataAlerts.map(function(a, idx) {
@@ -507,7 +507,7 @@ _processAlertsDataV4: function(oData) {
     var exceptionalAlertsCardData = exceptionalAlerts.map(function(a, idx) {
         return {
             id: a.PROCESS_ID || a.MSGID || ("exceptional-" + idx),
-            title: a.MSGTXT || "Exceptional alert",
+            title: a.MSGTXT || "Exception alert",
             description: a.ADDL_INFO || "",
             icon: "sap-icon://alert",
             severity: that._determineExceptionalSeverity(a.MSGTXT)
@@ -515,7 +515,7 @@ _processAlertsDataV4: function(oData) {
     });
 
     console.log("[V4 Alerts] System groups data:", systemAlertsCardData);
-    console.log("[V4 Alerts] Exceptional alerts:", exceptionalAlertsCardData);
+    console.log("[V4 Alerts] Exception alerts:", exceptionalAlertsCardData);
 
     // Bind to all three cards
     that._bindAlertsToCardsExact(dataAlertsCardData, systemAlertsCardData, exceptionalAlertsCardData);
@@ -558,12 +558,12 @@ _bindAlertsToCardsExact: function(dataAlertsCardData, systemAlertsCardData, exce
         // EXCEPTIONAL ALERTS CARD - Individual messages with severity
         if (oExceptionalCard) {
             if (exceptionalAlertsCardData.length === 0) {
-                that._showEmptyAlertsCard("Exceptional Alerts", "MyCardId3");
+                that._showEmptyAlertsCard("Exception Alerts", "MyCardId3");
             } else {
                 oExceptionalCard.setManifest(
                     that._createExceptionalAlertsCardManifest(exceptionalAlertsCardData)
                 );
-                console.log("[V4 Alerts] Exceptional card bound with", exceptionalAlertsCardData.length, "alerts");
+                console.log("[V4 Alerts] Exception card bound with", exceptionalAlertsCardData.length, "alerts");
             }
         }
 
@@ -715,7 +715,7 @@ _createExceptionalAlertsCardManifest: function(data) {
                 }
             },
             "header": { 
-                "title": "Exceptional Alerts", 
+                "title": "Exception Alerts", 
                 "subTitle": "Critical system exceptions",
                 "icon": {
                     "src": "sap-icon://critical-issue"
@@ -776,7 +776,7 @@ _setEmptyAlertCards: function() {
     
     if (oSystemCard) that._showEmptyAlertsCard("System Alerts", "MyCardId");
     if (oDataCard) that._showEmptyAlertsCard("Data Alerts", "MyCardId1");
-    if (oExceptionalCard) that._showEmptyAlertsCard("Exceptional Alerts", "MyCardId3");
+    if (oExceptionalCard) that._showEmptyAlertsCard("Exception Alerts", "MyCardId3");
 },
 
 _showEmptyAlertsCard: function(title, id) {

@@ -1,7 +1,8 @@
 sap.ui.define([
     "sap/ui/core/UIComponent",
+    "sap/ui/Device",
     "vcp/vcplannerdashboard/model/models"
-], (UIComponent, models) => {
+], (UIComponent,Device, models) => {
     "use strict";
 
     return UIComponent.extend("vcp.vcplannerdashboard.Component", {
@@ -21,6 +22,9 @@ sap.ui.define([
 
             // enable routing
             this.getRouter().initialize();
+             var oRootPath = jQuery.sap.getModulePath("vcp.vcplannerdashboard");
+            var oImageModel = new sap.ui.model.json.JSONModel({ path: oRootPath });
+            this.setModel(oImageModel, "imageModel");
         }
     });
 });

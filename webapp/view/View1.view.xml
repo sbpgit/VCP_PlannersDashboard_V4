@@ -39,15 +39,15 @@
                         </VBox>
 
                         <VBox class="control-group">
-                            <Label text="Version" />
-                            <Select id="idver" forceSelection="true">
+                            <Label text="Version" visible="false"/>
+                            <Select id="idver" forceSelection="true" visible="false">
                                 <core:Item key="v1" text="_BASELINE" />
                             </Select>
                         </VBox>
 
                         <VBox class="control-group">
-                            <Label text="Scenario" />
-                            <Select id="idser" forceSelection="true">
+                            <Label text="Scenario" visible="false"/>
+                            <Select id="idser" forceSelection="true" visible="false">
                                 <core:Item key="s1" text="_PLAN" />
                             </Select>
                         </VBox>
