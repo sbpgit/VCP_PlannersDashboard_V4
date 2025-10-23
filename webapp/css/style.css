@@ -220,3 +220,38 @@
     padding: 0.5rem 1rem;
     z-index: 1000;
 }
+
+
+/*Header color for card*/
+.sapFCardHeader {
+    /* background: #006BB8 !important; */
+    background: aliceblue !important;
+}
+
+/*Border for card1- System Alerts*/
+.sapFCardListItem {
+  border-bottom: 1px solid #d9d9d9 !important;
+  margin-bottom: 4px;
+  padding-bottom: 6px !important;
+}
+
+/* Optional: Remove the last border for neatness */
+.sapFCardListItem:last-child {
+  border-bottom: none !important;
+}
+
+.sapUiIntLCI.sapUiIntLCITwoLines .sapUiIntLCIIconAndLines, .sapUiIntLCI.sapUiIntLCIOneLine.sapUiIntLCIThumbnail .sapUiIntLCIIconAndLines {
+    height: calc(5rem - 1px);
+    align-items: center;
+    border-bottom: 1px solid #d9d9d9 !important;
+    margin-bottom: 0;
+    padding-bottom: 6px !important;
+}
+
+/*Border for List cards*/
+.sapUiSizeCompact .sapUiIntLCI.sapUiIntLCIOneLine .sapUiIntLCIIconAndLines {
+    height: calc(2rem - 1px);
+    border-bottom: 1px solid #d9d9d9 !important;
+    margin-bottom: 0;
+    padding-bottom: 4px !important;
+}

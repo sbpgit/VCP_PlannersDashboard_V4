@@ -15,6 +15,11 @@
                             <Title text="VC Planner Dashboard" level="H1" />
                             <Text text="Sales &amp; Operations Planning for Configurable Products" />
                         </VBox>
+                         <!-- <VariantManagement xmlns="sap.m" id="idMatList123VPD" select="handleSelectPress" save="onCreate" manage="onManage" supportFavorites="false" showFooter="true" popoverTitle="My Views" items="{path: '/items12'}" creationAllowed="true" supportPublic="true" supportApplyAutomatically="false" manageCancel="onManageCancel" cancel="onNameCancel" visible="false">
+                        <items>
+                            <VariantItem key="{VARIANTID}" text="{VARIANTNAME}" author="{USER}" visible="true" remove="{path:'REMOVE', formatter:'.formatter.formatRemove'}" sharing="{SCOPE}" changeable="{path:'CHANGE', formatter:'.formatter.formatChange'}" rename="false" enabled="{path:'ENABLE', formatter:'.formatter.formatEnable'}"/>
+                        </items>
+                    </VariantManagement> -->
                     </HBox>
 
                     <!-- Controls -->
@@ -68,9 +73,8 @@
     <!-- Row 1 -->
     <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
         <items>
-            <card:Card id="MyCardId" width="350px" height="400px"/>
-            <card:Card id="MyCardId1" width="700px" height="400px"/>
-            <card:Card id="MyCardId3" width="300px" height="400px"/>
+            <card:Card id="MyCardId" width="400px" height="400px"/>
+             <card:Card id="MyCardId3" width="1000px" height="400px"/>                     
             <Button id="quickHelpRibbon" text="Quick Help" icon="sap-icon://sys-help"
                     press="onOpenQuickHelp" class="quickHelpRibbon"/>
         </items>
@@ -79,7 +83,14 @@
     <!-- Row 2 -->
     <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
         <items>
-            <card:Card id="MyCardId2" width="800px" height="500px"/>
+         <card:Card id="MyCardId1" width="700px" height="400px"/>  
+          <card:Card id="MyCardId4" width="700px" height="400px"/>          
+        </items>
+    </HBox>
+<!-- Row 3 -->
+     <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
+        <items>       
+          <card:Card id="MyCardId2" width="1000px" height="500px"/>        
         </items>
     </HBox>
 </VBox>

@@ -28,8 +28,8 @@
     },
     "crossNavigation": {
       "inbounds": {
-        "vcplannerdashboard-Display": {
-          "semanticObject": "vcplannerdashboard",
+        "vcplannerdashboardNew-Display": {
+          "semanticObject": "vcplannerdashboardNew",
           "action": "Display",
           "title": "{{vcplannerdashboard-Display.flpTitle}}",
           "signature": {
@@ -84,7 +84,18 @@
           "autoExpandSelect": true,
           "earlyRequests": true
         }
-      }
+      },
+       "aModel": {
+                "dataSource": "catService",
+                "preload": true,
+                "settings": {}
+            },
+            "oGModel": {
+                "type": "sap.ui.model.json.JSONModel",
+                "settings": {
+                    "defaultBindingMode": "OneWay"
+                }
+            }
     },
     "resources": {
       "css": [
