@@ -93,6 +93,7 @@
             gap: 30px;
            
              justify-content: flex-start;
+             width: 100px !important;
           
           
         }
@@ -119,7 +120,7 @@
 
 
 .scrollable-card .sapFCard .sapFCardContent {
-    max-height: 250px!important;
+    max-height: 350px!important;
     overflow-y: auto!important;
     scrollbar-width: thin!important; /* Firefox */
     scrollbar-color: #cccccc #f0f0f0!important; /* Firefox */
@@ -127,7 +128,7 @@
 
 /* For Webkit browsers (Chrome, Safari) */
 .scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar {
-    width: 8px!important;
+    width: 15px!important;
 }
 
 .scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar-track {
@@ -155,13 +156,14 @@
     gap: 20px;
     margin: 0 !important;
     padding: 0 !important;
+    max-width: 100% !important ;
 }
 
 /* Card layout and base styling */
 .card-container card\:Card {
-    flex: 1 1 30%;
-    max-width: 33%;
-    min-width: 300px;
+    flex: 1 1 100%;
+    max-width: 100%;
+    min-width: 500px;
     border-radius: 16px;
     background: #fff;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
@@ -194,17 +196,17 @@
 }
 
 /* Responsive design */
-@media (max-width: 1400px) {
+@media (max-width: 1500px) {
     .card-container card\:Card {
         flex: 1 1 45%;
-        max-width: 45%;
+        max-width: 95%;
     }
 }
 
 @media (max-width: 800px) {
     .card-container card\:Card {
         flex: 1 1 90%;
-        max-width: 90%;
+        max-width: 100% !important;
     }
 }
 
@@ -265,3 +267,13 @@
 .chart-scrollable .sapUiIntegrationCardAnalyticalContent {
   min-width: 1800px;
 }
+.sapMFlexItemAlignAuto sapMFlexBoxBGTransparent sapMFlexItem{
+    width : auto !important;
+}
+.sapMFlexBox sapMHBox sapMFlexBoxJustifySpaceAround sapMFlexBoxAlignItemsStart sapMFlexBoxWrapWrap sapMFlexBoxAlignContentStretch sapMFlexBoxBGTransparent card-container sapMFlexItem{
+    width: 75px!important;
+}
+
+
+
+

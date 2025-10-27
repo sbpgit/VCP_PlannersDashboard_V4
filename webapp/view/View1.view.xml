@@ -90,7 +90,7 @@
 <!-- Row 3 -->
      <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
         <items>       
-          <card:Card id="MyCardId2" width="500px" height="400px"/>   
+          <card:Card id="MyCardId2" width="900px" height="400px"/>   
            <card:Card id="MyCardIdFore" class="chart-scrollable" width="500px" height="400px" />    
            
         </items>
@@ -127,7 +127,7 @@
     </HBox> -->
      <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
         <items>       
-         <card:Card id="idWFModel" width="800px" height="400px"/> 
+         <card:Card id="idWFModel" width="1000px" height="400px"/> 
            
         </items>
     </HBox>

@@ -687,9 +687,11 @@ sap.ui.define([
                             "highlight": "{severity}",
                             "icon": { "src": "{icon}" },
                             "info": {
-                                "value": "✓ {success} | ⚠ {warning} | ✗ {error}",
-                                "state": "{= ${error} > 0 ? 'Error' : ${warning} > 0 ? 'Warning' : 'Success' }"
+                                "value": "✓ {success} ⚠ {warning} ✗ {error}",
+                                "state": "{= ${error} > 0 ? 'Error' : ${warning} > 0 ? 'Warning' : 'Success' }",
+
                             },
+
                             "actions": [
                                 {
                                     "type": "Custom",
@@ -729,7 +731,8 @@ sap.ui.define([
                         "title": "Data Alerts",
                         "subTitle": "Issues in VC Planner data processing",
                         "icon": {
-                            "src": "sap-icon://activities"
+                            "src": "sap-icon://activities",
+                            "width" : "70px"
                         },
                         "status": {
                             "text": safeData.length + " alerts",
@@ -1403,7 +1406,7 @@ sap.ui.define([
         _applyCardManifestNew: function (sCardId, oManifest) {
             var oCard = this.byId(sCardId);
             if (oCard) {
-                oCard.setManifest(oManifest);               
+                oCard.setManifest(oManifest);
 
                 // attach configurationChange instead of filterChange
                 oCard.detachConfigurationChange(this.onFilterChangePeriod, this);
