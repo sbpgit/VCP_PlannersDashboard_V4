@@ -33,8 +33,11 @@ sap.ui.define([
             this.data = [];
             this.locationData = [];
             this.prodData = [];
+            that.newChartData = [];
             this.getLocProd();
-
+            this._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel");
+            this._showEmptyAlertsCard("Characteristic Percentage", "MyCardIdChar");
+            this._showEmptyAlertsCard("ForecastActual & Forecast", "MyCardIdFore");
             this.loadAlertsCards();
             setTimeout(function () {
                 // this.loadAlertsCards();
@@ -48,6 +51,7 @@ sap.ui.define([
                     const results = aContexts.map(oContext => oContext.getObject());
 
                     if (results?.length > 0) {
+                        that.oGModel.setProperty("/fullLocProdData", results);
                         this.processData(results);
                     } else {
                         sap.m.MessageToast.show("No data available for Locations and Products");
@@ -154,11 +158,11 @@ sap.ui.define([
 
                         // sap.ui.core.BusyIndicator.hide();
                     })
-                    // .catch((oError) => {
-                    //     // sap.ui.core.BusyIndicator.hide();
-                    //     console.error("Forecast data request failed:", oError);
-                    //     sap.m.MessageBox.error("Failed to load forecast data: " + (oError.message || "Unknown error"));
-                    // });
+                // .catch((oError) => {
+                //     // sap.ui.core.BusyIndicator.hide();
+                //     console.error("Forecast data request failed:", oError);
+                //     sap.m.MessageBox.error("Failed to load forecast data: " + (oError.message || "Unknown error"));
+                // });
             } catch (error) {
                 sap.m.MessageBox.error("Failed to load forecast data: " + (error.message || "Unknown error"));
             } finally {
@@ -381,6 +385,8 @@ sap.ui.define([
         onGetData: function () {
             this._loadForecastCard();
             this.loadAlertsCards();
+            this._loadWFCard();
+            this._loadCharCards();
         },
         onResetData: function () {
             sap.ui.core.BusyIndicator.show();
@@ -667,7 +673,7 @@ sap.ui.define([
                             "src": "sap-icon://process"
                         },
                         "status": {
-                            "text": "System Active",
+                            "text": "",
                             "state": "{= ${error} > 0 ? 'Error' : ${warning} > 0 ? 'Warning' : 'Success' }"
                         }
                     },
@@ -897,13 +903,13 @@ sap.ui.define([
             var lowerMessage = message.toLowerCase();
             if (lowerMessage.includes('error') || lowerMessage.includes('failed') ||
                 lowerMessage.includes('critical') || lowerMessage.includes('fatal') ||
-                lowerMessage.includes("no planning") || lowerMessage.includes("insufficient") ||lowerMessage.includes("no content") ) {
+                lowerMessage.includes("no planning") || lowerMessage.includes("insufficient") || lowerMessage.includes("no content")) {
                 return "Error";
             } else if (lowerMessage.includes('warning') || lowerMessage.includes('timeout')) {
                 return "Warning";
             }
-            else if (lowerMessage.includes('success') || lowerMessage.includes('good') 
-                || lowerMessage.includes('yes')||lowerMessage.includes('changed')) {
+            else if (lowerMessage.includes('success') || lowerMessage.includes('good')
+                || lowerMessage.includes('yes') || lowerMessage.includes('changed')) {
                 return "Success";
             }
             return "Information";
@@ -939,10 +945,12 @@ sap.ui.define([
             var oSystemCard = that.byId("MyCardId");
             var oDataCard = that.byId("MyCardId1");
             var oExceptionalCard = that.byId("MyCardId3");
+            var oInterfaceCard = that.byId("MyCardId4")
 
             if (oSystemCard) that._showEmptyAlertsCard("System Alerts", "MyCardId");
             if (oDataCard) that._showEmptyAlertsCard("Data Alerts", "MyCardId1");
             if (oExceptionalCard) that._showEmptyAlertsCard("Exception Alerts", "MyCardId3");
+            if (oInterfaceCard) that._showEmptyAlertsCard("Interface Alerts", "MyCardId4");
         },
 
         _showEmptyAlertsCard: function (title, id) {
@@ -1069,9 +1077,361 @@ sap.ui.define([
             } catch (err) {
                 console.error("Failed to navigate to Interface:", err);
             }
+        },
+        _loadWFCard: function (facloc, assembly, month) {
+            const oModel = this.getOwnerComponent().getModel();
+            const oCard = this.byId("idWFModel");
+            if (oCard) oCard.setBusy(true);
+            if (!oModel) {
+                console.error("OData model not available");
+                return;
+            }
+
+            // Get selected keys
+            const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
+            const prodSelectedKey = this.byId("productSelect").getSelectedKey();
+
+            var fullData = that.oGModel.getProperty("/fullLocProdData");
+            var factoryLocData = fullData.filter(id => id.DEMAND_LOC === locSelectedKey && id.PRODUCT_ID === prodSelectedKey);
+            var faclocManifest = {
+                "sap.app": {
+                    "id": "vcp.v4card.mapeWaterfall",
+                    "type": "card",
+                    "applicationVersion": { "version": "1.0.0" }
+                },
+                "sap.ui": { "technology": "UI5" },
+                "sap.card": {
+                    "type": "Analytical",
+                    "data": {
+                        // 👇 Dummy data so the card initializes its data binding
+                        "json": [{ "FACTORY_LOC": "1600" }]
+                    },
+                    "header": {
+                        "title": "Assembly Lag",
+                        "subTitle": "MAPE across Lag Months",
+                        "titleMaxLines": 1,
+                        "subTitleMaxLines": 1,
+
+                    },
+                    "configuration": {
+                        "maxFiltersInSingleLine": 0,
+                        "filters": {
+                            "FactoryLoc": {
+                                "type": "ComboBox",
+                                "label": "Dataset",
+                                "value": "",
+                                "placeholder": "Factory Location",
+                                "item": {
+                                    "path": "/",
+                                    "template": {
+                                        "key": "{FACTORY_LOC}",
+                                        "title": "{FACTORY_LOC}"
+                                    }
+                                },
+                                "data": {
+                                    // 👇 Make sure this dataset is non-empty too
+                                    "json": factoryLocData && factoryLocData.length ? factoryLocData : [
+                                        { "FACTORY_LOC": "1600" },
+                                        { "FACTORY_LOC": "1700" }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "content": {
+                        "chartType": "waterfall",
+                        "title": { "text": "" },
+                        "legend": { "visible": false },
+                        "plotArea": { "dataLabel": { "visible": true } },
+                        "data": { "path": "/" },
+                        "dimensions": [
+                            { "label": "Period", "value": "{}" }
+                        ],
+                        "measures": [
+                            { "label": "Lag 1", "value": "{}" }
+                        ],
+                        "feeds": [
+                            { "uid": "categoryAxis", "type": "Dimension", "values": [] },
+                            { "uid": "valueAxis", "type": "Measure", "values": [] }
+                        ]
+                    }
+                }
+            };
+
+            oCard.setManifest(faclocManifest);
+            oCard.detachConfigurationChange(this.onFilterChangeWF, this);
+            oCard.attachConfigurationChange(this.onFilterChangeWF, this);
+            oCard.setBusy(false)
+        },
+        onFilterChangeWF: function (oEvent) {
+            var mChanges = oEvent.getParameters().changes;
+            if (mChanges) {
+                if (Object.keys(mChanges).some(key => key.includes("FactoryLoc"))) {
+                    var selected = mChanges["/sap.card/configuration/filters/FactoryLoc/value"];
+
+                }
+            }
+        },
+        _loadCharCards: function () {
+            const oModel = this.getOwnerComponent().getModel();
+            const oCard = this.byId("idWFModel");
+            if (oCard) oCard.setBusy(true);
+            if (!oModel) {
+                console.error("OData model not available");
+                return;
+            }
+            var aFilters = [];
+            // Get selected keys
+            const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
+            const prodSelectedKey = this.byId("productSelect").getSelectedKey();
+            if (locSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("LOCATION_ID", "EQ", locSelectedKey));
+            }
+
+            if (prodSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", "EQ", prodSelectedKey));
+            }
+
+            const aFilters1 = Array.isArray(aFilters) ? aFilters : [];
+
+            // try {
+            //     sap.ui.core.BusyIndicator.show(0);
+
+            //     oModel.bindList("/getDemandAndForecast", null, [], aFilters1)
+            //         .requestContexts(0, 10000)
+            //         .then((aContexts) => {
+            //             var results = aContexts.map(oContext => oContext.getObject());
+            //             if (results.length) {
+            //                 results = results.slice(0, 100);
+            //                 results = results.map(e => ({
+            //                     WEEK_CHAR: `${e.WEEK_DATE} / ${e.CHAR_DESC}`,
+            //                     PERCENTAGE: Number(e.PERCENTAGE),
+            //                     FORECAST_SALES_PERCENTAGE: Number(e.FORECAST_SALES_PERCENTAGE)
+            //                 }));
+            //                 this._setCharAnalysisCard(results);
+            //             } else {
+            //                 sap.m.MessageToast.show("No data available for Locations and Products");
+            //             }
+            //         })
+            //         .catch((oError) => {
+            //             console.error("Read failed:", oError);
+            //             sap.m.MessageBox.error("Failed to load data: " + oError.message);
+            //         })
+            //         .finally(() => sap.ui.core.BusyIndicator.hide());
+
+            // } catch (err) {
+            //     sap.ui.core.BusyIndicator.hide();
+            //     console.error("bindList failed:", err);
+            // }
+
+            // oModel.bindList("/getDMDForecast", null, [], aFilters)
+            //     .requestContexts(0, 10000)
+            //     .then((aContexts) => {
+            //         var results = aContexts.map(oContext => oContext.getObject());
+
+            //         if (results?.length > 0) {
+            //             results = results.slice(0, 100);
+            //             const chartData = results.map(e => ({
+            //                 WEEK_DATE: e.WEEK_DATE, // X-axis (category)
+            //                 FORECAST_QTY: Number(e.QUANTITY) || 0,
+            //                 ACTUAL_QTY: Number(e.ACTUAL_QTY) || 0
+            //             }));
+            var chartData = [{ "LOCATION_ID": 1600, "PRODUCT_ID": "SCHAR_M", "UNIQUE_ID": 6897, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "SINGLE CHAR PRODUCT", "WEEK_DATE": "2025-06-02", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/06", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 33, "ABS_DIFF": -32, "PERCENT_DIFF": 0.9696969696969697, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "SCHAR_M", "UNIQUE_ID": 6897, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "SINGLE CHAR PRODUCT", "WEEK_DATE": "2025-06-02", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/06", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 33, "ABS_DIFF": -32, "PERCENT_DIFF": 0.9696969696969697, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "SCHAR_M", "UNIQUE_ID": 6897, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "SINGLE CHAR PRODUCT", "WEEK_DATE": "2025-06-02", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/06", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 33, "ABS_DIFF": -32, "PERCENT_DIFF": 0.9696969696969697, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "SCHAR_M", "UNIQUE_ID": 6893, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "SINGLE CHAR PRODUCT", "WEEK_DATE": "2025-06-16", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/20", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 9, "FORECAST_QTY": 33, "ABS_DIFF": -24, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "SCHAR_M", "UNIQUE_ID": 6893, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "SINGLE CHAR PRODUCT", "WEEK_DATE": "2025-06-16", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/20", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 9, "FORECAST_QTY": 33, "ABS_DIFF": -24, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "SCHAR_M", "UNIQUE_ID": 6893, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "SINGLE CHAR PRODUCT", "WEEK_DATE": "2025-06-16", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/20", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 9, "FORECAST_QTY": 33, "ABS_DIFF": -24, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2700", "UNIQUE_ID": 4873, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2700 Procedure", "WEEK_DATE": "2025-02-24", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/02/28", "QUARTER": "FY25 Q4", "MONTH": "FY25 P12", "YEAR_MONTH": "2025-02", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 1, "ABS_DIFF": 4, "PERCENT_DIFF": 4, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2700", "UNIQUE_ID": 4873, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2700 Procedure", "WEEK_DATE": "2025-02-24", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/02/28", "QUARTER": "FY25 Q4", "MONTH": "FY25 P12", "YEAR_MONTH": "2025-02", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 1, "ABS_DIFF": 4, "PERCENT_DIFF": 4, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2700", "UNIQUE_ID": 4873, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2700 Procedure", "WEEK_DATE": "2025-02-24", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/02/28", "QUARTER": "FY25 Q4", "MONTH": "FY25 P12", "YEAR_MONTH": "2025-02", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 1, "ABS_DIFF": 4, "PERCENT_DIFF": 4, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2700", "UNIQUE_ID": 4875, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2700 Procedure", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 7, "FORECAST_QTY": 1, "ABS_DIFF": 6, "PERCENT_DIFF": 6, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2900", "UNIQUE_ID": 6314, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2900 Procedure", "WEEK_DATE": "2025-05-19", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/23", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 125, "ABS_DIFF": -123, "PERCENT_DIFF": 0.984, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2900", "UNIQUE_ID": 6332, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2900 Procedure", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 126, "ABS_DIFF": -124, "PERCENT_DIFF": 0.9841269841269841, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2900", "UNIQUE_ID": 6342, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2900 Procedure", "WEEK_DATE": "2025-06-02", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/06", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 126, "ABS_DIFF": -122, "PERCENT_DIFF": 0.9682539682539683, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2900", "UNIQUE_ID": 6334, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2900 Procedure", "WEEK_DATE": "2025-06-02", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/06", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 126, "ABS_DIFF": -124, "PERCENT_DIFF": 0.9841269841269841, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_2900", "UNIQUE_ID": 6338, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "VCP 2900 Procedure", "WEEK_DATE": "2025-06-02", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/06/06", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 126, "ABS_DIFF": -123, "PERCENT_DIFF": 0.9761904761904762, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 8, "ABS_DIFF": -3, "PERCENT_DIFF": 0.375, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 8, "ABS_DIFF": -3, "PERCENT_DIFF": 0.375, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 10, "ABS_DIFF": -5, "PERCENT_DIFF": 0.5, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 10, "ABS_DIFF": -5, "PERCENT_DIFF": 0.5, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 8, "ABS_DIFF": -3, "PERCENT_DIFF": 0.375, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 8, "ABS_DIFF": -3, "PERCENT_DIFF": 0.375, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 10, "ABS_DIFF": -5, "PERCENT_DIFF": 0.5, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 10, "ABS_DIFF": -5, "PERCENT_DIFF": 0.5, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6633, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6636, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-14", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/18", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 5, "FORECAST_QTY": 11, "ABS_DIFF": -6, "PERCENT_DIFF": 0.5454545454545454, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 10, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 10, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 10, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 11, "ABS_DIFF": -7, "PERCENT_DIFF": 0.6363636363636364, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 10, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6623, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 10, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6631, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-21", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/04/25", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 4, "FORECAST_QTY": 10, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 7, "ABS_DIFF": -5, "PERCENT_DIFF": 0.7142857142857143, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 7, "ABS_DIFF": -6, "PERCENT_DIFF": 0.8571428571428571, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 8, "ABS_DIFF": -7, "PERCENT_DIFF": 0.875, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 8, "ABS_DIFF": -6, "PERCENT_DIFF": 0.75, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 6, "ABS_DIFF": -5, "PERCENT_DIFF": 0.8333333333333334, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 6, "ABS_DIFF": -5, "PERCENT_DIFF": 0.8333333333333334, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 6, "ABS_DIFF": -4, "PERCENT_DIFF": 0.6666666666666666, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 8, "ABS_DIFF": -6, "PERCENT_DIFF": 0.75, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 8, "ABS_DIFF": -7, "PERCENT_DIFF": 0.875, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 10, "ABS_DIFF": -8, "PERCENT_DIFF": 0.8, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 10, "ABS_DIFF": -9, "PERCENT_DIFF": 0.9, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 9, "ABS_DIFF": -8, "PERCENT_DIFF": 0.8888888888888888, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 9, "ABS_DIFF": -7, "PERCENT_DIFF": 0.7777777777777778, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 9, "ABS_DIFF": -8, "PERCENT_DIFF": 0.8888888888888888, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 9, "ABS_DIFF": -7, "PERCENT_DIFF": 0.7777777777777778, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 8, "ABS_DIFF": -7, "PERCENT_DIFF": 0.875, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 8, "ABS_DIFF": -6, "PERCENT_DIFF": 0.75, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6901, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 35, "ABS_DIFF": -34, "PERCENT_DIFF": 0.9714285714285714, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 35, "ABS_DIFF": -33, "PERCENT_DIFF": 0.9428571428571428, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6618, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-04-28", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/02", "QUARTER": "FY26 Q1", "MONTH": "FY26 P02", "YEAR_MONTH": "2025-04", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 6, "ABS_DIFF": -4, "PERCENT_DIFF": 0.6666666666666666, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 10, "ABS_DIFF": -7, "PERCENT_DIFF": 0.7, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 10, "ABS_DIFF": -7, "PERCENT_DIFF": 0.7, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6620, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-05-26", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/05/30", "QUARTER": "FY26 Q1", "MONTH": "FY26 P03", "YEAR_MONTH": "2025-05", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 11, "ABS_DIFF": -8, "PERCENT_DIFF": 0.7272727272727273, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 10, "ABS_DIFF": -8, "PERCENT_DIFF": 0.8, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6627, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-06-30", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/04", "QUARTER": "FY26 Q2", "MONTH": "FY26 P04", "YEAR_MONTH": "2025-06", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 2, "FORECAST_QTY": 11, "ABS_DIFF": -9, "PERCENT_DIFF": 0.8181818181818182, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 8, "ABS_DIFF": -5, "PERCENT_DIFF": 0.625, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 7, "ABS_DIFF": -4, "PERCENT_DIFF": 0.5714285714285714, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 10, "ABS_DIFF": -7, "PERCENT_DIFF": 0.7, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 9, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6666666666666666, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 7, "ABS_DIFF": -4, "PERCENT_DIFF": 0.5714285714285714, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 8, "ABS_DIFF": -5, "PERCENT_DIFF": 0.625, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 36, "ABS_DIFF": -33, "PERCENT_DIFF": 0.9166666666666666, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 9, "ABS_DIFF": -6, "PERCENT_DIFF": 0.6666666666666666, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 8, "ABS_DIFF": -5, "PERCENT_DIFF": 0.625, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6629, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-07-07", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/07/11", "QUARTER": "FY26 Q2", "MONTH": "FY26 P05", "YEAR_MONTH": "2025-07", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 3, "FORECAST_QTY": 6, "ABS_DIFF": -3, "PERCENT_DIFF": 0.5, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 9, "ABS_DIFF": -8, "PERCENT_DIFF": 0.8888888888888888, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 11, "ABS_DIFF": -10, "PERCENT_DIFF": 0.9090909090909091, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 11, "ABS_DIFF": -10, "PERCENT_DIFF": 0.9090909090909091, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 11, "ABS_DIFF": -10, "PERCENT_DIFF": 0.9090909090909091, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 11, "ABS_DIFF": -10, "PERCENT_DIFF": 0.9090909090909091, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 11, "ABS_DIFF": -10, "PERCENT_DIFF": 0.9090909090909091, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 10, "ABS_DIFF": -9, "PERCENT_DIFF": 0.9, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 9, "ABS_DIFF": -8, "PERCENT_DIFF": 0.8888888888888888, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 11, "ABS_DIFF": -10, "PERCENT_DIFF": 0.9090909090909091, "ANOMALY_TYPE": "High Variance (>10%)" }, { "LOCATION_ID": 1600, "PRODUCT_ID": "VCP_3900", "UNIQUE_ID": 6625, "LOCATION_DESC": "Plant SCS 1600", "PROD_DESC": "Steelcase Series 1 Chair Task VCP 3900", "WEEK_DATE": "2025-09-01", "YEAR": 2025, "WEEK_PERIODDESC": "CW 2025/09/05", "QUARTER": "FY26 Q3", "MONTH": "FY26 P07", "YEAR_MONTH": "2025-09", "MODEL_VERSION": "Active", "VERSION": "__BASELINE", "SCENARIO": "_PLAN", "VERSION_NAME": "Base Version", "SCENARIO_NAME": "_PLAN", "ACTUAL_QTY": 1, "FORECAST_QTY": 11, "ABS_DIFF": -10, "PERCENT_DIFF": 0.9090909090909091, "ANOMALY_TYPE": "High Variance (>10%)" }]
+            that.newChartData = chartData.filter(item => item.LOCATION_ID === 1600 && item.PRODUCT_ID === "VCP_3900");
+            this._setActualForecastCard(that.newChartData, "Week", "WEEK_DATE");
+            //     } else {
+            //         sap.m.MessageToast.show("No data available for Locations and Products");
+            //     }
+
+            //     sap.ui.core.BusyIndicator.hide();
+            // })
+            // .catch((oError) => {
+            //     sap.ui.core.BusyIndicator.hide();
+            //     console.error("Read failed:", oError);
+            //     sap.m.MessageBox.error("Failed to load data: " + oError.message);
+            // });
+        },
+        // _setCharAnalysisCard: function (data) {
+        //     const oCard = this.byId("MyCardIdChar");
+        //     if (oCard) oCard.setBusy(true);
+        //     const forecastCardManifest = {
+        //         "sap.app": {
+        //             "id": "vcp.v4card.forecastAnalysis",
+        //             "type": "card",
+        //             "applicationVersion": { "version": "1.0.0" }
+        //         },
+        //         "sap.ui": { "technology": "UI5" },
+        //         "sap.card": {
+        //             "type": "Analytical",
+        //             "header": {
+        //                 "title": "Forecast vs Actual %",
+        //                 "subTitle": "By Week / Characteristic",
+        //                 "titleMaxLines": 1,
+        //                 "subTitleMaxLines": 1
+        //             },
+        //             "data": {
+        //                 "json": data
+        //             },
+        //             "content": {
+        //                 "chartType": "bar",
+        //                 "legend": { "visible": true },
+        //                 "plotArea": {
+        //                     "dataLabel": { "visible": true }
+        //                 },
+        //                 "dimensions": [
+        //                     {
+        //                         "name": "Week / Characteristic",
+        //                         "value": "{WEEK_CHAR}"
+        //                     }
+        //                 ],
+        //                 "measures": [
+        //                     {
+        //                         "name": "Forecast %",
+        //                         "value": "{FORECAST_SALES_PERCENTAGE}"
+        //                     },
+        //                     {
+        //                         "name": "Actual %",
+        //                         "value": "{PERCENTAGE}"
+        //                     }
+        //                 ],
+        //                 "feeds": [
+        //                     {
+        //                         "uid": "categoryAxis",
+        //                         "type": "Dimension",
+        //                         "values": ["Week / Characteristic"]
+        //                     },
+        //                     {
+        //                         "uid": "valueAxis",
+        //                         "type": "Measure",
+        //                         "values": ["Forecast %", "Actual %"]
+        //                     }
+        //                 ]
+        //             }
+        //         }
+        //     };
+        //     oCard.setManifest(forecastCardManifest);
+        //     oCard.setBusy(false);
+        // },
+        _setActualForecastCard: function (oData, sName, sID) {
+            const oManifest = {
+                "sap.app": {
+                    "id": "vcp.v4card.forecastQuantity",
+                    "type": "card",
+                    "applicationVersion": { "version": "1.0.0" }
+                },
+                "sap.ui": { "technology": "UI5" },
+                "sap.card": {
+                    "type": "Analytical",
+                    "header": {
+                        "title": "Forecast Actual Quantity, Forecast Quantity",
+                        "subTitle": "By " + sName,
+                        "titleMaxLines": 1,
+                        "subTitleMaxLines": 1
+                    },
+                    "data": {
+                        "json": oData
+                    },
+                    "configuration": {
+                        "filters": {
+                            "Period": {
+                                "type": "ComboBox",
+                                "label": "Dataset",
+                                "value": sName, // default value week
+                                "item": {
+                                    "path": "/",
+                                    "template": {
+                                        "key": "{text}",
+                                        "title": "{text}"
+                                    }
+                                },
+                                "data": {
+                                    "json": [
+                                        { "text": "Week" },
+                                        { "text": "Month" },
+                                        { "text": "Year" }
+                                    ]
+                                }
+                            }
+                        }
+                    },
+                    "content": {
+                        "title": {
+                            "text": "Forecast Actual vs Forecast"
+
+                        },
+                        "chartType": "line",
+                        "legend": { "visible": true },
+                        "plotArea": {
+                            "dataLabel": { "visible": true },
+                            "window": { "start": 0, "end": 100 }
+                        },
+                        "dimensions": [
+                            {
+                                "name": sName,
+                                "value": "{" + sID + "}"
+                            }
+                        ],
+                        "measures": [
+                            {
+                                "name": "Forecast Actual Quantity",
+                                "value": "{ACTUAL_QTY}"
+                            },
+                            {
+                                "name": "Forecast Quantity",
+                                "value": "{FORECAST_QTY}"
+                            }
+                        ],
+                        "feeds": [
+                            {
+                                "uid": "categoryAxis",
+                                "type": "Dimension",
+                                "values": [sName]
+                            },
+                            {
+                                "uid": "valueAxis",
+                                "type": "Measure",
+                                "values": ["Forecast Actual Quantity", "Forecast Quantity"]
+                            }
+                        ]
+                    }
+                }
+            };
+
+            this._applyCardManifestNew("MyCardIdFore", oManifest);
+
+        },
+        _applyCardManifestNew: function (sCardId, oManifest) {
+            var oCard = this.byId(sCardId);
+            if (oCard) {
+                oCard.setManifest(oManifest);               
+
+                // attach configurationChange instead of filterChange
+                oCard.detachConfigurationChange(this.onFilterChangePeriod, this);
+                oCard.attachConfigurationChange(this.onFilterChangePeriod, this);
+            }
+            sap.ui.core.BusyIndicator.hide();
+        },
+        onFilterChangePeriod: function (oEvent) {
+            var mChanges = oEvent.getParameters().changes;
+            if (mChanges) {
+                if (Object.keys(mChanges).some(key => key.includes("Period"))) {
+                    var selected = mChanges["/sap.card/configuration/filters/Period/value"];
+                    if (selected === "Week") {
+                        var sName = "Week";
+                        var sID = "WEEK_DATE"
+                    }
+                    else if (selected === "Year") {
+                        var sName = "Year";
+                        var sID = "YEAR"
+                    }
+                    else if (selected === "Month") {
+                        var sName = "Month";
+                        var sID = "MONTH"
+                    }
+                    this._setActualForecastCard(that.newChartData, sName, sID);
+                }
+            }
         }
-
-
     });
 });
 

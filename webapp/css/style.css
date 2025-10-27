@@ -255,3 +255,13 @@
     margin-bottom: 0;
     padding-bottom: 4px !important;
 }
+
+.chart-scrollable .sapFCardContent {
+  overflow-x: auto !important;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+.chart-scrollable .sapUiIntegrationCardAnalyticalContent {
+  min-width: 1800px;
+}

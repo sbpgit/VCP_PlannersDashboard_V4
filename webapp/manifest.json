@@ -88,7 +88,8 @@
        "aModel": {
                 "dataSource": "catService",
                 "preload": true,
-                "settings": {}
+                "settings": {},
+                 "type": "sap.ui.model.json.JSONModel"
             },
             "oGModel": {
                 "type": "sap.ui.model.json.JSONModel",
