@@ -732,7 +732,7 @@ sap.ui.define([
                         "subTitle": "Issues in VC Planner data processing",
                         "icon": {
                             "src": "sap-icon://activities",
-                            "width" : "70px"
+                            "width": "70px"
                         },
                         "status": {
                             "text": safeData.length + " alerts",
@@ -912,7 +912,7 @@ sap.ui.define([
                 return "Warning";
             }
             else if (lowerMessage.includes('success') || lowerMessage.includes('good')
-                || lowerMessage.includes('yes')  ){
+                || lowerMessage.includes('yes')) {
                 return "Success";
             }
             return "Information";
@@ -1434,7 +1434,116 @@ sap.ui.define([
                     this._setActualForecastCard(that.newChartData, sName, sID);
                 }
             }
+        },
+
+        //     onOpenQuickHelp: function () {
+
+        //     if (!this._oQuickHelpDialog) {
+        //         this._oQuickHelpDialog = new sap.m.Dialog({
+        //             title: "Quick Help",
+        //             contentWidth: "400px",
+        //             content: [
+        //                 new sap.m.VBox({
+        //                     items: [
+        //                          new sap.m.Link({
+        //                             text: "To Open Option Mix Planning Application",
+        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#getOptionpercentages-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpoptionpercentage",  
+        //                             target: "_blank" // opens in new tab
+        //                         }),
+        //                           new sap.m.Link({
+        //                             text: "To Open Forecast Order Application",
+        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpforecastingorders-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpforecastingordersbeta",  
+        //                             target: "_blank" 
+        //                         }),
+        //                          new sap.m.Link({
+        //                             text: "To Open Restriction Likelihood Application",
+        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcprestrictionlikelihood-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcprestrictionlikelihoodv2",  
+        //                             target: "_blank" 
+        //                         }),
+        //                           new sap.m.Link({
+        //                             text: "To Open Assembly Requirements Application",
+        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpmaterialrequirements-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpmaterialrequirements",  
+        //                             target: "_blank"
+        //                         }),
+        //                     ]
+        //                 })
+        //             ],
+        //             beginButton: new sap.m.Button({
+        //                 text: "Close",
+        //                 press: function () {
+        //                     this._oQuickHelpDialog.close();
+        //                 }.bind(this)
+        //             })
+        //         });
+
+
+        //         this._oQuickHelpDialog.attachAfterClose(function () {
+        //             this._oQuickHelpDialog.destroy();
+        //             this._oQuickHelpDialog = null;
+        //         }.bind(this));
+
+        //         this.getView().addDependent(this._oQuickHelpDialog);
+        //     }
+
+
+        //     this._oQuickHelpDialog.open();
+        // },
+        onOpenQuickHelp: function (oEvent) {
+            var oView = this.getView();
+            if (!this._oQuickHelpPopover) {
+                this._oQuickHelpPopover = new sap.m.Popover({
+                    title: "Quick Help",
+                    placement: sap.m.PlacementType.Bottom,
+                    showHeader: true,
+                    contentWidth: "320px",
+                    content: [
+                        new sap.m.VBox({
+                            items: [
+                                new sap.m.Link({
+                                    text: "To Open Option Mix Planning Application",
+                                    href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#getOptionpercentages-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpoptionpercentage",
+                                    target: "_blank" // opens in new tab
+                                }),
+                                new sap.m.Link({
+                                    text: "To Open Forecast Order Application",
+                                    href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpforecastingorders-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpforecastingordersbeta",
+                                    target: "_blank"
+                                }),
+                                new sap.m.Link({
+                                    text: "To Open Restriction Likelihood Application",
+                                    href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcprestrictionlikelihood-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcprestrictionlikelihoodv2",
+                                    target: "_blank"
+                                }),
+                                new sap.m.Link({
+                                    text: "To Open Assembly Requirements Application",
+                                    href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpmaterialrequirements-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpmaterialrequirements",
+                                    target: "_blank"
+                                }),
+                            ]
+                        })
+                    ],
+                    footer: new sap.m.Bar({
+                        contentRight: [
+                            new sap.m.Button({
+                                text: "Close",
+                                press: function () { this._oQuickHelpPopover.close(); }.bind(this)
+                            })
+                        ]
+                    }),
+                    afterClose: function () {
+
+                    }.bind(this)
+                });
+
+                oView.addDependent(this._oQuickHelpPopover);
+            }
+            var oSource = oEvent.getSource ? oEvent.getSource() : this.byId("quickHelpRibbon");
+            this._oQuickHelpPopover.openBy(oSource);
         }
+
+
+
+
     });
 });
 
