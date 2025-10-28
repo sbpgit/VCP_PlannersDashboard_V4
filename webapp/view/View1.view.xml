@@ -73,7 +73,7 @@
     <!-- Row 1 -->
     <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
         <items>
-            <card:Card id="MyCardId" width="400px" height="400px"/>
+            <card:Card id="MyCardId" width="500px" height="400px"/>
              <card:Card id="MyCardId3" width="1000px" height="400px"/>                     
             <Button id="quickHelpRibbon" text="Quick Help" icon="sap-icon://sys-help"
                     press="onOpenQuickHelp" class="quickHelpRibbon"/>
@@ -84,13 +84,13 @@
     <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
         <items>
          <card:Card id="MyCardId1" width="700px" height="400px"/>  
-          <card:Card id="MyCardId4" width="700px" height="400px"/>          
+          <card:Card id="MyCardId4" width="800px" height="400px"/>          
         </items>
     </HBox>
 <!-- Row 3 -->
      <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
         <items>       
-          <card:Card id="MyCardId2" width="900px" height="400px"/>   
+          <card:Card id="MyCardId2" width="1000px" height="400px"/>   
            <card:Card id="MyCardIdFore" class="chart-scrollable" width="500px" height="400px" />    
            
         </items>

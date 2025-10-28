@@ -912,7 +912,7 @@ sap.ui.define([
                 return "Warning";
             }
             else if (lowerMessage.includes('success') || lowerMessage.includes('good')
-                || lowerMessage.includes('yes') || lowerMessage.includes('changed')) {
+                || lowerMessage.includes('yes')  ){
                 return "Success";
             }
             return "Information";

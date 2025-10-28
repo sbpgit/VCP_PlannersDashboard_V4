@@ -156,7 +156,11 @@
     gap: 20px;
     margin: 0 !important;
     padding: 0 !important;
+    margin-left: 25px !important;
+    margin-right: 5px !important;
     max-width: 100% !important ;
+    padding-left: 35px !important;
+    padding-right: 60px !important;
 }
 
 /* Card layout and base styling */
