@@ -1,8 +1,13 @@
 <mvc:View controllerName="vcp.vcplannerdashboard.controller.View1"
     xmlns:mvc="sap.ui.core.mvc"
-    xmlns="sap.m" xmlns:core="sap.ui.core" xmlns:card="sap.ui.integration.widgets">
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+    xmlns:card="sap.ui.integration.widgets" 
+    xmlns:viz="sap.viz.ui5.controls"
+xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
+
     <Page id="page" title="{i18n>title}" showHeader="false">
-    <content>
+        <content>
 
             <!-- HEADER SECTION -->
             <VBox class="header">
@@ -24,13 +29,11 @@
 
                     <!-- Controls -->
                     <HBox class="controls" alignItems="Center" justifyContent="End">
-
                         <VBox class="control-group">
                             <Label text="Location" />
                             <ComboBox id="LocationSelect" items="{locModel>/results1}" showSecondaryValues="true"
                                 selectionChange=".onLocationChange" placeholder="Select Location">
-                                <core:ListItem key="{locModel>DEMAND_LOC}" text="{locModel>DEMAND_DESC}"
-                                    additionalText="{locModel>DEMAND_LOC}" />
+                                <core:ListItem key="{locModel>DEMAND_LOC}" text="{locModel>DEMAND_DESC}" additionalText="{locModel>DEMAND_LOC}" />
                             </ComboBox>
                         </VBox>
 
@@ -38,28 +41,15 @@
                             <Label text="Product" />
                             <ComboBox id="productSelect" items="{prodModel>/results2}" showSecondaryValues="true"
                                 selectionChange=".onProductChange" placeholder="Select Product">
-                                <core:ListItem key="{prodModel>PRODUCT_ID}" text="{prodModel>PROD_DESC}"
-                                    additionalText="{prodModel>PRODUCT_ID}" />
+                                <core:ListItem key="{prodModel>PRODUCT_ID}" text="{prodModel>PROD_DESC}" additionalText="{prodModel>PRODUCT_ID}" />
                             </ComboBox>
                         </VBox>
 
-                        <VBox class="control-group">
-                            <Label text="Version" visible="false"/>
-                            <Select id="idver" forceSelection="true" visible="false">
-                                <core:Item key="v1" text="_BASELINE" />
-                            </Select>
-                        </VBox>
-
-                        <VBox class="control-group">
-                            <Label text="Scenario" visible="false"/>
-                            <Select id="idser" forceSelection="true" visible="false">
-                                <core:Item key="s1" text="_PLAN" />
-                            </Select>
-                        </VBox>
                         <VBox>
                             <Label text="" />
                             <Button id="idBtnPD" press="onGetData" text="Go" type="Emphasized" />
                         </VBox>
+
                         <VBox>
                             <Label text="" />
                             <Button id="idResetPD" press="onResetData" text="Reset" />
@@ -68,72 +58,145 @@
                 </HBox>
             </VBox>
 
-            <!-- MAIN CONTENT: 3 CARDS -->
-            <VBox class="main-dashboard">
-    <!-- Row 1 -->
-    <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
-        <items>
-            <card:Card id="MyCardId" width="500px" height="400px"/>
-             <card:Card id="MyCardId3" width="1000px" height="400px"/>                     
-            <Button id="quickHelpRibbon" text="Quick Help" icon="sap-icon://sys-help"
+            <!-- MAIN CONTENT -->
+            <VBox class="main-dashboard" justifyContent="Start" width="100%">
+                
+                <!-- ROW 1 -->
+                <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                    <items>
+                        <VBox class="card-wrapper smallCard" width="30%">
+                            <items>
+                                <card:Card id="MyCardId" height="400px"  />
+                            </items>
+                        </VBox>
+
+                        <VBox class="card-wrapper largeCard" width="69%">
+                            <items>
+                                <card:Card id="MyCardId3" height="400px"  />
+                            </items>
+                        </VBox>
+                         <Button id="quickHelpRibbon" text="Quick Help" icon="sap-icon://sys-help"
                     press="onOpenQuickHelp" class="quickHelpRibbon"/>
-        </items>
-    </HBox>
+                    </items>
+                </HBox>
 
-    <!-- Row 2 -->
-    <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
-        <items>
-         <card:Card id="MyCardId1" width="700px" height="400px"/>  
-          <card:Card id="MyCardId4" width="800px" height="400px"/>          
-        </items>
-    </HBox>
-<!-- Row 3 -->
-     <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
-        <items>       
-          <card:Card id="MyCardId2" width="1000px" height="400px"/>   
-           <card:Card id="MyCardIdFore" class="chart-scrollable" width="500px" height="400px" />    
-           
-        </items>
-    </HBox>
+                <!-- ROW 2 -->
+                <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                    <items>
+                        <VBox class="card-wrapper" width="49%">
+                            <items>
+                                <card:Card id="MyCardId1" height="400px" width="100%" />
+                            </items>
+                        </VBox>
+                        <VBox class="card-wrapper" width="50%">
+                            <items>
+                                <card:Card id="MyCardId4" height="400px" width="100%" />
+                            </items>
+                        </VBox>
+                    </items>
+                </HBox>
 
-    <!-- Row 4 characteristic and demand graphs-->
+                <!-- ROW 3 -->
+                <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                    <items>
+                        <VBox class="card-wrapper" width="65%">
+                            <items>
+                            <Panel id="forecastContainer"
+       headerText="Assembly Lag Analysis"
+       width="100%"
+       class="sapUiNoContentPadding sapUiMediumMarginBottom">
+
     <VBox class="sapUiSmallMargin" width="100%">
-    <!-- Filter Row -->
-    <!-- <HBox id="filterRow" alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
-        <items>
-            <ComboBox id="cbFactory" width="200px" placeholder="Select Factory_loc">
-                <items>
-                    <core:Item key="F1" text="Factory 1" />
-                    <core:Item key="F2" text="Factory 2" />
-                    <core:Item key="F3" text="Factory 3" />
-                </items>
-            </ComboBox>
+        <!-- Filter Row -->
+        <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+            <items>
+            <VBox>
+            <Label id="idFac" text="Factory Location" required="true"></Label>
+                 <ComboBox id="cbFactory" items="{filters>/Factory_loc}" showSecondaryValues="true"
+                                selectionChange=".onFacLocChange" placeholder="Select Factory Location">
+                                <core:ListItem key="{filters>FACTORY_LOC}" text="{filters>LOCATION_DESC}"
+                                    additionalText="{filters>FACTORY_LOC}" />
+                            </ComboBox>
+                              </VBox>
+                               <VBox>
+            <Label id="idAss" text="Assembly" required="true"></Label>
+                            <ComboBox id="cbAssembly" items="{assembly>/Assembly}" showSecondaryValues="true"
+                                selectionChange=".onAssemblyChange" placeholder="Select Assembly">
+                                <core:ListItem key="{assembly>COMPONENT}" text="{assembly>COMPONENT}"
+                                    />
+                            </ComboBox>
+                            </VBox>
+                             <VBox>
+            <Label id="idMonth" text="Month" required="true"></Label>
+                             <ComboBox id="cbMonth" items="{calendar>/MONTH}" showSecondaryValues="true"
+                                selectionChange=".onMonthChange" placeholder="Select Month">
+                                <core:ListItem key="{calendar>PERIODDESC}" text="{calendar>PERIODDESC}"
+                                    />
+                            </ComboBox>
+                             </VBox>
+                              <VBox>
+            <Label  text=" " ></Label>
+                           <Button id="idGo" press="onFilterGo" text="Go" type="Emphasized"></Button>
+                             </VBox>
+                             <VBox>
+            <Label  text=" " ></Label>
+                           <Button id="idReset" press="onFilterReset" text="Reset" type="Transparent"></Button>
+                             </VBox>
+            </items>
+        </HBox>
+            <!-- <card:Card id="idWFModel" width="100%" /> -->
+            <viz:VizFrame id="idWFModel"
+                          uiConfig="{applicationSet:'fiori'}"
+                          vizType="waterfall"
+                          height="400px"
+                          width="100%">
+                <viz:dataset>
+                    <viz.data:FlattenedDataset
+                        xmlns:viz.data="sap.viz.ui5.data"
+                        data="{waterfallModel>/WaterfallData}">
+                        <viz.data:dimensions>
+                            <viz.data:DimensionDefinition
+                                name="Lag"
+                                value="{waterfallModel>LAG_MONTH}"/>
+                        </viz.data:dimensions>
+                        <viz.data:measures>
+                            <viz.data:MeasureDefinition
+                             name="Mape"
+                                value="{waterfallModel>MAPE}"/>
+                               
+                        </viz.data:measures>
+                    </viz.data:FlattenedDataset>
+                </viz:dataset>
+                <viz:feeds>
+                    <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Lag"/>
+                    <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape"/>
+                </viz:feeds>
+            </viz:VizFrame>
 
-            <ComboBox id="cbAssembly" width="200px" placeholder="Select Assembly">
-                <items>
-                    <core:Item key="A1" text="Assembly 1" />
-                    <core:Item key="A2" text="Assembly 2" />
-                </items>
-            </ComboBox>
-
-            <ComboBox id="cbMonth" width="200px" placeholder="Select Month">
-                <items>
-                    <core:Item key="01" text="January" />
-                    <core:Item key="02" text="February" />
-                    <core:Item key="03" text="March" />
-                </items>
-            </ComboBox>
-        </items>
-    </HBox> -->
-     <HBox class="card-container" alignItems="Start" justifyContent="SpaceAround" wrap="Wrap">
-        <items>       
-         <card:Card id="idWFModel" width="1000px" height="400px"/> 
-           
-        </items>
-    </HBox>
     </VBox>
-</VBox>
+</Panel>
+                               
+                            </items>
+                        </VBox>
+                        <VBox class="card-wrapper" width="34%">
+                            <items>
+                                <card:Card id="MyCardIdFore" height="400px" width="100%" />
+                            </items>
+                        </VBox>
+                    </items>
+                </HBox>
 
+                <!-- ROW 4 -->
+                <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                    <items>
+                        <VBox class="card-wrapper" width="100%">
+                            <items>
+                                 <card:Card id="MyCardId2" height="400px" width="100%" />
+                            </items>
+                        </VBox>
+                    </items>
+                </HBox>
+            </VBox>
         </content>
     </Page>
 </mvc:View>
