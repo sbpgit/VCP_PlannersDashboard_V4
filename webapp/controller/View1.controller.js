@@ -12,6 +12,24 @@ sap.ui.define([
     var that;
     return Controller.extend("vcp.vcplannerdashboard.controller.View1", {
         formatter: formatter,
+        appMap: {
+            salesOrder: {
+                semanticObject: "getOptionpercentages",
+                action: "display"
+            },
+            purchaseOrder: {
+                semanticObject: "PurchaseOrder",
+                action: "manage"
+            },
+            inventory: {
+                semanticObject: "Inventory",
+                action: "overview"
+            },
+            analytics: {
+                semanticObject: "Analytics",
+                action: "display"
+            },
+        },
         onInit: function () {
             this.oModel = this.getOwnerComponent().getModel();
             this.data = [];
@@ -20,6 +38,7 @@ sap.ui.define([
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
             // this.loadAlertsCards();
+
         },
 
         onAfterRendering: function () {
@@ -1067,8 +1086,6 @@ sap.ui.define([
                             action: "display"
                         }
                     })) || "";
-                    var oStorage = jQuery.sap.storage(jQuery.sap.storage.Type.local);
-                    oStorage.put("nodeId", 58);
                     //Generate a  URL for the second application
                     var url = window.location.href.split('#')[0] + hash;
                     //Navigate to second app
@@ -1302,83 +1319,83 @@ sap.ui.define([
 
         //     this._oQuickHelpDialog.open();
         // },
- onOpenQuickHelp: function (oEvent) {
+        //  onOpenQuickHelp: function (oEvent) {
 
-    if (!this._oQuickHelpPopover) {
-        this._oQuickHelpPopover = new sap.m.Popover({
-            title: "Quick Help",
-            contentWidth: "400px",
-            placement: sap.m.PlacementType.Bottom, // shows below the button
-            content: [
-                new sap.m.VBox({
-                    items: [
-                        new sap.m.Link({
-                            text: "To Open Option Mix Planning Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#getOptionpercentages-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpoptionpercentage#/getOptionpercentages-display",
-                                    "_blank"
-                                );
-                            }
-                        }),
-                        new sap.m.Link({
-                            text: "To Open Forecast Order Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpforecastingorders-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpforecastingordersbeta#/vcpforecastingorders-display",
-                                    "_blank"
-                                );
-                            }
-                        }),
-                        new sap.m.Link({
-                            text: "To Open Assembly Requirements Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpmaterialrequirements-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpmaterialrequirements#/vcpmaterialrequirements-display",
-                                    "_blank"
-                                );
-                            }
-                        }),
-                        new sap.m.Link({
-                            text: "To Open Restriction Likelihood Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcprestrictionlikelihood-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcprestrictionlikelihoodv2#/Restriction-display",
-                                    "_blank"
-                                );
-                            }
-                        })
-                    ]
-                })
-            ],
+        //     if (!this._oQuickHelpPopover) {
+        //         this._oQuickHelpPopover = new sap.m.Popover({
+        //             title: "Quick Help",
+        //             contentWidth: "400px",
+        //             placement: sap.m.PlacementType.Bottom, // shows below the button
+        //             content: [
+        //                 new sap.m.VBox({
+        //                     items: [
+        //                         new sap.m.Link({
+        //                             text: "To Open Option Mix Planning Application",
+        //                             press: function () {
+        //                                 window.open(
+        //                                     "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#getOptionpercentages-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpoptionpercentage#/getOptionpercentages-display",
+        //                                     "_blank"
+        //                                 );
+        //                             }
+        //                         }),
+        //                         new sap.m.Link({
+        //                             text: "To Open Forecast Order Application",
+        //                             press: function () {
+        //                                 window.open(
+        //                                     "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpforecastingorders-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpforecastingordersbeta#/vcpforecastingorders-display",
+        //                                     "_blank"
+        //                                 );
+        //                             }
+        //                         }),
+        //                         new sap.m.Link({
+        //                             text: "To Open Assembly Requirements Application",
+        //                             press: function () {
+        //                                 window.open(
+        //                                     "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpmaterialrequirements-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpmaterialrequirements#/vcpmaterialrequirements-display",
+        //                                     "_blank"
+        //                                 );
+        //                             }
+        //                         }),
+        //                         new sap.m.Link({
+        //                             text: "To Open Restriction Likelihood Application",
+        //                             press: function () {
+        //                                 window.open(
+        //                                     "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcprestrictionlikelihood-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcprestrictionlikelihoodv2#/Restriction-display",
+        //                                     "_blank"
+        //                                 );
+        //                             }
+        //                         })
+        //                     ]
+        //                 })
+        //             ],
 
-           
-            footer: new sap.m.Toolbar({
-                content: [
-                    new sap.m.ToolbarSpacer(),
-                    new sap.m.Button({
-                        text: "Close",
-                        type: "Emphasized",
-                        press: function () {
-                            this._oQuickHelpPopover.close();
-                        }.bind(this)
-                    })
-                ]
-            })
-        });
 
-        
-        this._oQuickHelpPopover.attachAfterClose(function () {
-            this._oQuickHelpPopover.destroy();
-            this._oQuickHelpPopover = null;
-        }.bind(this));
+        //             footer: new sap.m.Toolbar({
+        //                 content: [
+        //                     new sap.m.ToolbarSpacer(),
+        //                     new sap.m.Button({
+        //                         text: "Close",
+        //                         type: "Emphasized",
+        //                         press: function () {
+        //                             this._oQuickHelpPopover.close();
+        //                         }.bind(this)
+        //                     })
+        //                 ]
+        //             })
+        //         });
 
-        this.getView().addDependent(this._oQuickHelpPopover);
-    }
 
-    
-    this._oQuickHelpPopover.openBy(oEvent.getSource());
-},
+        //         this._oQuickHelpPopover.attachAfterClose(function () {
+        //             this._oQuickHelpPopover.destroy();
+        //             this._oQuickHelpPopover = null;
+        //         }.bind(this));
+
+        //         this.getView().addDependent(this._oQuickHelpPopover);
+        //     }
+
+
+        //     this._oQuickHelpPopover.openBy(oEvent.getSource());
+        // },
 
 
 
@@ -1392,9 +1409,9 @@ sap.ui.define([
         //                 var oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
         //                 oCrossAppNavigator.toExternal({
         //                     target: {
-        //                         window.location.href = "https://<target-launchpad-url>/#SalesOrder-display"
-        //                         // semanticObject: "getOptionpercentages",
-        //                         // action: "display"
+        //                         // window.location.href = "https://<target-launchpad-url>/#SalesOrder-display"
+        //                         semanticObject: "getOptionpercentages",
+        //                         action: "display"
 
         //                     },
         //                 });
@@ -1436,8 +1453,136 @@ sap.ui.define([
 
         //     var oSource = oEvent.getSource ? oEvent.getSource() : this.byId("quickHelpRibbon");
         //     this._oQuickHelpPopover.openBy(oSource);
-        // }
+        // },
 
+        onOpenQuickHelp: function (oEvent) {
+            var oSource = oEvent.getSource ? oEvent.getSource() : this.byId("quickHelpRibbon");
+            var oPopover = this.byId("myQuickHelpPopover");
+
+            // ensure popover is a dependent of view (optional; usually automatic for XML)
+            this.getView().addDependent(oPopover);
+
+
+            oPopover.openBy(oSource);
+        },
+        onCloseQuickHelp: function () {
+            var oPopover = this.byId("myQuickHelpPopover");
+            if (oPopover) {
+                oPopover.close();
+            }
+        },
+
+        // onNavLinkPress: function (oEvent) {
+        //    var oNavLink = new sap.m.Link({
+                    
+        //             press: function () {
+        //                 var oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
+        //                 oCrossAppNavigator.toExternal({
+        //                     target: {
+        //                         // window.location.href = "https://<target-launchpad-url>/#SalesOrder-display"
+        //                         semanticObject: "getOptionpercentages",
+        //                         action: "display"
+
+        //                     },
+                            
+        //                 });
+        //                    oCrossAppNavigator.toExternal({
+        //                     target: {
+                              
+        //                         semanticObject: "vcpforecastingorders",
+        //                         action: "display"
+
+        //                     },
+                            
+        //                 });
+        //                      oCrossAppNavigator.toExternal({
+        //                     target: {
+                                
+        //                         semanticObject: "vcpmaterialrequirements",
+        //                         action: "display"
+
+        //                     },
+                            
+        //                 });
+        //                      oCrossAppNavigator.toExternal({
+        //                     target: {
+                                
+        //                         semanticObject: "Restriction",
+        //                         action: "display"
+
+        //                     },
+                            
+        //                 });
+        //                  oNavLink
+        //             }
+        //         });
+        //     },
+
+ appMap: {
+  optionMix: {  
+    semanticObject: "getOptionpercentages",
+    action: "display"
+  },
+  forecastingOrders: {
+    semanticObject: "vcpforecastingorders", 
+    action: "display"
+  },
+  materialRequirements: {
+    semanticObject: "vcpmaterialrequirements",
+    action: "display"
+  },
+  restriction: {
+    semanticObject: "Restriction",
+    action: "display"
+  }
+},
+
+onNavLinkPress: function (oEvent) {
+  try {
+    var oSource = oEvent.getSource();
+    var sAppKey = oSource.data("appKey");
+    
+    if (!sAppKey) {
+      console.warn("No appKey found on pressed link");
+      return;
+    }
+
+    var oTarget = this.appMap[sAppKey];
+    if (!oTarget) {
+      console.error("No mapping for appKey:", sAppKey);
+      return;
+    }
+
+    // If FLP available, use CrossApplicationNavigation
+    if (window.sap && sap.ushell && sap.ushell.Container && sap.ushell.Container.getService) {
+      try {
+        var oCrossAppNav = sap.ushell.Container.getService("CrossApplicationNavigation");
+        oCrossAppNav.toExternal({
+          target: {
+            semanticObject: oTarget.semanticObject,
+            action: oTarget.action
+          }
+        });
+      } catch (e) {
+        console.warn("FLP navigation failed, falling back:", e);
+        this.fallbackNavigation(oTarget);
+      }
+    } else {
+      this.fallbackNavigation(oTarget);
+    }
+  } catch (err) {
+    console.error("onNavLinkPress error:", err);
+  }
+},
+
+fallbackNavigation: function(oTarget) {
+  // Fallback navigation when not in FLP
+  if (oTarget.semanticObject && oTarget.action) {
+    var sHash = "#" + oTarget.semanticObject + "-" + oTarget.action;
+    var sFull = window.location.href.split("#")[0] + sHash;
+    window.open(sFull, "_blank");
+  }
+},
 
         loadAssemblyLag: function () {
             var totalData = that.oGModel.getProperty("/fullLocProdData");

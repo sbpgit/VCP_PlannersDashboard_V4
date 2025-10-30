@@ -77,6 +77,62 @@ xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
                         </VBox>
                          <Button id="quickHelpRibbon" text="Quick Help" icon="sap-icon://sys-help"
                     press="onOpenQuickHelp" class="quickHelpRibbon"/>
+                    <Popover
+                            id="myQuickHelpPopover"
+                            title="Quick Help"
+                            class="sapUiResponsivePadding--header sapUiResponsivePadding--footer"
+                            placement="Bottom"
+                            resizable="true"
+                            initialFocus="close"
+                            contentWidth="360px">
+
+    <VBox width="100%">
+        <!-- Link 1 -->
+        <Link text="Option Mix Planning"
+              press="onNavLinkPress">
+            <customData>
+                <core:CustomData key="appKey" value="getOptionpercentages" />
+            </customData>
+        </Link>
+
+        <!-- Link 2 -->
+        <Link text="Forecast Order"
+              press="onNavLinkPress">
+            <customData>
+                <core:CustomData key="appKey" value="vcpforecastingorders" />
+            </customData>
+        </Link>
+
+        <!-- Link 3 -->
+        <Link text="Assembly Requirements"
+              press="onNavLinkPress">
+            <customData>
+                <core:CustomData key="appKey" value="vcpmaterialrequirements" />
+            </customData>
+        </Link>
+
+        <!-- Link 4 -->
+        <Link text="Restriction Likelihood"
+              press="onNavLinkPress">
+            <customData>
+                <core:CustomData key="appKey" value="Restriction" />
+            </customData>
+        </Link>
+
+       
+    </VBox>
+
+    <footer>
+      <OverflowToolbar>
+        <ToolbarSpacer />
+        <Button
+          id="close"
+          text="Close"
+          press="onCloseQuickHelp" />
+      </OverflowToolbar>
+    </footer>
+  </Popover>
+
                     </items>
                 </HBox>
 
