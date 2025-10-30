@@ -78,14 +78,11 @@
       },
       "": {
         "dataSource": "mainService",
-        "type": "sap.ui.model.odata.v4.ODataModel",
         "preload": true,
         "settings": {
           "operationMode": "Server",
           "autoExpandSelect": true,
-          "earlyRequests": true,
-          "synchronizationMode": "None",
-          "groupId": "$auto"
+          "earlyRequests": true
         }
       },
        "aModel": {
