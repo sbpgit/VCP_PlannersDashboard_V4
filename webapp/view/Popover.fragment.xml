@@ -1,0 +1,29 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+	<ResponsivePopover
+		id="myPopover"
+		title="Quick Help"
+		class="sapUiContentPadding"
+		placement="Bottom" >
+		<endButton>
+			<Button text="Close" press="handleCloseButton" />
+		</endButton>
+		<content>
+        <VBox>
+			<Link
+				text="Option Mix Planning"
+				press="handleLinkPress" />
+                <Link
+				text="Forecast Orders"
+				press="handleLinkPress" />
+                <Link
+				text="Assemby Requirements"
+				press="handleLinkPress" />
+                <Link
+				text="Restriction Likelihood"
+				press="handleLinkPress" />
+                 </VBox>
+		</content>
+	</ResponsivePopover>
+</core:FragmentDefinition>

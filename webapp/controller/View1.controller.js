@@ -5,9 +5,10 @@ sap.ui.define([
     "sap/m/MessageBox",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
-    "../model/formatter"
+    "../model/formatter",
+    'sap/ui/core/Fragment'
 ], (Controller, JSONModel, MessageToast, MessageBox, Filter,
-    FilterOperator, formatter) => {
+    FilterOperator, formatter, Fragment) => {
     "use strict";
     var that;
     return Controller.extend("vcp.vcplannerdashboard.controller.View1", {
@@ -34,7 +35,8 @@ sap.ui.define([
             this.locationData = [];
             this.prodData = [];
             that.newChartData = [];
-            that.CalendarData = [], that.assemblyData = [], that.cardData = [];
+            that.CalendarData = [], that.assemblyData = [], that.cardData = [],
+                that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
             this.getLocProd();
             // this._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel");
             this._showEmptyAlertsCard("Characteristic Percentage", "MyCardIdChar");
@@ -386,7 +388,7 @@ sap.ui.define([
         onGetData: function () {
             this._loadForecastCard();
             this.loadAlertsCards();
-            that.loadAssemblyLag();
+            that.loadAllLags();
             this._loadCharCards();
         },
         onResetData: function () {
@@ -397,7 +399,10 @@ sap.ui.define([
             that.getView().setModel(calendarModel, "calendar");
             const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: [] });
             this.getView().setModel(oModel, "filters");
+            //Reset asselbly lag
+            that.onFilterResetAssembly();
             this.onAfterRendering();
+
         },
 
         // Main method to Data alerts using V4 OData
@@ -529,14 +534,21 @@ sap.ui.define([
             // Convert to array format for the card
             var systemAlertsCardData = Object.keys(systemGroups).map(function (group) {
                 var data = systemGroups[group];
+                var displayNameMap = {
+                    "PROCESS_JOBS": "Process Jobs",
+                    "INTERFACE": "Interface",
+                    "RESTRICTIONS": "Restrictions"
+                };
+
                 return {
-                    category: group,
+                    category: displayNameMap[group] || group,
                     count: data.count,
                     success: data.success,
                     warning: data.warning,
                     error: data.error,
                     icon: that._getSystemGroupIcon(group),
-                    severity: that._determineSystemSeverity(data.success, data.warning, data.error)
+                    severity: that._determineSystemSeverity(data.success, data.warning, data.error),
+                    rawCategory: group
                 };
             }).filter(function (item) {
                 return item.count > 0; // Only show groups with alerts
@@ -695,7 +707,7 @@ sap.ui.define([
                                 {
                                     "type": "Custom",
                                     "parameters": {
-                                        "actionId": "{category}"
+                                        "actionId": "{rawCategory}"
                                     }
                                 }
                             ]
@@ -755,45 +767,6 @@ sap.ui.define([
                 }
             };
         },
-        _getTargetForCategory: async function (category) {
-            try {
-                // ✅ Use async version to get the service
-                const oCrossAppNavigator = await sap.ushell.Container.getServiceAsync("CrossApplicationNavigation");
-                let sIntent;
-
-                switch (category) {
-                    case "PROCESS_JOBS":
-                        sIntent = await oCrossAppNavigator.hrefForExternalAsync({
-                            target: {
-                                semanticObject: "jobschedulersequence",
-                                action: "display"
-                            }
-                        });
-                        break;
-
-                    case "INTERFACE":
-                        sIntent = await oCrossAppNavigator.hrefForExternalAsync({
-                            target: {
-                                semanticObject: "vcpappvcpinterface",
-                                action: "Display"
-                            }
-                        });
-                        break;
-
-                    default:
-                        sIntent = "#Shell-home";
-                        break;
-                }
-
-                return sIntent;
-
-            } catch (err) {
-                console.error("Error while generating intent:", err);
-                return "#Shell-home";
-            }
-        }
-        ,
-
 
         // EXCEPTIONAL ALERTS CARD - Show individual messages with severity
         _createExceptionalAlertsCardManifest: function (data) {
@@ -1044,8 +1017,6 @@ sap.ui.define([
                             action: "display"
                         }
                     })) || "";
-                    var oStorage = jQuery.sap.storage(jQuery.sap.storage.Type.local);
-                    oStorage.put("nodeId", 58);
                     //Generate a  URL for the second application
                     var url = window.location.href.split('#')[0] + hash;
                     //Navigate to second app
@@ -1079,7 +1050,7 @@ sap.ui.define([
             }
         },
 
-        _loadCharCards: function () {
+        _loadCharCards: async function () {
             const oModel = this.getOwnerComponent().getModel();
             const oCard = this.byId("MyCardIdFore");
             if (oCard) oCard.setBusy(true);
@@ -1101,31 +1072,39 @@ sap.ui.define([
 
             const aFilters1 = Array.isArray(aFilters) ? aFilters : [];
 
-            // oModel.bindList("/getDMDAnalytical", null, [], aFilters1)
-            //     .requestContexts()
-            //     .then((aContexts) => {
-            //         var results = aContexts.map(oContext => oContext.getObject());
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
 
-            //         if (results?.length > 0) {
-            //             // results = results.slice(0, 100);
-            //             const chartData = results.map(e => ({
-            //                 WEEK_DATE: e.WEEK_DATE, // X-axis (category)
-            //                 FORECAST_QTY: Number(e.QUANTITY) || 0,
-            //                 ACTUAL_QTY: Number(e.ACTUAL_QTY) || 0
-            //             }));
-            //             that.newChartData = chartData.filter(item => item.LOCATION_ID === 1600 && item.PRODUCT_ID === "VCP_3900");
-            //             this._setActualForecastCard(that.newChartData, "Week", "WEEK_DATE");
-            //         } else {
-            //             sap.m.MessageToast.show("No data available for Locations and Products");
-            //         }
+            // while (bHasMore) {
+            //     // var url = `/getDMDAnalytical?$filter=LOCATION_ID eq '1600'`
+            //     const aContexts = await this.oModel
+            //         .bindList("/getDMDAnalytical", null, [], aFilters1)
+            //         .requestContexts(iSkip, iPageSize);
 
-            //         sap.ui.core.BusyIndicator.hide();
-            //     })
-            //     .catch((oError) => {
-            //         sap.ui.core.BusyIndicator.hide();
-            //         console.error("Read failed:", oError);
-            //         sap.m.MessageBox.error("Failed to load data: " + oError.message);
-            //     });
+            //     const aPageResults = aContexts.map(ctx => ctx.getObject());
+
+            //     aAllResults = aAllResults.concat(aPageResults);
+
+            //     // If we got less than requested, it's the last page
+            //     if (aPageResults.length < iPageSize) {
+            //         bHasMore = false;
+            //     } else {
+            //         iSkip += iPageSize;
+            //     }
+            // }
+
+            // console.log("Total records loaded:", aAllResults.length);
+
+            // if (aAllResults.length === 0) {
+            //     sap.m.MessageToast.show("No data available for selected Location & Product");
+            // } else {
+
+            //     that.forecastData = aAllResults;
+            //     // const oAssemblyModel = new sap.ui.model.json.JSONModel({ Assembly: that.forecastData });
+            //     this._setActualForecastCard(that.forecastData, "Week", "WEEK_DATE");
+            // }
             oCard.setBusy(false);
         },
 
@@ -1250,195 +1229,78 @@ sap.ui.define([
             }
         },
 
-        //     onOpenQuickHelp: function () {
+        handleCloseButton: function (oEvent) {
+            this.byId("myPopover").close();
+        },
+        onOpenQuickHelp: function (oEvent) {
+            var oButton = oEvent.getSource(),
+                oView = this.getView();
 
-        //     if (!this._oQuickHelpDialog) {
-        //         this._oQuickHelpDialog = new sap.m.Dialog({
-        //             title: "Quick Help",
-        //             contentWidth: "400px",
-        //             content: [
-        //                 new sap.m.VBox({
-        //                     items: [
-        //                          new sap.m.Link({
-        //                             text: "To Open Option Mix Planning Application",
-        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#getOptionpercentages-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpoptionpercentage",  
-        //                             target: "_blank" // opens in new tab
-        //                         }),
-        //                           new sap.m.Link({
-        //                             text: "To Open Forecast Order Application",
-        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpforecastingorders-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpforecastingordersbeta",  
-        //                             target: "_blank" 
-        //                         }),
-        //                          new sap.m.Link({
-        //                             text: "To Open Restriction Likelihood Application",
-        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcprestrictionlikelihood-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcprestrictionlikelihoodv2",  
-        //                             target: "_blank" 
-        //                         }),
-        //                           new sap.m.Link({
-        //                             text: "To Open Assembly Requirements Application",
-        //                             href: "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpmaterialrequirements-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpmaterialrequirements",  
-        //                             target: "_blank"
-        //                         }),
-        //                     ]
-        //                 })
-        //             ],
-        //             beginButton: new sap.m.Button({
-        //                 text: "Close",
-        //                 press: function () {
-        //                     this._oQuickHelpDialog.close();
-        //                 }.bind(this)
-        //             })
-        //         });
+            if (!this._pPopover) {
+                this._pPopover = Fragment.load({
+                    id: oView.getId(),
+                    name: "vcp.vcplannerdashboard.view.Popover",
+                    controller: this
+                }).then(function (oPopover) {
+                    oView.addDependent(oPopover);
+                    // oPopover.bindElement("/ProductCollection/0");
+                    return oPopover;
+                });
+            }
+            this._pPopover.then(function (oPopover) {
+                oPopover.openBy(oButton);
+            });
+        },
+        handleLinkPress: async function (oEvent) {
+            var selectedApp = oEvent.getSource().getText();
+            try {
+                switch (selectedApp) {
+                    case "Option Mix Planning":
+                        var semanticObject = "getOptionpercentages",
+                            action = "display";
+                        break;
 
+                    case "Forecast Orders":
+                        var semanticObject = "vcpforecastingorders",
+                            action = "display";
+                        break;
+                    case "Assembly Requirements":
+                        var semanticObject = "vcpmaterialrequirements",
+                            action = "display";
+                        break;
+                    case "Restriction Likelihood":
+                        var semanticObject = "vcpvendergoodcapacity",
+                            action = "display";
+                        break;
 
-        //         this._oQuickHelpDialog.attachAfterClose(function () {
-        //             this._oQuickHelpDialog.destroy();
-        //             this._oQuickHelpDialog = null;
-        //         }.bind(this));
-
-        //         this.getView().addDependent(this._oQuickHelpDialog);
-        //     }
-
-
-        //     this._oQuickHelpDialog.open();
-        // },
- onOpenQuickHelp: function (oEvent) {
-
-    if (!this._oQuickHelpPopover) {
-        this._oQuickHelpPopover = new sap.m.Popover({
-            title: "Quick Help",
-            contentWidth: "400px",
-            placement: sap.m.PlacementType.Bottom, // shows below the button
-            content: [
-                new sap.m.VBox({
-                    items: [
-                        new sap.m.Link({
-                            text: "To Open Option Mix Planning Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#getOptionpercentages-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpoptionpercentage#/getOptionpercentages-display",
-                                    "_blank"
-                                );
-                            }
-                        }),
-                        new sap.m.Link({
-                            text: "To Open Forecast Order Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpforecastingorders-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpforecastingordersbeta#/vcpforecastingorders-display",
-                                    "_blank"
-                                );
-                            }
-                        }),
-                        new sap.m.Link({
-                            text: "To Open Assembly Requirements Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcpmaterialrequirements-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcpmaterialrequirements#/vcpmaterialrequirements-display",
-                                    "_blank"
-                                );
-                            }
-                        }),
-                        new sap.m.Link({
-                            text: "To Open Restriction Likelihood Application",
-                            press: function () {
-                                window.open(
-                                    "https://vcpprovider-sc0jeojq.launchpad.cfapps.us10.hana.ondemand.com/site?siteId=b0d7404e-d3bf-497d-9769-c48700e9ed22#vcprestrictionlikelihood-display?sap-ui-app-id-hint=saas_approuter_vcpapp.vcprestrictionlikelihoodv2#/Restriction-display",
-                                    "_blank"
-                                );
-                            }
-                        })
-                    ]
-                })
-            ],
-
-           
-            footer: new sap.m.Toolbar({
-                content: [
-                    new sap.m.ToolbarSpacer(),
-                    new sap.m.Button({
-                        text: "Close",
-                        type: "Emphasized",
-                        press: function () {
-                            this._oQuickHelpPopover.close();
-                        }.bind(this)
-                    })
-                ]
-            })
-        });
-
-        
-        this._oQuickHelpPopover.attachAfterClose(function () {
-            this._oQuickHelpPopover.destroy();
-            this._oQuickHelpPopover = null;
-        }.bind(this));
-
-        this.getView().addDependent(this._oQuickHelpPopover);
-    }
-
-    
-    this._oQuickHelpPopover.openBy(oEvent.getSource());
-},
-
-
-
-        // onOpenQuickHelp: function (oEvent) {
-        //     var oView = this.getView();
-
-        //     if (!this._oQuickHelpPopover) {
-        //         var oNavLink = new sap.m.Link({
-        //             text: "Open App (vcpunique)",
-        //             press: function () {
-        //                 var oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
-        //                 oCrossAppNavigator.toExternal({
-        //                     target: {
-        //                         window.location.href = "https://<target-launchpad-url>/#SalesOrder-display"
-        //                         // semanticObject: "getOptionpercentages",
-        //                         // action: "display"
-
-        //                     },
-        //                 });
-        //             }
-        //         });
-
-        //         this._oQuickHelpPopover = new sap.m.Popover({
-        //             title: "Quick Help",
-        //             placement: sap.m.PlacementType.Bottom,
-        //             contentWidth: "360px",
-        //             content: [
-        //                 new sap.m.VBox({
-        //                     width: "100%",
-        //                     items: [
-
-        //                         new sap.m.List({
-        //                             items: [
-        //                                 new sap.m.StandardListItem({ title: "OPen the app" }),
-
-        //                             ]
-        //                         }),
-
-        //                         oNavLink
-        //                     ]
-        //                 })
-        //             ],
-        //             footer: new sap.m.Bar({
-        //                 contentRight: [
-        //                     new sap.m.Button({
-        //                         text: "Close",
-        //                         press: function () { this._oQuickHelpPopover.close(); }.bind(this)
-        //                     })
-        //                 ]
-        //             })
-        //         });
-
-        //         oView.addDependent(this._oQuickHelpPopover);
-        //     }
-
-        //     var oSource = oEvent.getSource ? oEvent.getSource() : this.byId("quickHelpRibbon");
-        //     this._oQuickHelpPopover.openBy(oSource);
-        // }
-
-
+                    default:
+                        break;
+                }
+                if (sap.ushell && sap.ushell.Container && sap.ushell.Container.getService) {
+                    var oCrossAppNavigator = sap.ushell.Container.getService("CrossApplicationNavigation");
+                    // generate the Hash to display 
+                    var hash = (oCrossAppNavigator && oCrossAppNavigator.hrefForExternal({
+                        target: {
+                            semanticObject: semanticObject,
+                            action: action
+                        }
+                    })) || "";
+                    //Generate a  URL for the second application
+                    var url = window.location.href.split('#')[0] + hash;
+                    //Navigate to second app
+                    sap.m.URLHelper.redirect(url, true);
+                }
+            } catch (err) {
+                console.error("Failed to navigate to :", err);
+            }
+        },
+        loadAllLags: async function () {
+            await that.loadAssemblyLag();
+            await that.loadOptMixLag();
+            // await that.loadRtrLag();
+            // await that.loadPrdDmdLag();
+        },
+        //Load assembly lag- start
         loadAssemblyLag: function () {
             var totalData = that.oGModel.getProperty("/fullLocProdData");
             const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
@@ -1446,6 +1308,14 @@ sap.ui.define([
             totalData = that.removeDuplicates(totalData.filter(id => id.DEMAND_LOC === locSelectedKey && id.PRODUCT_ID === prodSelectedKey), "FACTORY_LOC");
             const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: totalData });
             this.getView().setModel(oModel, "filters");
+            var oFactoryCombo = this.byId("cbFactory");
+            setTimeout(() => {
+                var aItems = oFactoryCombo.getItems();
+                if (aItems.length > 0) {
+                    oFactoryCombo.setSelectedKey(aItems[0].getKey());
+                    oFactoryCombo.fireSelectionChange({ selectedItem: aItems[0] });
+                }
+            }, 200);
 
         },
         onFacLocChange: async function (oEvent) {
@@ -1467,16 +1337,6 @@ sap.ui.define([
                 aFilters.push(new sap.ui.model.Filter("FACTORY_LOC", sap.ui.model.FilterOperator.EQ, facLoc));
             }
 
-            // ✅ If there are filters, combine them with OR
-            var oFilterCondition = null;
-            if (aFilters.length > 0) {
-                oFilterCondition = new sap.ui.model.Filter({
-                    filters: aFilters,
-                    and: false // "false" = OR condition
-                });
-            }
-            sap.ui.core.BusyIndicator.show(0);
-
             const iPageSize = 5000; // tune this depending on your service
             let iSkip = 0;
             let aAllResults = [];
@@ -1484,7 +1344,7 @@ sap.ui.define([
 
             while (bHasMore) {
                 const aContexts = await this.oModel
-                    .bindList("/getAssemblyRequirements", null, null, aFilters)
+                    .bindList("/getAssemblyData", null, null, aFilters)
                     .requestContexts(iSkip, iPageSize);
 
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
@@ -1504,55 +1364,46 @@ sap.ui.define([
             if (aAllResults.length === 0) {
                 sap.m.MessageToast.show("No data available for selected Location & Product");
             } else {
-                that.assemblyData = this.removeDuplicates(aAllResults, "COMPONENT");
+
+                that.totalAssemblyData = aAllResults;
+                that.assemblyData = this.removeDuplicates(aAllResults, "ASSEMBLY");
                 const oAssemblyModel = new sap.ui.model.json.JSONModel({ Assembly: that.assemblyData });
                 this.getView().setModel(oAssemblyModel, "assembly");
+                setTimeout(() => {
+                    var oAssembly = this.byId("cbAssembly");
+                    var oBinding = oAssembly.getBinding("items");
+
+                    if (oBinding) {
+                        // oBinding.attachEventOnce("dataReceived", () => {
+                        var aItems = oAssembly.getItems();
+                        if (aItems.length > 0) {
+                            oAssembly.setSelectedKey(aItems[0].getKey());
+                            oAssembly.fireSelectionChange({ selectedItem: aItems[0] });
+                        }
+                        // });
+                    }
+                }, 0);
             }
 
-            sap.ui.core.BusyIndicator.hide();
+            // sap.ui.core.BusyIndicator.hide();
         },
-        onAssemblyChange: function () {
-            that.getCalendarData();
-        },
-        getCalendarData: async function () {
-            var aFilters = [];
-            aFilters.push(new sap.ui.model.Filter("LEVEL", sap.ui.model.FilterOperator.EQ, "M"));
-            const iPageSize = 5000; // tune this depending on your service
-            let iSkip = 0;
-            let aAllResults = [];
-            let bHasMore = true;
-            while (bHasMore) {
-                const aContexts = await this.oModel
-                    .bindList("/getIBPCalenderWeek", null, null, aFilters)
-                    .requestContexts(iSkip, iPageSize);
-
-                const aPageResults = aContexts.map(ctx => ctx.getObject());
-
-                aAllResults = aAllResults.concat(aPageResults);
-
-                // If we got less than requested, it's the last page
-                if (aPageResults.length < iPageSize) {
-                    bHasMore = false;
-                } else {
-                    iSkip += iPageSize;
+        onAssemblyChange: function (oEvent) {
+            var assemblySelected = oEvent.getParameters().selectedItem.getKey();
+            var aAllResults = that.totalAssemblyData.filter(id => id.ASSEMBLY === assemblySelected);
+            aAllResults = that.removeDuplicates(aAllResults, "MONTH");
+            const calendarModel = new sap.ui.model.json.JSONModel({ MONTH: aAllResults });
+            that.getView().setModel(calendarModel, "calendar");
+            var oCalendar = this.byId("cbMonth");
+            setTimeout(() => {
+                var aItems = aAllResults;
+                if (aItems.length > 0) {
+                    oCalendar.setSelectedKey(aItems[0].MONTH);
+                    oCalendar.fireSelectionChange({ selectedItem: aItems[0] });
                 }
-            }
-
-            console.log("Total records loaded:", aAllResults.length);
-
-            if (aAllResults.length === 0) {
-                sap.m.MessageToast.show("No calendar data available");
-            } else {
-                // that.CalendarData = that.CalendarData.concat(oData.results);
-                const calendarModel = new sap.ui.model.json.JSONModel({ MONTH: aAllResults });
-                that.getView().setModel(calendarModel, "calendar");
-            }
-            sap.ui.core.BusyIndicator.hide();
-
+            }, 200);
         },
-        onFilterGo: function () {
-            // that.byId("idWFModel").setBusy(true);
-            // sap.ui.core.BusyIndicator.show();
+
+        onAssemblyGo: function () {
             var loc = this.byId("LocationSelect").getSelectedKey();
             var prod = this.byId("productSelect").getSelectedKey();
             var facloc = this.byId("cbFactory").getSelectedKey();
@@ -1586,7 +1437,7 @@ sap.ui.define([
 
                 } catch (e) {
                     console.error("Invalid JSON returned from backend", e);
-                    MessageToast.show("Error parsing backend data");
+                    // MessageToast.show("Error parsing backend data");
                     sap.ui.core.BusyIndicator.hide();
                     return;
                 }
@@ -1598,8 +1449,8 @@ sap.ui.define([
 
         },
         setAssemblyCardManifest: function (oData) {
-
             var oVizFrame = this.byId("idWFModel");
+            oVizFrame.setBusy(true);
             var oPopOver = new sap.viz.ui5.controls.Popover({});
             oPopOver.connect(oVizFrame.getVizUid());
             oVizFrame.setVizProperties({
@@ -1618,17 +1469,224 @@ sap.ui.define([
             });
             var oModel = new sap.ui.model.json.JSONModel({ WaterfallData: oData });
             this.getView().setModel(oModel, "waterfallModel");
+            oVizFrame.setBusy(false);
+            sap.ui.core.BusyIndicator.hide();
         },
-        onFilterReset: function () {
+        onFilterResetAssembly: function () {
             that.byId("cbFactory").setSelectedKey();
             that.byId("cbAssembly").setSelectedKey();
             that.byId("cbMonth").setSelectedKey();
             var oModel = new sap.ui.model.json.JSONModel({ WaterfallData: [] });
             this.getView().setModel(oModel, "waterfallModel");
             // that._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel")
+        },
+        //Load assembly lag- end
+        //Load option mix lag- start
+        loadOptMixLag: function () {
+            var totalData = that.oGModel.getProperty("/fullLocProdData");
+            const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
+            const prodSelectedKey = this.byId("productSelect").getSelectedKey();
+            totalData = that.removeDuplicates(totalData.filter(id => id.DEMAND_LOC === locSelectedKey && id.PRODUCT_ID === prodSelectedKey), "FACTORY_LOC");
+            const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: totalData });
+            this.getView().setModel(oModel, "filters");
+            var oFactoryCombo = this.byId("cbFactoryPL");
+            setTimeout(() => {
+                var aItems = oFactoryCombo.getItems();
+                if (aItems.length > 0) {
+                    oFactoryCombo.setSelectedKey(aItems[0].getKey());
+                    oFactoryCombo.fireSelectionChange({ selectedItem: aItems[0] });
+                }
+            }, 200);
+
+        },
+        onOptFacChange: async function (oEvent) {
+            sap.ui.core.BusyIndicator.show();
+            const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
+            const prodSelectedKey = this.byId("productSelect").getSelectedKey();
+            var facLoc = oEvent.getParameters().selectedItem.getKey();
+            var aFilters = [];
+
+            // ✅ Add filters only when values exist
+            if (locSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("LOCATION_ID", sap.ui.model.FilterOperator.EQ, locSelectedKey));
+            }
+
+            if (prodSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", sap.ui.model.FilterOperator.EQ, prodSelectedKey));
+            }
+            if (facLoc) {
+                aFilters.push(new sap.ui.model.Filter("FACTORY_LOC", sap.ui.model.FilterOperator.EQ, facLoc));
+            }
+
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
+
+            while (bHasMore) {
+                const aContexts = await this.oModel
+                    .bindList("/getOptPrtData", null, null, aFilters)
+                    .requestContexts(iSkip, iPageSize);
+
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
+
+                aAllResults = aAllResults.concat(aPageResults);
+
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
+
+            console.log("Total records loaded:", aAllResults.length);
+
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No data available for selected Location & Product");
+            } else {
+
+                that.totalOptMixData = aAllResults;
+                that.monthData = this.removeDuplicates(aAllResults, "MONTH");
+                const oMonthModel = new sap.ui.model.json.JSONModel({ Month: that.monthData });
+                this.getView().setModel(oMonthModel, "calendarOpt");
+                setTimeout(() => {
+                    var oMonth = this.byId("cbMonthPL");
+                    var oBinding = oMonth.getBinding("items");
+
+                    if (oBinding) {
+                        // oBinding.attachEventOnce("dataReceived", () => {
+                        var aItems = oMonth.getItems();
+                        if (aItems.length > 0) {
+                            oMonth.setSelectedKey(aItems[0].getKey());
+                            oMonth.fireSelectionChange({ selectedItem: aItems[0] });
+                        }
+                        // });
+                    }
+                }, 0);
+            }
+
+            // sap.ui.core.BusyIndicator.hide();
+        },
+        onOptMonthChange: function (oEvent) {
+            var monthSelected = oEvent.getParameters().selectedItem.getKey();
+            var aAllResults = that.totalOptMixData.filter(id => id.MONTH === monthSelected);
+            aAllResults = that.removeDuplicates(aAllResults, "CHAR_NUM");
+            const charModel = new sap.ui.model.json.JSONModel({ CHARA_NUM: aAllResults });
+            that.getView().setModel(charModel, "characteristic");
+
+            setTimeout(() => {
+                var oChar = this.byId("cbCharPL");
+                var oCharBinding = oChar.getBinding("items");
+                if (oCharBinding) {
+                    var aItems = oChar.getItems();
+                    if (aItems.length > 0) {
+                        oChar.setSelectedKey(aItems[0].getKey());
+                        oChar.fireSelectionChange({ selectedItem: aItems[0] });
+                    }
+                }
+            }, 200);
+        },
+        onOptCharChange: function (oEvent) {
+            var charSelected = oEvent.getParameters().selectedItem.getKey();
+            var monthSelected = that.byId("cbMonthPL").getSelectedKey();
+            var aAllResults = that.totalOptMixData.filter(id => id.CHAR_NUM === charSelected && id.MONTH === monthSelected);
+            aAllResults = that.removeDuplicates(aAllResults, "CHAR_VALUE");
+            const charValModel = new sap.ui.model.json.JSONModel({ CHARA_VALUE: aAllResults });
+            that.getView().setModel(charValModel, "characteristicValue");
+
+            setTimeout(() => {
+                var oCharVal = this.byId("cbCharValPL");
+                var oCharValBinding = oCharVal.getBinding("items");
+                if (oCharValBinding) {
+                    var aItems = oCharVal.getItems();
+                    if (aItems.length > 0) {
+                        oCharVal.setSelectedKey(aItems[0].getKey());
+                        oCharVal.fireSelectionChange({ selectedItem: aItems[0] });
+                    }
+                }
+            }, 200);
+        },
+        onOptMixGo: function () {
+            var loc = this.byId("LocationSelect").getSelectedKey();
+            var prod = this.byId("productSelect").getSelectedKey();
+            var facloc = this.byId("cbFactoryPL").getSelectedKey();
+            var characteristic = this.byId("cbCharPL").getSelectedKey();
+            var monthOpt = this.byId("cbMonthPL").getSelectedKey();
+            var charvalOpt  = this.byId("cbCharValPL").getSelectedKey();
+
+
+            var oFunction = this.oModel.bindContext("/getOptPercentLagfun(...)");
+
+            oFunction.setParameter("FACTORY_LOACATION", facloc);
+            oFunction.setParameter("LOCATION", loc);
+            oFunction.setParameter("PRODUCT", prod);           
+            oFunction.setParameter("MONTH", monthOpt);
+             oFunction.setParameter("CHARACTERISTIC", characteristic);
+             oFunction.setParameter("CHARACTERISTIC_VALUE", charvalOpt);
+
+            oFunction.execute().then(function () {
+                const oCtx = oFunction.getBoundContext();
+                if (!oCtx) {
+                    MessageToast.show("No data returned from backend");
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+                const oResult = oCtx.getObject();
+                // CAP V4 function returns { value: "<stringified-json>" }
+                let data;
+
+                try {
+                    data = JSON.parse(oResult.value.value); // ✅ Parse the string
+                    that.setOptionCardManifest(data);
+
+                } catch (e) {
+                    console.error("Invalid JSON returned from backend", e);
+                    // MessageToast.show("Error parsing backend data");
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+            }).catch(function (err) {
+                sap.ui.core.BusyIndicator.hide();
+                MessageToast.show("Failed to load Assembly Lag data");
+            });
+
+        },
+        setOptionCardManifest: function (oData) {
+            var oVizFrame = this.byId("idOptMixWF");
+            oVizFrame.setBusy(true);
+            var oPopOver = new sap.viz.ui5.controls.Popover({});
+            oPopOver.connect(oVizFrame.getVizUid());
+            oVizFrame.setVizProperties({
+                title: { visible: true, text: "Option Mix Lag Analysis" },
+                plotArea: {
+                    dataLabel: { visible: true },
+                    colorPalette: ["#5899DA", "#E8743B", "#19A979", "#ED4A7B", "#945ECF", "#13A4B4"]
+                },
+                categoryAxis: {
+                    title: { visible: true }
+                },
+                valueAxis: {
+                    title: { visible: true }
+                },
+                legend: { visible: false }
+            });
+            var oModel = new sap.ui.model.json.JSONModel({ WaterfallDataOpt: oData });
+            this.getView().setModel(oModel, "waterfallModelOpt");
+            oVizFrame.setBusy(false);
+            sap.ui.core.BusyIndicator.hide();
+        },
+        onFilterResetOption: function () {
+            that.byId("cbFactoryPL").setSelectedKey();
+            that.byId("cbMonthPL").setSelectedKey();
+            that.byId("cbCharPL").setSelectedKey();
+            that.byId("cbCharValPL").setSelectedKey();
+            var oModel = new sap.ui.model.json.JSONModel({ WaterfallData: [] });
+            this.getView().setModel(oModel, "waterfallModel");
+            // that._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel")
         }
-
-
 
     });
 });

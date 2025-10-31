@@ -60,55 +60,324 @@ xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
 
             <!-- MAIN CONTENT -->
             <VBox class="main-dashboard" justifyContent="Start" width="100%">
-                
-                <!-- ROW 1 -->
-                <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
-                    <items>
-                        <VBox class="card-wrapper smallCard" width="30%">
-                            <items>
-                                <card:Card id="MyCardId" height="400px"  />
-                            </items>
-                        </VBox>
+             <Button id="quickHelpRibbon"
+                                        text="Quick Help"
+                                        icon="sap-icon://sys-help"
+                                        press="onOpenQuickHelp"
+                                        class="quickHelpRibbon"/>
+                                        
+                 <!-- Alerts Panel -->
+                <Panel id="alertsPanel"
+                       headerText="Alerts"
+                       expandable="true"
+                       expanded="true"
+                       width="100%"
+                       class="sapUiNoContentPadding sapUiMediumMarginBottom">
 
-                        <VBox class="card-wrapper largeCard" width="69%">
+                    <VBox width="100%">
+                        <!-- ROW 1 -->
+                        <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
                             <items>
-                                <card:Card id="MyCardId3" height="400px"  />
-                            </items>
-                        </VBox>
-                         <Button id="quickHelpRibbon" text="Quick Help" icon="sap-icon://sys-help"
-                    press="onOpenQuickHelp" class="quickHelpRibbon"/>
-                    </items>
-                </HBox>
+                                <VBox class="card-wrapper smallCard" width="30%">
+                                    <items>
+                                        <card:Card id="MyCardId" height="400px" />
+                                    </items>
+                                </VBox>
 
-                <!-- ROW 2 -->
-                <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
-                    <items>
-                        <VBox class="card-wrapper" width="49%">
-                            <items>
-                                <card:Card id="MyCardId1" height="400px" width="100%" />
+                                <VBox class="card-wrapper largeCard" width="69%">
+                                    <items>
+                                        <card:Card id="MyCardId3" height="400px" />
+                                    </items>
+                                </VBox>
+
+                               
                             </items>
-                        </VBox>
-                        <VBox class="card-wrapper" width="50%">
+                        </HBox>
+
+                        <!-- ROW 2 -->
+                        <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
                             <items>
-                                <card:Card id="MyCardId4" height="400px" width="100%" />
+                                <VBox class="card-wrapper" width="49%">
+                                    <items>
+                                        <card:Card id="MyCardId1" height="400px" width="100%" />
+                                    </items>
+                                </VBox>
+                                <VBox class="card-wrapper" width="50%">
+                                    <items>
+                                        <card:Card id="MyCardId4" height="400px" width="100%" />
+                                    </items>
+                                </VBox>
                             </items>
-                        </VBox>
-                    </items>
-                </HBox>
+                        </HBox>
+                    </VBox>
+                </Panel>
+
+<!-- ========================================================= -->
+<!-- ===== LAGS DISPLAY SECTION (2x2 Grid) =================== -->
+<!-- ========================================================= -->
+<Panel id="lagsPanel"
+       headerText="Lags"
+       expandable="true"
+       expanded="false"
+       width="100%"
+       class="sapUiNoContentPadding sapUiMediumMarginBottom">
+
+    <VBox width="100%">
+
+        <!-- ========== ROW 1: Assembly + Procurement ========== -->
+        <HBox class="sapUiMediumMarginBottom"
+              alignItems="Start"
+              justifyContent="SpaceBetween"
+              wrap="Wrap">
+            <items>
+
+                <!-- ==== ASSEMBLY LAG ==== -->
+                <VBox width="49%" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                    <Title text="Assembly Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                        <items>
+                            <VBox >
+                                <Label id="idFac" text="Factory Location" required="true"></Label>
+                 <ComboBox id="cbFactory" items="{filters>/Factory_loc}" showSecondaryValues="true"
+                                selectionChange=".onFacLocChange" placeholder="Select Factory Location">
+                                <core:ListItem key="{filters>FACTORY_LOC}" text="{filters>LOCATION_DESC}"
+                                    additionalText="{filters>FACTORY_LOC}" />
+                            </ComboBox>
+                              </VBox>
+                               <VBox>
+            <Label id="idAss" text="Assembly" required="true"></Label>
+                            <ComboBox id="cbAssembly" items="{assembly>/Assembly}" showSecondaryValues="true"
+                                selectionChange=".onAssemblyChange" placeholder="Select Assembly">
+                                <core:ListItem key="{assembly>ASSEMBLY}" text="{assembly>ASSEMBLY}"
+                                    />
+                            </ComboBox>
+                            </VBox>
+                             <VBox>
+            <Label id="idMonth" text="Month" required="true"></Label>
+                             <ComboBox id="cbMonth" items="{calendar>/MONTH}" showSecondaryValues="true"
+                                selectionChange=".onAssemblyGo" placeholder="Select Month">
+                                <core:ListItem key="{calendar>MONTH}" text="{calendar>MONTH}"
+                                    />
+                            </ComboBox>
+                             </VBox>
+                        </items>
+                    </HBox>
+
+                    <viz:VizFrame id="idWFModel"
+                                  uiConfig="{applicationSet:'fiori'}"
+                                  vizType="waterfall"
+                                  height="400px"
+                                  width="100%">
+                        <viz:dataset>
+                            <viz.data:FlattenedDataset
+                                xmlns:viz.data="sap.viz.ui5.data"
+                                data="{waterfallModel>/WaterfallData}">
+                                <viz.data:dimensions>
+                                    <viz.data:DimensionDefinition name="Lag" value="{waterfallModel>LAG_MONTH}" />
+                                </viz.data:dimensions>
+                                <viz.data:measures>
+                                    <viz.data:MeasureDefinition name="Mape" value="{waterfallModel>MAPE}" />
+                                </viz.data:measures>
+                            </viz.data:FlattenedDataset>
+                        </viz:dataset>
+                        <viz:feeds>
+                            <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Lag" />
+                            <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape" />
+                        </viz:feeds>
+                    </viz:VizFrame>
+                </VBox>
+
+                <!-- ==== Option Mix LAG ==== -->
+                <VBox width="49%" class="sapUiSmallMarginBottom">
+                    <Title text="Option Mix Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                        <items>
+                            <VBox>
+                                <Label text="Factory Location" />
+                                <ComboBox id="cbFactoryPL" items="{filters>/Factory_loc}" showSecondaryValues="true" selectionChange="onOptFacChange">
+                                    <core:ListItem key="{filters>FACTORY_LOC}"
+                                                   text="{filters>LOCATION_DESC}"
+                                                   additionalText="{filters>FACTORY_LOC}" />
+                                </ComboBox>
+                            </VBox>
+                            <VBox>
+                                <Label text="Month" />
+                                <ComboBox id="cbMonthPL" items="{calendarOpt>/Month}" showSecondaryValues="true" selectionChange="onOptMonthChange">
+                                    <core:ListItem key="{calendarOpt>MONTH}" text="{calendarOpt>MONTH}" />
+                                </ComboBox>
+                            </VBox>
+                             <VBox>
+                                <Label text="Char." />
+                                <ComboBox id="cbCharPL" items="{characteristic>/CHARA_NUM}" showSecondaryValues="true" selectionChange="onOptCharChange">
+                                    <core:ListItem key="{characteristic>CHAR_NUM}" text="{characteristic>CHAR_NUM}" />
+                                </ComboBox>
+                            </VBox>
+                            <VBox>
+                                <Label text="Char. Value" />
+                                <ComboBox id="cbCharValPL" items="{characteristicValue>/CHARA_VALUE}" showSecondaryValues="true" selectionChange="onOptMixGo">
+                                    <core:ListItem key="{characteristicValue>CHAR_VALUE}" text="{characteristicValue>CHAR_VALUE}" />
+                                </ComboBox>
+                            </VBox>
+                        </items>
+                    </HBox>
+
+                    <viz:VizFrame id="idOptMixWF"
+                                  uiConfig="{applicationSet:'fiori'}"
+                                  vizType="waterfall"
+                                  height="400px"
+                                  width="100%">
+                        <viz:dataset>
+                            <viz.data:FlattenedDataset
+                                xmlns:viz.data="sap.viz.ui5.data"
+                                data="{waterfallModelOpt>/WaterfallDataOpt}">
+                                <viz.data:dimensions>
+                                    <viz.data:DimensionDefinition name="Lag" value="{waterfallModelOpt>LAG_MONTH}" />
+                                </viz.data:dimensions>
+                                <viz.data:measures>
+                                    <viz.data:MeasureDefinition name="Mape" value="{waterfallModelOpt>MAPE}" />
+                                </viz.data:measures>
+                            </viz.data:FlattenedDataset>
+                        </viz:dataset>
+                        <viz:feeds>
+                            <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Lag" />
+                            <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape" />
+                        </viz:feeds>
+                    </viz:VizFrame>
+                </VBox>
+
+            </items>
+        </HBox>
+
+        <!-- ========== ROW 2: Production + Dispatch ========== -->
+        <HBox alignItems="Start"
+              justifyContent="SpaceBetween"
+              wrap="Wrap">
+            <items>
+
+                <!-- ==== PRODUCTION LAG ==== -->
+                <VBox width="49%" class="sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                    <Title text="Restriction Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                        <items>
+                            <VBox>
+                                <Label text="Factory Location" />
+                                <ComboBox id="cbFactoryPR" items="{filters>/Factory_loc}" showSecondaryValues="true">
+                                    <core:ListItem key="{filters>FACTORY_LOC}"
+                                                   text="{filters>LOCATION_DESC}"
+                                                   additionalText="{filters>FACTORY_LOC}" />
+                                </ComboBox>
+                            </VBox>
+                            <VBox>
+                                <Label text="Month" />
+                                <ComboBox id="cbMonthPR" items="{calendar>/MONTH}" showSecondaryValues="true">
+                                    <core:ListItem key="{calendar>PERIODDESC}" text="{calendar>PERIODDESC}" />
+                                </ComboBox>
+                            </VBox>
+                             <VBox>
+                                <Label text="Line" />
+                                <ComboBox id="cbLinePR" items="{Line>/LINE}" showSecondaryValues="true">
+                                    <core:ListItem key="{Line>/LINE}" text="{Line>/LINE}" />
+                                </ComboBox>
+                            </VBox>
+                            <VBox>
+                                <Label text="Restriction ID" />
+                                <ComboBox id="cbRstrPR" items="{RestId>/RTR_ID}" showSecondaryValues="true">
+                                    <core:ListItem key="{RestId>/RTR_ID}" text="{RestId>/RTR_ID}" />
+                                </ComboBox>
+                            </VBox>
+                        </items>
+                    </HBox>
+
+                    <viz:VizFrame id="idProductionWF"
+                                  uiConfig="{applicationSet:'fiori'}"
+                                  vizType="waterfall"
+                                  height="400px"
+                                  width="100%">
+                        <viz:dataset>
+                            <viz.data:FlattenedDataset
+                                xmlns:viz.data="sap.viz.ui5.data"
+                                data="{productionLagModel>/WaterfallData}">
+                                <viz.data:dimensions>
+                                    <viz.data:DimensionDefinition name="Lag" value="{productionLagModel>LAG_MONTH}" />
+                                </viz.data:dimensions>
+                                <viz.data:measures>
+                                    <viz.data:MeasureDefinition name="Mape" value="{productionLagModel>MAPE}" />
+                                </viz.data:measures>
+                            </viz.data:FlattenedDataset>
+                        </viz:dataset>
+                        <viz:feeds>
+                            <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Lag" />
+                            <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape" />
+                        </viz:feeds>
+                    </viz:VizFrame>
+                </VBox>
+
+                <!-- ==== DISPATCH LAG ==== -->
+                <VBox width="49%" class="sapUiSmallMarginBottom">
+                    <Title text="Product Demand Lag analysis" level="H3" class="sapUiSmallMarginBottom" />
+                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                        <items>
+                            <VBox>
+                                <Label text="Factory Location" />
+                                <ComboBox id="cbFactoryDL" items="{filters>/Factory_loc}" showSecondaryValues="true">
+                                    <core:ListItem key="{filters>FACTORY_LOC}"
+                                                   text="{filters>LOCATION_DESC}"
+                                                   additionalText="{filters>FACTORY_LOC}" />
+                                </ComboBox>
+                            </VBox>
+                            <VBox>
+                                <Label text="Month" />
+                                <ComboBox id="cbMonthDL" items="{calendar>/MONTH}" showSecondaryValues="true">
+                                    <core:ListItem key="{calendar>PERIODDESC}" text="{calendar>PERIODDESC}" />
+                                </ComboBox>
+                            </VBox>
+                        </items>
+                    </HBox>
+
+                    <viz:VizFrame id="idDispatchWF"
+                                  uiConfig="{applicationSet:'fiori'}"
+                                  vizType="waterfall"
+                                  height="400px"
+                                  width="100%">
+                        <viz:dataset>
+                            <viz.data:FlattenedDataset
+                                xmlns:viz.data="sap.viz.ui5.data"
+                                data="{dispatchLagModel>/WaterfallData}">
+                                <viz.data:dimensions>
+                                    <viz.data:DimensionDefinition name="Lag" value="{dispatchLagModel>LAG_MONTH}" />
+                                </viz.data:dimensions>
+                                <viz.data:measures>
+                                    <viz.data:MeasureDefinition name="Mape" value="{dispatchLagModel>MAPE}" />
+                                </viz.data:measures>
+                            </viz.data:FlattenedDataset>
+                        </viz:dataset>
+                        <viz:feeds>
+                            <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Lag" />
+                            <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape" />
+                        </viz:feeds>
+                    </viz:VizFrame>
+                </VBox>
+
+            </items>
+        </HBox>
+
+    </VBox>
+</Panel>
+
 
                 <!-- ROW 3 -->
-                <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                <!-- <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
                     <items>
                         <VBox class="card-wrapper" width="65%">
                             <items>
                             <Panel id="forecastContainer"
        headerText="Assembly Lag Analysis"
        width="100%"
-       class="sapUiNoContentPadding sapUiMediumMarginBottom">
+       class="sapUiNoContentPadding sapUiMediumMarginBottom"> -->
 
-    <VBox class="sapUiSmallMargin" width="100%">
+    <!-- <VBox class="sapUiSmallMargin" width="100%"> -->
         <!-- Filter Row -->
-        <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+        <!-- <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
             <items>
             <VBox>
             <Label id="idFac" text="Factory Location" required="true"></Label>
@@ -143,9 +412,9 @@ xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
                            <Button id="idReset" press="onFilterReset" text="Reset" type="Transparent"></Button>
                              </VBox>
             </items>
-        </HBox>
+        </HBox> -->
             <!-- <card:Card id="idWFModel" width="100%" /> -->
-            <viz:VizFrame id="idWFModel"
+            <!-- <viz:VizFrame id="idWFModel"
                           uiConfig="{applicationSet:'fiori'}"
                           vizType="waterfall"
                           height="400px"
@@ -174,9 +443,9 @@ xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
             </viz:VizFrame>
 
     </VBox>
-</Panel>
+</Panel> -->
                                
-                            </items>
+                            <!-- </items>
                         </VBox>
                         <VBox class="card-wrapper" width="34%">
                             <items>
@@ -184,15 +453,21 @@ xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
                             </items>
                         </VBox>
                     </items>
-                </HBox>
+                </HBox> -->
 
                 <!-- ROW 4 -->
                 <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
                     <items>
-                        <VBox class="card-wrapper" width="100%">
+                        <VBox class="card-wrapper" width="50%">
                             <items>
                                  <card:Card id="MyCardId2" height="400px" width="100%" />
+                                 
                             </items>
+                        </VBox>
+                        <VBox class="card-wrapper" width="49%">
+                            <items>
+                        <card:Card id="MyCardIdFore" height="400px" width="100%" />
+                         </items>
                         </VBox>
                     </items>
                 </HBox>

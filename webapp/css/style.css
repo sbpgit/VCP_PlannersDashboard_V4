@@ -18,7 +18,7 @@
             backdrop-filter: blur(10px);
             border-radius: 20px;
             padding: 30px;
-            margin-bottom: 10px;
+            margin-bottom: 0px !important;
             box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
         }
 
@@ -145,7 +145,7 @@
     margin-top: 0rem !important;
     display: flex;
     flex-direction: column;
-    gap: 10px; /* vertical spacing between rows */
+    gap: 5px; /* vertical spacing between rows */
 }
 
 /* Card container layout */
@@ -314,7 +314,10 @@
   box-sizing: border-box;
 }
 
+.sapUiMediumMarginBottom {
+    margin-bottom: 0rem !important;
+}
 
-
-
-
+.v-m-root{
+    background-color: aliceblue;
+}
