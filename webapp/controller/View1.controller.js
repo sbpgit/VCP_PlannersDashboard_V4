@@ -24,6 +24,7 @@ sap.ui.define([
         },
 
         onAfterRendering: function () {
+            sap.ui.core.BusyIndicator.show()
             that = this;
             that.oGModel = that.getOwnerComponent().getModel("oGModel");
             sap.ui.core.BusyIndicator.show();
@@ -37,6 +38,7 @@ sap.ui.define([
             that.newChartData = [];
             that.CalendarData = [], that.assemblyData = [], that.cardData = [],
                 that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
+            that.rtrLineData = [], that.prdDmdData = [], that.wowData = [];
             this.getLocProd();
             // this._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel");
             this._showEmptyAlertsCard("Characteristic Percentage", "MyCardIdChar");
@@ -399,8 +401,12 @@ sap.ui.define([
             that.getView().setModel(calendarModel, "calendar");
             const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: [] });
             this.getView().setModel(oModel, "filters");
+            that.byId("lagsPanel").setExpanded(false);
             //Reset asselbly lag
             that.onFilterResetAssembly();
+            that.onFilterResetOptMix();
+            that.onFilterResetRtr();
+            that.onFilterResetPrdDmd();
             this.onAfterRendering();
 
         },
@@ -1077,38 +1083,45 @@ sap.ui.define([
             let aAllResults = [];
             let bHasMore = true;
 
-            // while (bHasMore) {
-            //     // var url = `/getDMDAnalytical?$filter=LOCATION_ID eq '1600'`
-            //     const aContexts = await this.oModel
-            //         .bindList("/getDMDAnalytical", null, [], aFilters1)
-            //         .requestContexts(iSkip, iPageSize);
+            while (bHasMore) {
+                // var url = `/getDMDAnalytical?$filter=LOCATION_ID eq '1600'`
+                const aContexts = await this.oModel
+                    .bindList("/getDMDAnalytical", null, [], aFilters1)
+                    .requestContexts(iSkip, iPageSize);
 
-            //     const aPageResults = aContexts.map(ctx => ctx.getObject());
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
 
-            //     aAllResults = aAllResults.concat(aPageResults);
+                aAllResults = aAllResults.concat(aPageResults);
 
-            //     // If we got less than requested, it's the last page
-            //     if (aPageResults.length < iPageSize) {
-            //         bHasMore = false;
-            //     } else {
-            //         iSkip += iPageSize;
-            //     }
-            // }
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
 
-            // console.log("Total records loaded:", aAllResults.length);
+            console.log("Total records loaded:", aAllResults.length);
 
-            // if (aAllResults.length === 0) {
-            //     sap.m.MessageToast.show("No data available for selected Location & Product");
-            // } else {
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No data available for selected Location & Product");
+            } else {
 
-            //     that.forecastData = aAllResults;
-            //     // const oAssemblyModel = new sap.ui.model.json.JSONModel({ Assembly: that.forecastData });
-            //     this._setActualForecastCard(that.forecastData, "Week", "WEEK_DATE");
-            // }
+                that.wowData = aAllResults;
+                var actualWOW = aAllResults.filter(id => id.COMP_TYPE === "Actual WoW")
+                // const oAssemblyModel = new sap.ui.model.json.JSONModel({ Assembly: that.forecastData });
+                this._setActualForecastCard(actualWOW, "Actual");
+            }
             oCard.setBusy(false);
         },
 
-        _setActualForecastCard: function (oData, sName, sID) {
+        _setActualForecastCard: function (oData, sName) {
+            oData.forEach(d => {
+                if (d.THIS_WEEK_DATE?.includes("/Date(")) {
+                    const timestamp = parseInt(d.THIS_WEEK_DATE.match(/\d+/)[0]);
+                    d.THIS_WEEK_DATE = new Date(timestamp).toISOString().split("T")[0];
+                }
+            });
             const oManifest = {
                 "sap.app": {
                     "id": "vcp.v4card.forecastQuantity",
@@ -1119,7 +1132,7 @@ sap.ui.define([
                 "sap.card": {
                     "type": "Analytical",
                     "header": {
-                        "title": "Forecast Actual Quantity, Forecast Quantity",
+                        "title": "WOW Variance Trend",
                         "subTitle": "By " + sName,
                         "titleMaxLines": 1,
                         "subTitleMaxLines": 1
@@ -1132,7 +1145,7 @@ sap.ui.define([
                             "Period": {
                                 "type": "ComboBox",
                                 "label": "Dataset",
-                                "value": sName, // default value week
+                                "value": sName,
                                 "item": {
                                     "path": "/",
                                     "template": {
@@ -1142,56 +1155,82 @@ sap.ui.define([
                                 },
                                 "data": {
                                     "json": [
-                                        { "text": "Week" },
-                                        { "text": "Month" },
-                                        { "text": "Year" }
+                                        { "text": "Actual" },
+                                        { "text": "Forecast" }
                                     ]
                                 }
                             }
                         }
                     },
                     "content": {
-                        "title": {
-                            "text": "Forecast Actual vs Forecast"
-
-                        },
                         "chartType": "line",
+                         "title": { "text": "WOW Variance" },
                         "legend": { "visible": true },
                         "plotArea": {
                             "dataLabel": { "visible": true },
-                            "window": { "start": 0, "end": 100 }
+                            "window": { "start": 0, "end": 100 },
+                            "tooltip": { "visible": true }
                         },
                         "dimensions": [
                             {
-                                "name": sName,
-                                "value": "{" + sID + "}"
+                                "label": "Week",
+                                "value": "{THIS_WEEK_DATE}"
+                            },
+                            {
+                                "label": "Type",
+                                "value": "{COMP_TYPE}"
                             }
                         ],
                         "measures": [
                             {
-                                "name": "Forecast Actual Quantity",
-                                "value": "{ACTUAL_QTY}"
-                            },
-                            {
-                                "name": "Forecast Quantity",
-                                "value": "{FORECAST_QTY}"
+                                "label": "% Variance",
+                                "value": "{PERCENT_DIFF_WOW}"
                             }
                         ],
                         "feeds": [
                             {
                                 "uid": "categoryAxis",
                                 "type": "Dimension",
-                                "values": [sName]
+                                "values": ["Week"]
+                            },
+                            {
+                                "uid": "color",
+                                "type": "Dimension",
+                                "values": ["Type"]
                             },
                             {
                                 "uid": "valueAxis",
                                 "type": "Measure",
-                                "values": ["Forecast Actual Quantity", "Forecast Quantity"]
+                                "values": ["% Variance"]
                             }
-                        ]
+                        ],
+                        "chartProperties": {
+                            "plotArea": {
+                                "dataLabel": { "visible": true },
+                                "colorPalette": ["#007aff"],
+                                "tooltip": {
+                                    "visible": true,
+                                    "formatString": ["This: {THIS_WEEK_VALUE}\nPrev: {PREV_WEEK_VALUE}\nΔ: {ABS_DIFF_WOW}\nVar: {(PERCENT_DIFF_WOW*100).toFixed(1)}%"]
+                                }
+                            },
+                            "valueAxis": {
+                                "title": { "text": "% Variance" }
+                            },
+                            "categoryAxis": {
+                                "title": { "text": "Week" },
+                                "label": {
+                                    "formatString": "MMM dd"  // show readable week dates
+                                }
+                            },
+                            "legend": {
+                                "visible": true,
+                                "position": "bottom"
+                            }
+                        }
                     }
                 }
             };
+
 
             this._applyCardManifestNew("MyCardIdFore", oManifest);
 
@@ -1212,19 +1251,15 @@ sap.ui.define([
             if (mChanges) {
                 if (Object.keys(mChanges).some(key => key.includes("Period"))) {
                     var selected = mChanges["/sap.card/configuration/filters/Period/value"];
-                    if (selected === "Week") {
-                        var sName = "Week";
-                        var sID = "WEEK_DATE"
+                    if (selected === "Actual") {
+                        var sName = "Actual";
+                        var data = that.wowData.filter(id => id.COMP_TYPE === "Actual WoW")
                     }
-                    else if (selected === "Year") {
-                        var sName = "Year";
-                        var sID = "YEAR"
+                    else if (selected === "Forecast") {
+                        var sName = "Forecast";
+                        var data = that.wowData.filter(id => id.COMP_TYPE === "Forecast WoW")
                     }
-                    else if (selected === "Month") {
-                        var sName = "Month";
-                        var sID = "MONTH"
-                    }
-                    this._setActualForecastCard(that.newChartData, sName, sID);
+                    this._setActualForecastCard(data, sName);
                 }
             }
         },
@@ -1308,21 +1343,43 @@ sap.ui.define([
             totalData = that.removeDuplicates(totalData.filter(id => id.DEMAND_LOC === locSelectedKey && id.PRODUCT_ID === prodSelectedKey), "FACTORY_LOC");
             const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: totalData });
             this.getView().setModel(oModel, "filters");
-            var oFactoryCombo = this.byId("cbFactory");
-            setTimeout(() => {
-                var aItems = oFactoryCombo.getItems();
-                if (aItems.length > 0) {
-                    oFactoryCombo.setSelectedKey(aItems[0].getKey());
-                    oFactoryCombo.fireSelectionChange({ selectedItem: aItems[0] });
-                }
-            }, 200);
+            // var oFactoryCombo = this.byId("cbFactory");
+            // setTimeout(() => {
+            //     var aItems = oFactoryCombo.getItems();
+            //     if (aItems.length > 0) {
+            //         oFactoryCombo.setSelectedKey(aItems[0].getKey());
+            //         oFactoryCombo.fireSelectionChange({ selectedItem: aItems[0] });
+            //     }
+            // }, 200);
+            // Define combo boxes and their corresponding fire functions
+            const comboConfig = [
+                { id: "cbFactoryPL", fn: this.onOptFacChange.bind(this) },
+                { id: "cbFactory", fn: this.onFacLocChange.bind(this) },
+                { id: "cbFactoryPR", fn: this.onRtrLocChange.bind(this) },
+                { id: "cbFactoryDL", fn: this.onPrdDmdLocChange.bind(this) }
+            ];
+
+            // Set first item & trigger selection function for each combo
+            comboConfig.forEach(cfg => {
+                const oCombo = this.byId(cfg.id);
+                if (!oCombo) return;
+
+                setTimeout(() => {
+                    const aItems = oCombo.getItems();
+                    if (aItems.length > 0) {
+                        const oFirstItem = aItems[0];
+                        oCombo.setSelectedKey(oFirstItem.getKey());
+                        cfg.fn({ getSource: () => oCombo, getParameter: () => ({ selectedItem: oFirstItem }) });
+                    }
+                }, 200);
+            });
 
         },
         onFacLocChange: async function (oEvent) {
             sap.ui.core.BusyIndicator.show();
             const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
             const prodSelectedKey = this.byId("productSelect").getSelectedKey();
-            var facLoc = oEvent.getParameters().selectedItem.getKey();
+            var facLoc = oEvent.getSource().getSelectedKey();
             var aFilters = [];
 
             // ✅ Add filters only when values exist
@@ -1480,6 +1537,28 @@ sap.ui.define([
             this.getView().setModel(oModel, "waterfallModel");
             // that._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel")
         },
+        onFilterResetOptMix: function () {
+            that.byId("cbFactoryPL").setSelectedKey();
+            that.byId("cbMonthPL").setSelectedKey();
+            that.byId("cbCharPL").setSelectedKey();
+            that.byId("cbCharValPL").setSelectedKey();
+            var oModel = new sap.ui.model.json.JSONModel({ WaterfallDataOpt: [] });
+            this.getView().setModel(oModel, "waterfallModelOpt");
+        },
+        onFilterResetRtr: function () {
+            that.byId("cbFactoryPR").setSelectedKey();
+            that.byId("cbMonthPR").setSelectedKey();
+            that.byId("cbLinePR").setSelectedKey();
+            that.byId("cbRstrPR").setSelectedKey();
+            var oModel = new sap.ui.model.json.JSONModel({ WaterfallDataRTR: [] });
+            this.getView().setModel(oModel, "rtrLagModel");
+        },
+        onFilterResetPrdDmd: function () {
+            that.byId("cbFactoryDL").setSelectedKey();
+            that.byId("cbMonthDL").setSelectedKey();
+            var oModel = new sap.ui.model.json.JSONModel({ WaterfallDataPrdDmd: [] });
+            this.getView().setModel(oModel, "prddmdLagModel");
+        },
         //Load assembly lag- end
         //Load option mix lag- start
         loadOptMixLag: function () {
@@ -1503,7 +1582,7 @@ sap.ui.define([
             sap.ui.core.BusyIndicator.show();
             const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
             const prodSelectedKey = this.byId("productSelect").getSelectedKey();
-            var facLoc = oEvent.getParameters().selectedItem.getKey();
+            var facLoc = oEvent.getSource().getSelectedKey();
             var aFilters = [];
 
             // ✅ Add filters only when values exist
@@ -1613,17 +1692,17 @@ sap.ui.define([
             var facloc = this.byId("cbFactoryPL").getSelectedKey();
             var characteristic = this.byId("cbCharPL").getSelectedKey();
             var monthOpt = this.byId("cbMonthPL").getSelectedKey();
-            var charvalOpt  = this.byId("cbCharValPL").getSelectedKey();
+            var charvalOpt = this.byId("cbCharValPL").getSelectedKey();
 
 
-            var oFunction = this.oModel.bindContext("/getOptPercentLagfun(...)");
+            var oFunction = this.oModel.bindContext("/getOptPercentLagFun(...)");
 
             oFunction.setParameter("FACTORY_LOACATION", facloc);
             oFunction.setParameter("LOCATION", loc);
-            oFunction.setParameter("PRODUCT", prod);           
+            oFunction.setParameter("PRODUCT", prod);
             oFunction.setParameter("MONTH", monthOpt);
-             oFunction.setParameter("CHARACTERISTIC", characteristic);
-             oFunction.setParameter("CHARACTERISTIC_VALUE", charvalOpt);
+            oFunction.setParameter("CHARACTERISTIC", characteristic);
+            oFunction.setParameter("CHARACTERISTIC_VALUE", charvalOpt);
 
             oFunction.execute().then(function () {
                 const oCtx = oFunction.getBoundContext();
@@ -1650,7 +1729,7 @@ sap.ui.define([
 
             }).catch(function (err) {
                 sap.ui.core.BusyIndicator.hide();
-                MessageToast.show("Failed to load Assembly Lag data");
+                MessageToast.show("Failed to load Opt Mix Lag data");
             });
 
         },
@@ -1678,16 +1757,309 @@ sap.ui.define([
             oVizFrame.setBusy(false);
             sap.ui.core.BusyIndicator.hide();
         },
-        onFilterResetOption: function () {
-            that.byId("cbFactoryPL").setSelectedKey();
-            that.byId("cbMonthPL").setSelectedKey();
-            that.byId("cbCharPL").setSelectedKey();
-            that.byId("cbCharValPL").setSelectedKey();
-            var oModel = new sap.ui.model.json.JSONModel({ WaterfallData: [] });
-            this.getView().setModel(oModel, "waterfallModel");
-            // that._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel")
-        }
+        //Load RTR Filters- Start
+        onRtrLocChange: async function (oEvent) {
+            sap.ui.core.BusyIndicator.show();
+            const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
+            const prodSelectedKey = this.byId("productSelect").getSelectedKey();
+            var facLoc = oEvent.getSource().getSelectedKey();
+            ;
+            var aFilters = [];
 
+            // ✅ Add filters only when values exist
+            if (locSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("LOCATION_ID", sap.ui.model.FilterOperator.EQ, locSelectedKey));
+            }
+
+            // if (prodSelectedKey) {
+            //     aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", sap.ui.model.FilterOperator.EQ, prodSelectedKey));
+            // }
+            if (facLoc) {
+                aFilters.push(new sap.ui.model.Filter("FACTORY_LOC", sap.ui.model.FilterOperator.EQ, facLoc));
+            }
+
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
+
+            while (bHasMore) {
+                const aContexts = await this.oModel
+                    .bindList("/getRTRData", null, null, aFilters)
+                    .requestContexts(iSkip, iPageSize);
+
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
+
+                aAllResults = aAllResults.concat(aPageResults);
+
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
+
+            console.log("Total records loaded:", aAllResults.length);
+
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No data available for selected Location & Product");
+            } else {
+                that.rtrLineData = aAllResults;
+                var monthDataRtr = this.removeDuplicates(aAllResults, "MONTH");
+                const oMonthModelRtr = new sap.ui.model.json.JSONModel({ MonthRtr: monthDataRtr });
+                this.getView().setModel(oMonthModelRtr, "calendarRtr");
+                setTimeout(() => {
+                    var oMonth = this.byId("cbMonthPR");
+                    var oBinding = oMonth.getBinding("items");
+
+                    if (oBinding) {
+                        var aItems = oMonth.getItems();
+                        if (aItems.length > 0) {
+                            oMonth.setSelectedKey(aItems[0].getKey());
+                            oMonth.fireSelectionChange({ selectedItem: aItems[0] });
+                        }
+                    }
+                }, 0);
+            }
+        },
+        onRtrMonthChange: function (oEvent) {
+            var monthSelected = oEvent.getParameters().selectedItem.getKey();
+            var aAllResults = that.rtrLineData.filter(id => id.MONTH === monthSelected);
+            aAllResults = that.removeDuplicates(aAllResults, "LINE_ID");
+            const rtrLineModel = new sap.ui.model.json.JSONModel({ LINEIDRTR: aAllResults });
+            that.getView().setModel(rtrLineModel, "LINEIDRT");
+            setTimeout(() => {
+                var oChar = this.byId("cbLinePR");
+                var oCharBinding = oChar.getBinding("items");
+                if (oCharBinding) {
+                    var aItems = oChar.getItems();
+                    if (aItems.length > 0) {
+                        oChar.setSelectedKey(aItems[0].getKey());
+                        oChar.fireSelectionChange({ selectedItem: aItems[0] });
+                    }
+                }
+            }, 0);
+
+        },
+        onRtrLineChange: function (oEvent) {
+            var lineSelected = oEvent.getParameters().selectedItem.getKey();
+            var monthSelected = that.byId("cbMonthPR").getSelectedKey();
+            var aAllResults = that.rtrLineData.filter(id => id.MONTH === monthSelected && id.LINE_ID === lineSelected);
+            aAllResults = that.removeDuplicates(aAllResults, "RESTRICTION");
+            const rtrModel = new sap.ui.model.json.JSONModel({ RTR_ID: aAllResults });
+            that.getView().setModel(rtrModel, "RTRID");
+            setTimeout(() => {
+                var oChar = this.byId("cbRstrPR");
+                var oCharBinding = oChar.getBinding("items");
+                if (oCharBinding) {
+                    var aItems = oChar.getItems();
+                    if (aItems.length > 0) {
+                        oChar.setSelectedKey(aItems[0].getKey());
+                        oChar.fireSelectionChange({ selectedItem: aItems[0] });
+                    }
+                }
+            }, 0);
+        },
+        onRtrGo: function () {
+            var loc = this.byId("LocationSelect").getSelectedKey();
+            var facloc = this.byId("cbFactoryPR").getSelectedKey();
+            var monthRtr = this.byId("cbMonthPR").getSelectedKey();
+            var lineRtr = this.byId("cbLinePR").getSelectedKey();
+            var rtrId = this.byId("cbRstrPR").getSelectedKey();
+
+
+            var oFunction = this.oModel.bindContext("/getRestrictionLagFun(...)");
+
+            oFunction.setParameter("FACTORY_LOACATION", facloc);
+            oFunction.setParameter("LOCATION", loc);
+            oFunction.setParameter("LINE", lineRtr);
+            oFunction.setParameter("RESTRICTION_ID", rtrId);
+            oFunction.setParameter("MONTH", monthRtr);
+
+            oFunction.execute().then(function () {
+                const oCtx = oFunction.getBoundContext();
+                if (!oCtx) {
+                    MessageToast.show("No data returned from backend");
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+                const oResult = oCtx.getObject();
+                // CAP V4 function returns { value: "<stringified-json>" }
+                let data;
+
+                try {
+                    data = JSON.parse(oResult.value.value); // ✅ Parse the string
+                    that.setOptionCardManifestRtr(data);
+
+                } catch (e) {
+                    console.error("Invalid JSON returned from backend", e);
+                    // MessageToast.show("Error parsing backend data");
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+            }).catch(function (err) {
+                sap.ui.core.BusyIndicator.hide();
+                MessageToast.show("Failed to load RTR Lag data");
+            });
+
+        },
+        setOptionCardManifestRtr: function (oData) {
+            var oVizFrame = this.byId("idRTRWF");
+            oVizFrame.setBusy(true);
+            var oPopOver = new sap.viz.ui5.controls.Popover({});
+            oPopOver.connect(oVizFrame.getVizUid());
+            oVizFrame.setVizProperties({
+                title: { visible: true, text: "Restriction Lag Analysis" },
+                plotArea: {
+                    dataLabel: { visible: true },
+                    colorPalette: ["#5899DA", "#E8743B", "#19A979", "#ED4A7B", "#945ECF", "#13A4B4"]
+                },
+                categoryAxis: {
+                    title: { visible: true }
+                },
+                valueAxis: {
+                    title: { visible: true }
+                },
+                legend: { visible: false }
+            });
+            var oModel = new sap.ui.model.json.JSONModel({ WaterfallDataRTR: oData });
+            this.getView().setModel(oModel, "rtrLagModel");
+            oVizFrame.setBusy(false);
+            sap.ui.core.BusyIndicator.hide();
+        },
+        onPrdDmdLocChange: async function (oEvent) {
+            sap.ui.core.BusyIndicator.show();
+            const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
+            const prodSelectedKey = this.byId("productSelect").getSelectedKey();
+            var facLoc = oEvent.getSource().getSelectedKey();
+            var aFilters = [];
+
+            // ✅ Add filters only when values exist
+            if (locSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("LOCATION_ID", sap.ui.model.FilterOperator.EQ, locSelectedKey));
+            }
+
+            if (prodSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", sap.ui.model.FilterOperator.EQ, prodSelectedKey));
+            }
+            if (facLoc) {
+                aFilters.push(new sap.ui.model.Filter("FACTORY_LOC", sap.ui.model.FilterOperator.EQ, facLoc));
+            }
+
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
+
+            while (bHasMore) {
+                const aContexts = await this.oModel
+                    .bindList("/getPrdDmdData", null, null, aFilters)
+                    .requestContexts(iSkip, iPageSize);
+
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
+
+                aAllResults = aAllResults.concat(aPageResults);
+
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
+
+            console.log("Total records loaded:", aAllResults.length);
+
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No data available for selected Location & Product");
+            } else {
+                that.prdDmdData = aAllResults;
+                var monthDataPrdDMD = this.removeDuplicates(aAllResults, "MONTH");
+                const oMonthModelPrdDmd = new sap.ui.model.json.JSONModel({ MonthPrd: monthDataPrdDMD });
+                this.getView().setModel(oMonthModelPrdDmd, "calendarPrdDmd");
+                setTimeout(() => {
+                    var oMonth = this.byId("cbMonthDL");
+                    var oBinding = oMonth.getBinding("items");
+
+                    if (oBinding) {
+                        var aItems = oMonth.getItems();
+                        if (aItems.length > 0) {
+                            oMonth.setSelectedKey(aItems[0].getKey());
+                            oMonth.fireSelectionChange({ selectedItem: aItems[0] });
+                        }
+                    }
+                }, 0);
+            }
+        },
+        onPrdDmdGo: function () {
+            var loc = this.byId("LocationSelect").getSelectedKey();
+            var prod = this.byId("productSelect").getSelectedKey();
+            var facloc = this.byId("cbFactoryDL").getSelectedKey();
+            var monthPrdDmd = this.byId("cbMonthDL").getSelectedKey();
+            var oFunction = this.oModel.bindContext("/getPrdDmdLagFun(...)");
+
+            oFunction.setParameter("FACTORY_LOACATION", facloc);
+            oFunction.setParameter("LOCATION", loc);
+            oFunction.setParameter("MONTH", monthPrdDmd);
+            oFunction.setParameter("PRODUCT", prod);
+
+
+            oFunction.execute().then(function () {
+                const oCtx = oFunction.getBoundContext();
+                if (!oCtx) {
+                    MessageToast.show("No data returned from backend");
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+                const oResult = oCtx.getObject();
+                // CAP V4 function returns { value: "<stringified-json>" }
+                let data;
+
+                try {
+                    data = JSON.parse(oResult.value.value); // ✅ Parse the string
+                    that.setOptionCardManifestPRDDMD(data);
+
+                } catch (e) {
+                    console.error("Invalid JSON returned from backend", e);
+                    // MessageToast.show("Error parsing backend data");
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+            }).catch(function (err) {
+                sap.ui.core.BusyIndicator.hide();
+                MessageToast.show("Failed to load RTR Lag data");
+            });
+
+        },
+        setOptionCardManifestPRDDMD: function (oData) {
+            var oVizFrame = this.byId("idPRDDMDWF");
+            oVizFrame.setBusy(true);
+            var oPopOver = new sap.viz.ui5.controls.Popover({});
+            oPopOver.connect(oVizFrame.getVizUid());
+            oVizFrame.setVizProperties({
+                title: { visible: true, text: "Product Demand Lag Analysis" },
+                plotArea: {
+                    dataLabel: { visible: true },
+                    colorPalette: ["#5899DA", "#E8743B", "#19A979", "#ED4A7B", "#945ECF", "#13A4B4"]
+                },
+                categoryAxis: {
+                    title: { visible: true }
+                },
+                valueAxis: {
+                    title: { visible: true }
+                },
+                legend: { visible: false }
+            });
+            var oModel = new sap.ui.model.json.JSONModel({ WaterfallDataPrdDmd: oData });
+            this.getView().setModel(oModel, "prddmdLagModel");
+            oVizFrame.setBusy(false);
+            sap.ui.core.BusyIndicator.hide();
+        },
     });
 });
 
