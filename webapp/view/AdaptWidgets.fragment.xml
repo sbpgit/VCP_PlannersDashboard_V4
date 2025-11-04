@@ -3,9 +3,11 @@
 	xmlns:core="sap.ui.core">
 	<ResponsivePopover
 		id="idWidgets"
-		title="Adapt Filters"
+		title="Adapt Widgets"
 		class="sapUiContentPadding"
-		placement="Bottom" >
+		placement="Bottom" 
+    contentWidth="400px"
+    >
         <beginButton>
 			<Button text="Ok" press="onSelectWidget" type="Emphasized"/>
 		</beginButton>
@@ -13,9 +15,8 @@
 			<Button text="Cancel" press="onCloseWidget" />
 		</endButton>
 		<content>
-        <VBox>
+        <!-- <VBox>
       <IconTabBar id="idAdaptTabBar" expandable="false">
-        <!-- FIELD tab -->
         <items>
           <IconTabFilter
             id="itfFields"
@@ -47,7 +48,38 @@
           </IconTabFilter>
          </items>
       </IconTabBar>
-   </VBox>
+   </VBox> -->
+   <Table id="idWidgetTable"
+		inset="false"
+		mode="MultiSelect"
+		items="{
+			path: '/widgetCollection',
+			sorter: {
+				path: 'Name'
+			}
+		}">
+		<headerToolbar>
+			<OverflowToolbar>
+				<Title text="Widget Selection" level="H2"/>
+				<ToolbarSpacer/>
+				 <SearchField id="sfFilterSearch" width="200px" liveChange="onWidgetSearch" placeholder="Search for widgets" />
+			</OverflowToolbar>
+		</headerToolbar>
+		<columns>
+			<Column width="12em">
+				<Text text="All Widgets" />
+			</Column>
+		</columns>
+		<items>
+			<ColumnListItem vAlign="Middle">
+				<cells>
+					<ObjectIdentifier
+						title="{Name}"
+					/>
+				</cells>
+			</ColumnListItem>
+		</items>
+	</Table>
 		</content>
 	</ResponsivePopover>
 </core:FragmentDefinition>

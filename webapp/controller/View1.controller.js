@@ -21,10 +21,7 @@ sap.ui.define([
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
             // this.loadAlertsCards();
-      
-
         },
-
         onAfterRendering: function () {
             sap.ui.core.BusyIndicator.show()
             that = this;
@@ -42,16 +39,12 @@ sap.ui.define([
                 that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
             that.rtrLineData = [], that.prdDmdData = [], that.wowData = [];
             this.getLocProd();
-            // this._showEmptyAlertsCard("Assembly Lag Analysis", "idWFModel");
             this._showEmptyAlertsCard("Characteristic Percentage", "MyCardIdChar");
             this._showEmptyAlertsCard("ForecastActual & Forecast", "MyCardIdFore");
             this.loadAlertsCards();
-            setTimeout(function () {
-                // this.loadAlertsCards();
-            }.bind(this), 1000);
-            if (!this._panelsInitialized) {
-                this.initializePanels();
-            }
+            // if (!this._panelsInitialized) {
+            //     this.initializePanels();
+            // }
         },
         // v4 oData
         getLocProd: function () {
@@ -165,14 +158,7 @@ sap.ui.define([
                             // sap.m.MessageToast.show("No forecast data available");
                             this._showEmptyAlertsCard("Forecast Snapshot Lag Analysis", "MyCardId2")
                         }
-
-                        // sap.ui.core.BusyIndicator.hide();
                     })
-                // .catch((oError) => {
-                //     // sap.ui.core.BusyIndicator.hide();
-                //     console.error("Forecast data request failed:", oError);
-                //     sap.m.MessageBox.error("Failed to load forecast data: " + (oError.message || "Unknown error"));
-                // });
             } catch (error) {
                 sap.m.MessageBox.error("Failed to load forecast data: " + (error.message || "Unknown error"));
             } finally {
@@ -1335,31 +1321,81 @@ sap.ui.define([
             }
         },
         loadAllLags: async function () {
-            await that.loadAssemblyLag();
-            await that.loadOptMixLag();
-            // await that.loadRtrLag();
-            // await that.loadPrdDmdLag();
+            await that.allFacotryLoc();
+            await that.loadAssemblyFac();
+        },
+        //Load factory location for Assemly lag
+        loadAssemblyFac: async function () {
+            sap.ui.core.BusyIndicator.show();
+            const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
+            const prodSelectedKey = this.byId("productSelect").getSelectedKey();
+            var aFilters = [];
+            // ✅ Add filters only when values exist
+            if (locSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("LOCATION_ID", sap.ui.model.FilterOperator.EQ, locSelectedKey));
+            }
+
+            if (prodSelectedKey) {
+                aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", sap.ui.model.FilterOperator.EQ, prodSelectedKey));
+            }
+
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
+
+            while (bHasMore) {
+                const aContexts = await this.oModel
+                    .bindList("/getAssemblyData", null, null, aFilters)
+                    .requestContexts(iSkip, iPageSize);
+
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
+
+                aAllResults = aAllResults.concat(aPageResults);
+
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
+
+            console.log("Total records loaded:", aAllResults.length);
+
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No data available for selected Location & Product");
+            } else {
+                that.totalAssemblyData = aAllResults;
+                var facLocation = that.removeDuplicates(aAllResults, "FACTORY_LOC");
+                const olocModel = new sap.ui.model.json.JSONModel({ Location: facLocation });
+                this.getView().setModel(olocModel, "location");
+                setTimeout(() => {
+                    var oLocation = this.byId("cbFactory");
+                    var oBinding = oLocation.getBinding("items");
+                    if (oBinding) {
+                        var aItems = oLocation.getItems();
+                        if (aItems.length > 0) {
+                            oLocation.setSelectedKey(aItems[0].getKey());
+                            oLocation.fireSelectionChange({ selectedItem: aItems[0] });
+                        }
+                    }
+                }, 0);
+            }
+
         },
         //Load assembly lag- start
-        loadAssemblyLag: function () {
+        allFacotryLoc: function () {
             var totalData = that.oGModel.getProperty("/fullLocProdData");
             const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
             const prodSelectedKey = this.byId("productSelect").getSelectedKey();
             totalData = that.removeDuplicates(totalData.filter(id => id.DEMAND_LOC === locSelectedKey && id.PRODUCT_ID === prodSelectedKey), "FACTORY_LOC");
             const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: totalData });
             this.getView().setModel(oModel, "filters");
-            // var oFactoryCombo = this.byId("cbFactory");
-            // setTimeout(() => {
-            //     var aItems = oFactoryCombo.getItems();
-            //     if (aItems.length > 0) {
-            //         oFactoryCombo.setSelectedKey(aItems[0].getKey());
-            //         oFactoryCombo.fireSelectionChange({ selectedItem: aItems[0] });
-            //     }
-            // }, 200);
             // Define combo boxes and their corresponding fire functions
             const comboConfig = [
                 { id: "cbFactoryPL", fn: this.onOptFacChange.bind(this) },
-                { id: "cbFactory", fn: this.onFacLocChange.bind(this) },
+                // { id: "cbFactory", fn: this.onFacLocChange.bind(this) },
                 { id: "cbFactoryPR", fn: this.onRtrLocChange.bind(this) },
                 { id: "cbFactoryDL", fn: this.onPrdDmdLocChange.bind(this) }
             ];
@@ -1471,10 +1507,7 @@ sap.ui.define([
             var facloc = this.byId("cbFactory").getSelectedKey();
             var assembly = this.byId("cbAssembly").getSelectedKey();
             var month = this.byId("cbMonth").getSelectedKey();
-
-
             var oFunction = this.oModel.bindContext("/getAssemblyLagfun(...)");
-
             oFunction.setParameter("FACTORY_LOACATION", facloc);
             oFunction.setParameter("LOCATION", loc);
             oFunction.setParameter("PRODUCT", prod);
@@ -1495,6 +1528,7 @@ sap.ui.define([
 
                 try {
                     data = JSON.parse(oResult.value.value); // ✅ Parse the string
+                    data.sort((a, b) => a.LAG_MONTH - b.LAG_MONTH);
                     that.setAssemblyCardManifest(data);
 
                 } catch (e) {
@@ -1698,10 +1732,7 @@ sap.ui.define([
             var characteristic = this.byId("cbCharPL").getSelectedKey();
             var monthOpt = this.byId("cbMonthPL").getSelectedKey();
             var charvalOpt = this.byId("cbCharValPL").getSelectedKey();
-
-
             var oFunction = this.oModel.bindContext("/getOptPercentLagFun(...)");
-
             oFunction.setParameter("FACTORY_LOACATION", facloc);
             oFunction.setParameter("LOCATION", loc);
             oFunction.setParameter("PRODUCT", prod);
@@ -1723,6 +1754,7 @@ sap.ui.define([
 
                 try {
                     data = JSON.parse(oResult.value.value); // ✅ Parse the string
+                    data.sort((a, b) => a.LAG_MONTH - b.LAG_MONTH);
                     that.setOptionCardManifest(data);
 
                 } catch (e) {
@@ -1768,17 +1800,12 @@ sap.ui.define([
             const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
             const prodSelectedKey = this.byId("productSelect").getSelectedKey();
             var facLoc = oEvent.getSource().getSelectedKey();
-            ;
             var aFilters = [];
 
             // ✅ Add filters only when values exist
             if (locSelectedKey) {
                 aFilters.push(new sap.ui.model.Filter("LOCATION_ID", sap.ui.model.FilterOperator.EQ, locSelectedKey));
             }
-
-            // if (prodSelectedKey) {
-            //     aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", sap.ui.model.FilterOperator.EQ, prodSelectedKey));
-            // }
             if (facLoc) {
                 aFilters.push(new sap.ui.model.Filter("FACTORY_LOC", sap.ui.model.FilterOperator.EQ, facLoc));
             }
@@ -1872,10 +1899,7 @@ sap.ui.define([
             var monthRtr = this.byId("cbMonthPR").getSelectedKey();
             var lineRtr = this.byId("cbLinePR").getSelectedKey();
             var rtrId = this.byId("cbRstrPR").getSelectedKey();
-
-
             var oFunction = this.oModel.bindContext("/getRestrictionLagFun(...)");
-
             oFunction.setParameter("FACTORY_LOACATION", facloc);
             oFunction.setParameter("LOCATION", loc);
             oFunction.setParameter("LINE", lineRtr);
@@ -1896,6 +1920,7 @@ sap.ui.define([
 
                 try {
                     data = JSON.parse(oResult.value.value); // ✅ Parse the string
+                    data.sort((a, b) => a.LAG_MONTH - b.LAG_MONTH);
                     that.setOptionCardManifestRtr(data);
 
                 } catch (e) {
@@ -2005,13 +2030,10 @@ sap.ui.define([
             var facloc = this.byId("cbFactoryDL").getSelectedKey();
             var monthPrdDmd = this.byId("cbMonthDL").getSelectedKey();
             var oFunction = this.oModel.bindContext("/getPrdDmdLagFun(...)");
-
             oFunction.setParameter("FACTORY_LOACATION", facloc);
             oFunction.setParameter("LOCATION", loc);
             oFunction.setParameter("MONTH", monthPrdDmd);
             oFunction.setParameter("PRODUCT", prod);
-
-
             oFunction.execute().then(function () {
                 const oCtx = oFunction.getBoundContext();
                 if (!oCtx) {
@@ -2026,6 +2048,7 @@ sap.ui.define([
 
                 try {
                     data = JSON.parse(oResult.value.value); // ✅ Parse the string
+                    data.sort((a, b) => a.LAG_MONTH - b.LAG_MONTH);
                     that.setOptionCardManifestPRDDMD(data);
 
                 } catch (e) {
@@ -2066,13 +2089,10 @@ sap.ui.define([
             sap.ui.core.BusyIndicator.hide();
         },
         // 
-
-
         onAdaptWidgets: function (oEvent) {
             var oView = this.getView();
             var oButton = oEvent.getSource();
             var that = this;
-
 
             if (this._oWidgetPopover) {
                 try {
@@ -2096,116 +2116,119 @@ sap.ui.define([
 
                 oView.addDependent(oPopover);
                 that._oWidgetPopover = oPopover;
+                // ✅ Create random widget data before opening
+                const aWidgets = [];
+                const widgetNames = [
+                    "Alerts", "Lags", "Forecast"
+                ];
 
+                for (let i = 0; i < 3; i++) {
+                    aWidgets.push({
+                        ID: i + 1,
+                        Name: widgetNames[i]
+                    });
+                }
+
+                // ✅ Create JSON model and set to popover
+                const oWidgetModel = new sap.ui.model.json.JSONModel({
+                    widgetCollection: aWidgets
+                });
+                oPopover.setModel(oWidgetModel);
 
                 if (typeof oPopover.openBy === "function") {
+                    oPopover.attachAfterOpen(function () {
+                        const oTable = Fragment.byId(oView.getId(), "idWidgetTable");
+
+                        if (that._aSelectedWidgets && that._aSelectedWidgets.length > 0) {
+                            // reselect previously saved ones
+                            oTable.getItems().forEach(item => {
+                                const oData = item.getBindingContext().getObject();
+                                if (that._aSelectedWidgets.some(w => w.ID === oData.ID)) {
+                                    oTable.setSelectedItem(item, true);
+                                }
+                            });
+                        } else {
+                            // first time: select all
+                            if (oTable && oTable.selectAll) {
+                                oTable.selectAll();
+                            }
+                        }
+                    });
                     oPopover.openBy(oButton);
                     console.log("AdaptWidgets popover opened");
                 } else {
-                    console.error("Loaded fragment ");
-                    
+                    console.error("Loaded fragment does not support openBy()");
+
                 }
             }).catch(function (oError) {
                 console.error("Failed to load fragment");
-               
+
             });
         },
+        onWidgetSearch: function (oEvent) {
+            const sQuery = oEvent.getParameter("newValue");
+            const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
+            const oBinding = oTable.getBinding("items");
 
-        /**
-         * 
-         * This handler is mapped as press="onSelectWidget" in the fragment
-         */
-        onSelectWidget: function (oEvent) {
+            if (sQuery) {
+                const oFilter = new sap.ui.model.Filter("Name", sap.ui.model.FilterOperator.Contains, sQuery);
+                oBinding.filter([oFilter]);
+            } else {
+                oBinding.filter([]);
+            }
+        },
 
+        onSelectWidget: function () {
+            const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
+            const aSelectedItems = oTable.getSelectedItems();
+
+            // Extract selected widget objects
+            const aSelectedWidgets = aSelectedItems.map(function (item) {
+                return item.getBindingContext().getObject();
+            });
+
+            // ✅ Save confirmed selection for persistence
+            this._aSelectedWidgets = aSelectedWidgets;
+
+            // Extract names
+            const aNames = aSelectedWidgets.map(w => w.Name);
+
+            // --- Visibility logic ---
+            const oAlerts = this.byId("alertsPanel");
+            const oLags = this.byId("lagsPanel");
+            const oForecast = this.byId("idRow4");
+
+            oAlerts.setVisible(aNames.includes("Alerts"));
+            oLags.setVisible(aNames.includes("Lags"));
+            oForecast.setVisible(aNames.includes("Forecast"));
+
+
+            // Close popover
             if (this._oWidgetPopover) {
                 this._oWidgetPopover.close();
             }
-          this.onFieldCheckboxSelect();
-          
-            
         },
-
-        /**
-         * Cancel button handler
-         */
         onCloseWidget: function (oEvent) {
+            const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
+
+            // ✅ Restore last confirmed selections
+            oTable.removeSelections();
+
+            if (this._aSelectedWidgets && this._aSelectedWidgets.length > 0) {
+                oTable.getItems().forEach(item => {
+                    const oData = item.getBindingContext().getObject();
+                    if (this._aSelectedWidgets.some(w => w.ID === oData.ID)) {
+                        oTable.setSelectedItem(item, true);
+                    }
+                });
+            }
+
+            // Close popover
             if (this._oWidgetPopover) {
                 this._oWidgetPopover.close();
             }
-           
-            console.log("onCloseWidget");
         },
-        onFieldSelect: function () {
-            var aSelectedItems = this.byId("lstFields").getSelectedItems();
-            aSelectedItems.forEach(function (oItem) {
-                console.log(oItem.getTitle());
-            });
-        },
- 
- 
-// Adapt Widgets functionallity
 
-onFieldCheckboxSelect: function () {
-    var oView = this.getView();
-
-    
-    var aCheckboxIds = ["chk_alerts", "chk_lags", "chk_forecast"];
-    var mCheckboxTargets = {
-        "chk_alerts": ["alertsPanel"],
-        "chk_lags":   ["lagsPanel"],
-        "chk_forecast": [ "idRow4", "MyCardIdFore"]
-    };
-
-    var aSharedContainersToHide = ["mCheckboxTargets", "idRow4"]; 
-  
-    var sFilterControlId = "idAdaptTabBar";
-
-    var mSelected = {}, bAnySelected = false;
-    aCheckboxIds.forEach(function (sChkId) {
-        var oChk = oView.byId(sChkId);
-        mSelected[sChkId] = !!(oChk && oChk.getSelected && oChk.getSelected());
-        if (mSelected[sChkId]) bAnySelected = true;
-    });
-
-   
-    function setVisibleIfExists(sId, bVisible) {
-        if (!sId) return;
-        var o = oView.byId(sId);
-        if (o && typeof o.setVisible === "function") {
-            o.setVisible(Boolean(bVisible));
-        }
-    }
-
-    if (!bAnySelected) {
-        Object.keys(mCheckboxTargets).forEach(function (sChk) {
-            mCheckboxTargets[sChk].forEach(function (sTargetId) {
-                setVisibleIfExists(sTargetId, true);
-            });
-        }); 
-        aSharedContainersToHide.forEach(function (sId) { setVisibleIfExists(sId, true); });
-        setVisibleIfExists(sFilterControlId, true);
-        return;
-    }
-
-    aSharedContainersToHide.forEach(function (sId) { setVisibleIfExists(sId, false); });
-    setVisibleIfExists(sFilterControlId, true); 
-    var sAllTargets = [];
-    Object.keys(mCheckboxTargets).forEach(function (sChk) {
-        mCheckboxTargets[sChk].forEach(function (sT) { if (sT && sAllTargets.indexOf(sT) === -1) sAllTargets.push(sT); });
-    });
-
-    sAllTargets.forEach(function (sTargetId) {
-        var bTargetVisible = false;
-        Object.keys(mCheckboxTargets).forEach(function (sChk) {
-            if (mSelected[sChk] && mCheckboxTargets[sChk].indexOf(sTargetId) !== -1) {
-                bTargetVisible = true;
-            }
-        });
-        setVisibleIfExists(sTargetId, bTargetVisible);
-    });
-}
-
-       
     });
 });
 
