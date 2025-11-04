@@ -321,3 +321,5 @@
 .v-m-root{
     background-color: aliceblue;
 }
+.hiddenPanel { display: none !important; }
+

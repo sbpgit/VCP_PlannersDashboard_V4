@@ -4,6 +4,8 @@
     xmlns:core="sap.ui.core"
     xmlns:card="sap.ui.integration.widgets" 
     xmlns:viz="sap.viz.ui5.controls"
+    xmlns:f="sap.f"
+    xmlns:smartfilterbar="sap.ui.comp.smartfilterbar"
 xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
 
     <Page id="page" title="{i18n>title}" showHeader="false">

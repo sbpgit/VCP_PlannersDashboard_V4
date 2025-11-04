@@ -14,10 +14,40 @@
 		</endButton>
 		<content>
         <VBox>
-        <!-- <Table id="idWidgetTable">
+      <IconTabBar id="idAdaptTabBar" expandable="false">
+        <!-- FIELD tab -->
+        <items>
+          <IconTabFilter
+            id="itfFields"
+            icon="sap-icon://filter"
+            key="FIELDS"
+            text="Field">
+            <VBox fitContainer="true" class="sapUiSmallMargin">
+           
+              <SearchField id="sfFilterSearch" width="100%" liveChange="onFilterSearch" placeholder="Search for Filters" />
+               <List id="lstFields"  width="100%" selectionChange = "onFieldSelect">
+            <CustomListItem>
+              <HBox alignItems="Center" justifyContent="SpaceBetween" width="100%">
+             <CheckBox id="chk_alerts" selected="false" text="Alerts" select="onFieldCheckboxSelect"/>
+            </HBox>
+            </CustomListItem>
+            <CustomListItem>
+             <HBox alignItems="Center" justifyContent="SpaceBetween" width="100%">
+              <CheckBox id="chk_lags" selected="false" text="Lags" />
+              </HBox>              
+              </CustomListItem>
+            <CustomListItem>
+            <HBox alignItems="Center" justifyContent="SpaceBetween" width="100%">
+            <CheckBox id="chk_forecast" selected="false" text="Forecast" select="onFieldCheckboxSelect"/>
+            </HBox>
+              </CustomListItem>
+            </List>
 
-        </Table> -->
-			                 </VBox>
+            </VBox>
+          </IconTabFilter>
+         </items>
+      </IconTabBar>
+   </VBox>
 		</content>
 	</ResponsivePopover>
 </core:FragmentDefinition>

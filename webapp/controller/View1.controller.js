@@ -21,6 +21,8 @@ sap.ui.define([
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
             // this.loadAlertsCards();
+      
+
         },
 
         onAfterRendering: function () {
@@ -47,6 +49,9 @@ sap.ui.define([
             setTimeout(function () {
                 // this.loadAlertsCards();
             }.bind(this), 1000);
+            if (!this._panelsInitialized) {
+                this.initializePanels();
+            }
         },
         // v4 oData
         getLocProd: function () {
@@ -1164,7 +1169,7 @@ sap.ui.define([
                     },
                     "content": {
                         "chartType": "line",
-                         "title": { "text": "WOW Variance" },
+                        "title": { "text": "WOW Variance" },
                         "legend": { "visible": true },
                         "plotArea": {
                             "dataLabel": { "visible": true },
@@ -2060,6 +2065,147 @@ sap.ui.define([
             oVizFrame.setBusy(false);
             sap.ui.core.BusyIndicator.hide();
         },
+        // 
+
+
+        onAdaptWidgets: function (oEvent) {
+            var oView = this.getView();
+            var oButton = oEvent.getSource();
+            var that = this;
+
+
+            if (this._oWidgetPopover) {
+                try {
+                    if (this._oWidgetPopover.isOpen && this._oWidgetPopover.isOpen()) {
+                        this._oWidgetPopover.close();
+                    } else {
+                        this._oWidgetPopover.openBy(oButton);
+                    }
+                } catch (e) {
+                    console.error("Error toggling popover:", e);
+                }
+                return;
+            }
+
+            // Load fragment only once
+            Fragment.load({
+                id: oView.getId(),
+                name: "vcp.vcplannerdashboard.view.AdaptWidgets",
+                controller: this
+            }).then(function (oPopover) {
+
+                oView.addDependent(oPopover);
+                that._oWidgetPopover = oPopover;
+
+
+                if (typeof oPopover.openBy === "function") {
+                    oPopover.openBy(oButton);
+                    console.log("AdaptWidgets popover opened");
+                } else {
+                    console.error("Loaded fragment ");
+                    
+                }
+            }).catch(function (oError) {
+                console.error("Failed to load fragment");
+               
+            });
+        },
+
+        /**
+         * 
+         * This handler is mapped as press="onSelectWidget" in the fragment
+         */
+        onSelectWidget: function (oEvent) {
+
+            if (this._oWidgetPopover) {
+                this._oWidgetPopover.close();
+            }
+          this.onFieldCheckboxSelect();
+          
+            
+        },
+
+        /**
+         * Cancel button handler
+         */
+        onCloseWidget: function (oEvent) {
+            if (this._oWidgetPopover) {
+                this._oWidgetPopover.close();
+            }
+           
+            console.log("onCloseWidget");
+        },
+        onFieldSelect: function () {
+            var aSelectedItems = this.byId("lstFields").getSelectedItems();
+            aSelectedItems.forEach(function (oItem) {
+                console.log(oItem.getTitle());
+            });
+        },
+ 
+ 
+// Adapt Widgets functionallity
+
+onFieldCheckboxSelect: function () {
+    var oView = this.getView();
+
+    
+    var aCheckboxIds = ["chk_alerts", "chk_lags", "chk_forecast"];
+    var mCheckboxTargets = {
+        "chk_alerts": ["alertsPanel"],
+        "chk_lags":   ["lagsPanel"],
+        "chk_forecast": [ "idRow4", "MyCardIdFore"]
+    };
+
+    var aSharedContainersToHide = ["mCheckboxTargets", "idRow4"]; 
+  
+    var sFilterControlId = "idAdaptTabBar";
+
+    var mSelected = {}, bAnySelected = false;
+    aCheckboxIds.forEach(function (sChkId) {
+        var oChk = oView.byId(sChkId);
+        mSelected[sChkId] = !!(oChk && oChk.getSelected && oChk.getSelected());
+        if (mSelected[sChkId]) bAnySelected = true;
+    });
+
+   
+    function setVisibleIfExists(sId, bVisible) {
+        if (!sId) return;
+        var o = oView.byId(sId);
+        if (o && typeof o.setVisible === "function") {
+            o.setVisible(Boolean(bVisible));
+        }
+    }
+
+    if (!bAnySelected) {
+        Object.keys(mCheckboxTargets).forEach(function (sChk) {
+            mCheckboxTargets[sChk].forEach(function (sTargetId) {
+                setVisibleIfExists(sTargetId, true);
+            });
+        }); 
+        aSharedContainersToHide.forEach(function (sId) { setVisibleIfExists(sId, true); });
+        setVisibleIfExists(sFilterControlId, true);
+        return;
+    }
+
+    aSharedContainersToHide.forEach(function (sId) { setVisibleIfExists(sId, false); });
+    setVisibleIfExists(sFilterControlId, true); 
+    var sAllTargets = [];
+    Object.keys(mCheckboxTargets).forEach(function (sChk) {
+        mCheckboxTargets[sChk].forEach(function (sT) { if (sT && sAllTargets.indexOf(sT) === -1) sAllTargets.push(sT); });
+    });
+
+    sAllTargets.forEach(function (sTargetId) {
+        var bTargetVisible = false;
+        Object.keys(mCheckboxTargets).forEach(function (sChk) {
+            if (mSelected[sChk] && mCheckboxTargets[sChk].indexOf(sTargetId) !== -1) {
+                bTargetVisible = true;
+            }
+        });
+        setVisibleIfExists(sTargetId, bTargetVisible);
+    });
+}
+
+       
     });
 });
 
