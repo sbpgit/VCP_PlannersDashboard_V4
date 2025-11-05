@@ -117,7 +117,7 @@ body {
 /* === PANEL HEADER GRADIENTS =============================== */
 /* ========================================================= */
 .alerts-panel .sapMPanelHdr {
-    background: linear-gradient(to right, rgba(243,156,18,0.1), transparent);
+    background: linear-gradient(to right, rgba(10,110,209,0.1), transparent);
     border-radius: 6px;
     padding-left: 8px;
 }
@@ -144,11 +144,11 @@ body {
     border-radius: 12px;
     padding: 0.5rem;
     background-color: #ffffff;
-    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.15);
+    box-shadow:  0 4px 8px rgba(0, 112, 242, 0.15);
     transition: all 0.3s ease;
 }
 .alerts-panel .card-wrapper:hover {
-    box-shadow: 0 8px 16px rgba(243, 156, 18, 0.3);
+    box-shadow:  0 4px 8px rgba(0, 112, 242, 0.15);
     transform: translateY(-3px);
 }
 

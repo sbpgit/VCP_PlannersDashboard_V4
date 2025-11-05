@@ -21,6 +21,7 @@ sap.ui.define([
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
             this.getLocationData();
+            this.getView().setModel(new sap.ui.model.json.JSONModel({ items12: [] }), "viewDetails");
         },
         onAfterRendering: async function () {
             sap.ui.core.BusyIndicator.show()
@@ -41,7 +42,7 @@ sap.ui.define([
             this.getLocProd();
             // this._showEmptyAlertsCard("WOW Variance", "MyCardIdFore");
             await this.loadAlertsCards();
-            this.getVariantData();
+            // this.getVariantData();
         },
         getLocationData: async function () {
             const iPageSize = 5000; // tune this depending on your service
@@ -2086,7 +2087,7 @@ sap.ui.define([
                 // ✅ Create random widget data before opening
                 const aWidgets = [];
                 const widgetNames = [
-                    "Alerts", "Lags", "Forecast"
+                    "Alerts", "Lags", "WoW Variance Analysis"
                 ];
 
                 for (let i = 0; i < 3; i++) {
@@ -2167,7 +2168,7 @@ sap.ui.define([
 
             oAlerts.setVisible(aNames.includes("Alerts"));
             oLags.setVisible(aNames.includes("Lags"));
-            oForecast.setVisible(aNames.includes("Forecast"));
+            oForecast.setVisible(aNames.includes("WoW Variance Analysis"));
 
 
             // Close popover
@@ -2199,7 +2200,8 @@ sap.ui.define([
         getVariantData: async function () {
             sap.ui.core.BusyIndicator.show();
             try {
-                const variantUser = (this.getUser() || "").toLowerCase();
+                // const variantUser = (this.getUser() || "").toLowerCase();
+                const variantUser = "pradeepkumardaka@sbpcorp.in"
                 const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
                 this.oGModel.setProperty("/UserId", variantUser);
 
@@ -2252,7 +2254,7 @@ sap.ui.define([
 
                     // Update model on VariantManagement
                     const oViewModel = new sap.ui.model.json.JSONModel({ items12: defaultVariant });
-                    oVariantMgmt.setModel(oViewModel);
+                    oVariantMgmt.setModel(oViewModel,"viewDetails");
                     oVariantMgmt.setDefaultKey("0");
                     oVariantMgmt.setSelectedKey("0");
 
@@ -2294,7 +2296,7 @@ sap.ui.define([
 
                 // --- Configure VariantManagement UI ---
                 const oViewModel = new sap.ui.model.json.JSONModel({ items12: aProcessed });
-                oVariantMgmt.setModel(oViewModel);
+                oVariantMgmt.setModel(oViewModel,"viewDetails");
 
                 if (sDefaultVariantId) {
                     oVariantMgmt.setDefaultKey(sDefaultVariantId);
@@ -2386,7 +2388,7 @@ sap.ui.define([
 
                 // --- Assign variant model to control ---
                 const variantModel = new sap.ui.model.json.JSONModel({ items12: uniqueVariants });
-                oVariantMgmt.setModel(variantModel);
+                oVariantMgmt.setModel(variantModel,"viewDetails");
 
                 // --- Determine active key ---
                 const newVariantFlag = this.oGModel.getProperty("/newVaraintFlag");
@@ -2429,58 +2431,91 @@ sap.ui.define([
         },
 
         onCreate: async function (oEvent) {
-            sap.ui.core.BusyIndicator.show();
-            try {
-                const sLocation = this.byId("LocationSelect").getSelectedKey();
-                const sProduct = this.byId("productSelect").getSelectedKey();
+    sap.ui.core.BusyIndicator.show();
 
-                if (!sLocation && !sProduct) {
-                    return sap.m.MessageToast.show("No values selected in filters Location & Product");
-                }
+    try {
+        const sLocation = this.byId("LocationSelect").getSelectedKey();
+        const sProduct = this.byId("productSelect").getSelectedKey();
 
-                const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
-                const varName = oEvent.getParameters().name;
-                const sDefault = oEvent.getParameters().def ? "Y" : "N";
-                const sScope = oEvent.getParameters().public ? "Public" : "Private";
+        if (!sLocation && !sProduct) {
+            sap.m.MessageToast.show("No values selected in filters Location & Product");
+            return;
+        }
 
-                const dataArray = [
-                    sLocation && { Field: "Location", Value: sLocation, Default: sDefault },
-                    sProduct && { Field: "Product", Value: sProduct }
-                ].filter(Boolean);
-                const bAlerts = this.byId("alertsPanel").getVisible();
-                const bLags = this.byId("lagsPanel").getVisible();
-                const bForecast = this.byId("idRow4").getVisible();
+        const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
+        const varName = oEvent.getParameters().name;
+        const sDefault = oEvent.getParameters().def ? "Y" : "N";
+        const sScope = oEvent.getParameters().public ? "Public" : "Private";
+        const flag = oEvent.getParameters().overwrite ? "E" : "X";
 
-                dataArray.push({ Field: "ALERTS_VISIBLE", Value: String(bAlerts) });
-                dataArray.push({ Field: "LAGS_VISIBLE", Value: String(bLags) });
-                dataArray.push({ Field: "FORECAST_VISIBLE", Value: String(bForecast) });
+        // Capture current panel visibility
+        const bAlerts = this.byId("alertsPanel").getVisible();
+        const bLags = this.byId("lagsPanel").getVisible();
+        const bForecast = this.byId("idRow4").getVisible();
 
-                dataArray.forEach(d => {
-                    d.IDNAME = varName;
-                    d.App_Name = appName;
-                    d.SCOPE = sScope;
-                });
+        // Build payload
+        const dataArray = [];
+        if (sLocation) dataArray.push({ Field: "Location", Value: sLocation, Default: sDefault });
+        if (sProduct) dataArray.push({ Field: "Product", Value: sProduct });
+        dataArray.push({ Field: "ALERTS_VISIBLE", Value: String(bAlerts) });
+        dataArray.push({ Field: "LAGS_VISIBLE", Value: String(bLags) });
+        dataArray.push({ Field: "FORECAST_VISIBLE", Value: String(bForecast) });
 
-                const oFunction = this.oModel.bindContext("/createVariant(...)");
-                oFunction.setParameter("Flag", oEvent.getParameters().overwrite ? "E" : "X");
-                oFunction.setParameter("USER", this.oGModel.getProperty("/UserId"));
-                oFunction.setParameter("VARDATA", JSON.stringify(dataArray));
+        dataArray.forEach(d => {
+            d.IDNAME = varName;
+            d.App_Name = appName;
+            d.SCOPE = sScope;
+        });
 
-                const oCtx = await oFunction.execute().then(() => oFunction.getBoundContext());
-                const result = JSON.parse(oCtx.getObject().value.value);
+        // === Execute CAP function ===
+        const oFunction = this.oModel.bindContext("/createVariant(...)");
+        oFunction.setParameter("Flag", flag);
+        oFunction.setParameter("USER", this.oGModel.getProperty("/UserId"));
+        oFunction.setParameter("VARDATA", JSON.stringify(dataArray));
 
-                this.oGModel.setProperty("/newVariant", result);
-                this.oGModel.setProperty("/newVaraintFlag", "X");
-                this.byId("idMatListVPD").setModified(false);
-                this.onAfterRendering();
+        await oFunction.execute();
+        const oCtx = oFunction.getBoundContext();
+        if (!oCtx) {
+            sap.m.MessageToast.show("No response received from backend");
+            return;
+        }
 
-            } catch (err) {
-                console.error("Variant creation failed", err);
-                sap.m.MessageToast.show("Failed to create variant");
-            } finally {
-                sap.ui.core.BusyIndicator.hide();
-            }
-        },
+        const oResult = oCtx.getObject();
+        console.log("📦 createVariant response:", oResult); // debug once
+
+        // === Normalize response for all CAP versions ===
+        let result = [];
+        if (Array.isArray(oResult)) {
+            result = oResult; // ✅ direct array
+        } else if (oResult?.value && Array.isArray(oResult.value)) {
+            result = oResult.value; // ✅ OData structured array
+        } else if (typeof oResult?.value?.value === "string") {
+            result = JSON.parse(oResult.value.value); // ✅ legacy CAP JSON string
+        } else if (oResult && typeof oResult === "object") {
+            result = [oResult]; // ✅ single object wrapped
+        }
+
+        if (!result || result.length === 0) {
+            sap.m.MessageToast.show("Variant created but no data returned");
+            return;
+        }
+
+        // === Apply result to model ===
+        this.oGModel.setProperty("/newVariant", result);
+        this.oGModel.setProperty("/newVaraintFlag", "X");
+        this.byId("idMatList123VPD").setModified(false);
+        this.onAfterRendering();
+
+        sap.m.MessageToast.show("Variant created successfully");
+
+    } catch (err) {
+        console.error("❌ Variant creation failed:", err);
+        sap.m.MessageToast.show("Failed to create variant");
+    } finally {
+        sap.ui.core.BusyIndicator.hide();
+    }
+},
+
         onManage: async function (oEvent) {
             sap.ui.core.BusyIndicator.show();
 
