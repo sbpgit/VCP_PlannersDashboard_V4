@@ -20,9 +20,9 @@ sap.ui.define([
             this.prodData = [];
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
-            // this.loadAlertsCards();
+            this.getLocationData();
         },
-        onAfterRendering: function () {
+        onAfterRendering: async function () {
             sap.ui.core.BusyIndicator.show()
             that = this;
             that.oGModel = that.getOwnerComponent().getModel("oGModel");
@@ -39,34 +39,68 @@ sap.ui.define([
                 that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
             that.rtrLineData = [], that.prdDmdData = [], that.wowData = [];
             this.getLocProd();
-            this._showEmptyAlertsCard("Characteristic Percentage", "MyCardIdChar");
-            this._showEmptyAlertsCard("ForecastActual & Forecast", "MyCardIdFore");
-            this.loadAlertsCards();
-            // if (!this._panelsInitialized) {
-            //     this.initializePanels();
-            // }
+            // this._showEmptyAlertsCard("WOW Variance", "MyCardIdFore");
+            await this.loadAlertsCards();
+            this.getVariantData();
+        },
+        getLocationData: async function () {
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
+
+            while (bHasMore) {
+                const aContexts = await this.oModel
+                    .bindList("/getLocation")
+                    .requestContexts(iSkip, iPageSize);
+
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
+
+                aAllResults = aAllResults.concat(aPageResults);
+
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
+            console.log("Total records loaded:", aAllResults.length);
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No data available for all Locations");
+            } else {
+                that.oGModel.setProperty("/fullLocData", aAllResults);
+            }
         },
         // v4 oData
-        getLocProd: function () {
-            this.oModel.bindList("/getfactorylocdesc")
-                .requestContexts()
-                .then((aContexts) => {
-                    const results = aContexts.map(oContext => oContext.getObject());
+        getLocProd: async function () {
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
 
-                    if (results?.length > 0) {
-                        that.oGModel.setProperty("/fullLocProdData", results);
-                        this.processData(results);
-                    } else {
-                        sap.m.MessageToast.show("No data available for Locations and Products");
-                    }
+            while (bHasMore) {
+                const aContexts = await this.oModel
+                    .bindList("/getfactorylocdesc")
+                    .requestContexts(iSkip, iPageSize);
 
-                    sap.ui.core.BusyIndicator.hide();
-                })
-                .catch((oError) => {
-                    sap.ui.core.BusyIndicator.hide();
-                    console.error("Read failed:", oError);
-                    sap.m.MessageBox.error("Failed to load data: " + oError.message);
-                });
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
+                aAllResults = aAllResults.concat(aPageResults);
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
+            console.log("Total records loaded:", aAllResults.length);
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No data available in demand location and products");
+            } else {
+                that.oGModel.setProperty("/fullLocProdData", aAllResults);
+                this.processData(aAllResults);
+                sap.ui.core.BusyIndicator.hide();
+            }
         },
 
         processData: function (results) {
@@ -393,12 +427,16 @@ sap.ui.define([
             const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: [] });
             this.getView().setModel(oModel, "filters");
             that.byId("lagsPanel").setExpanded(false);
+            this.byId("LocationSelect").setSelectedKey("");
+            this.byId("productSelect").setSelectedKey("");
             //Reset asselbly lag
             that.onFilterResetAssembly();
             that.onFilterResetOptMix();
             that.onFilterResetRtr();
             that.onFilterResetPrdDmd();
-            this.onAfterRendering();
+            that.onFilterResetWOW();
+            // that.loadAlertsCards();
+            that.onAfterRendering();
 
         },
 
@@ -1097,162 +1135,79 @@ sap.ui.define([
             if (aAllResults.length === 0) {
                 sap.m.MessageToast.show("No data available for selected Location & Product");
             } else {
-
+                const oWOWModel = new sap.ui.model.json.JSONModel({
+                    options: [
+                        { key: "Actual WoW", text: "Actual" },
+                        { key: "Forecast WoW", text: "Forecast" }
+                    ],
+                    selectedKey: "Actual WoW" // ✅ Default selection
+                });
+                // Set the model at view level
+                this.getView().setModel(oWOWModel, "wowModel");
+                const oWOWModelVariance = new sap.ui.model.json.JSONModel({
+                    Variance: [
+                        { key: "10", text: ">10" },
+                        { key: "20", text: ">20" },
+                        { key: "30", text: ">30" }
+                    ],
+                    selectedKey: "10" // ✅ Default selection
+                });
+                // Set the model at view level
+                this.getView().setModel(oWOWModelVariance, "wowModelVariance");
                 that.wowData = aAllResults;
-                var actualWOW = aAllResults.filter(id => id.COMP_TYPE === "Actual WoW")
+                var actualWOW = aAllResults.filter(id => id.COMP_TYPE === "Actual WoW" && id.PERCENT_DIFF_WOW > 0.10);
                 // const oAssemblyModel = new sap.ui.model.json.JSONModel({ Assembly: that.forecastData });
                 this._setActualForecastCard(actualWOW, "Actual");
             }
             oCard.setBusy(false);
         },
-
-        _setActualForecastCard: function (oData, sName) {
+        _setActualForecastCard(oData) {
             oData.forEach(d => {
                 if (d.THIS_WEEK_DATE?.includes("/Date(")) {
                     const timestamp = parseInt(d.THIS_WEEK_DATE.match(/\d+/)[0]);
                     d.THIS_WEEK_DATE = new Date(timestamp).toISOString().split("T")[0];
                 }
             });
-            const oManifest = {
-                "sap.app": {
-                    "id": "vcp.v4card.forecastQuantity",
-                    "type": "card",
-                    "applicationVersion": { "version": "1.0.0" }
+            var oVizFrame = this.byId("MyCardIdFore");
+            oVizFrame.setBusy(true);
+            var oPopOver = new sap.viz.ui5.controls.Popover({});
+            oPopOver.connect(oVizFrame.getVizUid());
+            oVizFrame.setVizProperties({
+                title: { visible: true, text: "WOW Variance" },
+                plotArea: {
+                    dataLabel: { visible: true },
+                    colorPalette: ["#5899DA", "#E8743B", "#19A979", "#ED4A7B", "#945ECF", "#13A4B4"]
                 },
-                "sap.ui": { "technology": "UI5" },
-                "sap.card": {
-                    "type": "Analytical",
-                    "header": {
-                        "title": "WOW Variance Trend",
-                        "subTitle": "By " + sName,
-                        "titleMaxLines": 1,
-                        "subTitleMaxLines": 1
-                    },
-                    "data": {
-                        "json": oData
-                    },
-                    "configuration": {
-                        "filters": {
-                            "Period": {
-                                "type": "ComboBox",
-                                "label": "Dataset",
-                                "value": sName,
-                                "item": {
-                                    "path": "/",
-                                    "template": {
-                                        "key": "{text}",
-                                        "title": "{text}"
-                                    }
-                                },
-                                "data": {
-                                    "json": [
-                                        { "text": "Actual" },
-                                        { "text": "Forecast" }
-                                    ]
-                                }
-                            }
-                        }
-                    },
-                    "content": {
-                        "chartType": "line",
-                        "title": { "text": "WOW Variance" },
-                        "legend": { "visible": true },
-                        "plotArea": {
-                            "dataLabel": { "visible": true },
-                            "window": { "start": 0, "end": 100 },
-                            "tooltip": { "visible": true }
-                        },
-                        "dimensions": [
-                            {
-                                "label": "Week",
-                                "value": "{THIS_WEEK_DATE}"
-                            },
-                            {
-                                "label": "Type",
-                                "value": "{COMP_TYPE}"
-                            }
-                        ],
-                        "measures": [
-                            {
-                                "label": "% Variance",
-                                "value": "{PERCENT_DIFF_WOW}"
-                            }
-                        ],
-                        "feeds": [
-                            {
-                                "uid": "categoryAxis",
-                                "type": "Dimension",
-                                "values": ["Week"]
-                            },
-                            {
-                                "uid": "color",
-                                "type": "Dimension",
-                                "values": ["Type"]
-                            },
-                            {
-                                "uid": "valueAxis",
-                                "type": "Measure",
-                                "values": ["% Variance"]
-                            }
-                        ],
-                        "chartProperties": {
-                            "plotArea": {
-                                "dataLabel": { "visible": true },
-                                "colorPalette": ["#007aff"],
-                                "tooltip": {
-                                    "visible": true,
-                                    "formatString": ["This: {THIS_WEEK_VALUE}\nPrev: {PREV_WEEK_VALUE}\nΔ: {ABS_DIFF_WOW}\nVar: {(PERCENT_DIFF_WOW*100).toFixed(1)}%"]
-                                }
-                            },
-                            "valueAxis": {
-                                "title": { "text": "% Variance" }
-                            },
-                            "categoryAxis": {
-                                "title": { "text": "Week" },
-                                "label": {
-                                    "formatString": "MMM dd"  // show readable week dates
-                                }
-                            },
-                            "legend": {
-                                "visible": true,
-                                "position": "bottom"
-                            }
-                        }
-                    }
-                }
-            };
-
-
-            this._applyCardManifestNew("MyCardIdFore", oManifest);
-
-        },
-        _applyCardManifestNew: function (sCardId, oManifest) {
-            var oCard = this.byId(sCardId);
-            if (oCard) {
-                oCard.setManifest(oManifest);
-
-                // attach configurationChange instead of filterChange
-                oCard.detachConfigurationChange(this.onFilterChangePeriod, this);
-                oCard.attachConfigurationChange(this.onFilterChangePeriod, this);
-            }
+                categoryAxis: {
+                    title: { visible: true }
+                },
+                valueAxis: {
+                    title: { visible: true }
+                },
+                legend: { visible: false }
+            });
+            var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: oData });
+            this.getView().setModel(oModel, "wowVariance");
+            oVizFrame.setBusy(false);
             sap.ui.core.BusyIndicator.hide();
         },
-        onFilterChangePeriod: function (oEvent) {
-            var mChanges = oEvent.getParameters().changes;
-            if (mChanges) {
-                if (Object.keys(mChanges).some(key => key.includes("Period"))) {
-                    var selected = mChanges["/sap.card/configuration/filters/Period/value"];
-                    if (selected === "Actual") {
-                        var sName = "Actual";
-                        var data = that.wowData.filter(id => id.COMP_TYPE === "Actual WoW")
-                    }
-                    else if (selected === "Forecast") {
-                        var sName = "Forecast";
-                        var data = that.wowData.filter(id => id.COMP_TYPE === "Forecast WoW")
-                    }
-                    this._setActualForecastCard(data, sName);
-                }
-            }
+        onVarianceChange: function (oEvent) {
+            var selectedType = that.byId("idWOW").getSelectedKey();
+            var selectedVariance = oEvent.getSource().getSelectedKey();
+            var actualWOW = that.wowData.filter(id => id.COMP_TYPE === selectedType && id.PERCENT_DIFF_WOW > selectedVariance);
+            this._setActualForecastCard(actualWOW);
+        },
+        onTypeChange: function (oEvent) {
+            var selectedType = oEvent.getSource().getSelectedKey();
+            var selectedVariance = that.byId("idVariance").getSelectedKey();
+            var actualWOW = that.wowData.filter(id => id.COMP_TYPE === selectedType && id.PERCENT_DIFF_WOW > selectedVariance);
+            this._setActualForecastCard(actualWOW);
+        },
+        onFilterResetWOW: function () {
+            that.byId("idVariance").setSelectedKey("Actual WoW");
+            that.byId("idWOW").setSelectedKey("0.10");
+            var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: [] });
+            this.getView().setModel(oModel, "wowVariance");
         },
 
         handleCloseButton: function (oEvent) {
@@ -1368,7 +1323,19 @@ sap.ui.define([
             } else {
                 that.totalAssemblyData = aAllResults;
                 var facLocation = that.removeDuplicates(aAllResults, "FACTORY_LOC");
-                const olocModel = new sap.ui.model.json.JSONModel({ Location: facLocation });
+                var factoryDescription = that.oGModel.getProperty("/fullLocData");
+                // Extract matching LOCATION_DESC
+                const descMap = factoryDescription.reduce((acc, curr) => {
+                    acc[curr.LOCATION_ID] = curr.LOCATION_DESC;
+                    return acc;
+                }, {});
+
+                // Add LOCATION_DESC to each object in facLocation
+                const facLocationWithDesc = facLocation.map(item => ({
+                    ...item,
+                    LOCATION_DESC: descMap[item.FACTORY_LOC] || "Unknown"
+                }));
+                const olocModel = new sap.ui.model.json.JSONModel({ Location: facLocationWithDesc });
                 this.getView().setModel(olocModel, "location");
                 setTimeout(() => {
                     var oLocation = this.byId("cbFactory");
@@ -2228,6 +2195,413 @@ sap.ui.define([
                 this._oWidgetPopover.close();
             }
         },
+        //Variant Code Starts//
+        getVariantData: async function () {
+            sap.ui.core.BusyIndicator.show();
+            try {
+                const variantUser = (this.getUser() || "").toLowerCase();
+                const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
+                this.oGModel.setProperty("/UserId", variantUser);
+
+                // --- Build filters ---
+                const oFilterUserScope = new sap.ui.model.Filter({
+                    filters: [
+                        new sap.ui.model.Filter("APPLICATION_NAME", sap.ui.model.FilterOperator.EQ, appName),
+                        new sap.ui.model.Filter("USER", sap.ui.model.FilterOperator.EQ, variantUser)
+                    ],
+                    and: true
+                });
+
+                const oFilterPublicScope = new sap.ui.model.Filter({
+                    filters: [
+                        new sap.ui.model.Filter("APPLICATION_NAME", sap.ui.model.FilterOperator.EQ, appName),
+                        new sap.ui.model.Filter("SCOPE", sap.ui.model.FilterOperator.EQ, "Public")
+                    ],
+                    and: true
+                });
+
+                const oFinalFilter = new sap.ui.model.Filter({
+                    filters: [oFilterUserScope, oFilterPublicScope],
+                    and: false
+                });
+
+                // --- Fetch header variants ---
+                const aContexts = await this.oModel.bindList("/getVariantHeader", null, [], oFinalFilter).requestContexts();
+                const aResults = aContexts.map(ctx => ctx.getObject());
+                this.oGModel.setProperty("/headerDetails", aResults);
+
+                // --- VariantManagement control reference ---
+                const oVariantMgmt = this.byId("idMatListVPD");
+
+                // --- Handle case: No variants exist ---
+                if (aResults.length === 0) {
+                    const defaultVariant = [{
+                        VARIANTNAME: "Standard",
+                        VARIANTID: "0",
+                        DEFAULT: "Y",
+                        REMOVE: false,
+                        CHANGE: false,
+                        USER: "SAP",
+                        SCOPE: sap.m.SharingMode.Public
+                    }];
+
+                    this.oGModel.setProperty("/variantDetails", []);
+                    this.oGModel.setProperty("/fromFunction", "X");
+                    this.oGModel.setProperty("/viewNames", defaultVariant);
+                    this.oGModel.setProperty("/defaultDetails", "");
+
+                    // Update model on VariantManagement
+                    const oViewModel = new sap.ui.model.json.JSONModel({ items12: defaultVariant });
+                    oVariantMgmt.setModel(oViewModel);
+                    oVariantMgmt.setDefaultKey("0");
+                    oVariantMgmt.setSelectedKey("0");
+
+                    // Load Standard variant
+                    const newVariant = this.oGModel.getProperty("/newVariant");
+                    if (this.oGModel.getProperty("/newVaraintFlag") === "X" && newVariant) {
+                        this.handleSelectPress(newVariant[0].VARIANTNAME);
+                        this.oGModel.setProperty("/newVaraintFlag", "");
+                    } else {
+                        this.handleSelectPress("Standard");
+                    }
+
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+                // --- Handle case: Variants exist ---
+                const aUserVariants = [];
+                let sDefaultVariantId = null;
+
+                const aProcessed = aResults.map(item => {
+                    if (item.DEFAULT === "Y" && item.USER === variantUser) {
+                        sDefaultVariantId = item.VARIANTID;
+                        aUserVariants.push(item);
+                    }
+                    if (item.USER !== variantUser) {
+                        item.CHANGE = false;
+                        item.REMOVE = false;
+                        item.ENABLE = false;
+                    }
+                    return item;
+                });
+
+                if (aUserVariants.length) {
+                    this.oGModel.setProperty("/defaultVariant", aUserVariants);
+                }
+
+                this.oGModel.setProperty("/VariantData", aProcessed);
+
+                // --- Configure VariantManagement UI ---
+                const oViewModel = new sap.ui.model.json.JSONModel({ items12: aProcessed });
+                oVariantMgmt.setModel(oViewModel);
+
+                if (sDefaultVariantId) {
+                    oVariantMgmt.setDefaultKey(sDefaultVariantId);
+                    oVariantMgmt.setSelectedKey(sDefaultVariantId);
+                }
+
+                // --- Load variant details ---
+                await this.getTotalVariantDetails();
+
+            } catch (err) {
+                console.error("Error in getVariantData:", err);
+                sap.m.MessageToast.show("Error while loading variant details");
+            } finally {
+                sap.ui.core.BusyIndicator.hide();
+            }
+        },
+
+        getTotalVariantDetails: async function () {
+            sap.ui.core.BusyIndicator.show();
+
+            try {
+                const oVariantMgmt = this.byId("idMatListVPD");
+                const headerData = this.oGModel.getProperty("/VariantData") || [];
+                const userVariant = this.oGModel.getProperty("/UserId");
+
+                if (!headerData.length) {
+                    sap.m.MessageToast.show("No variant headers found.");
+                    sap.ui.core.BusyIndicator.hide();
+                    return;
+                }
+
+                // --- Build filters dynamically ---
+                const oFilters = headerData.map(h =>
+                    new sap.ui.model.Filter("VARIANTID", sap.ui.model.FilterOperator.EQ, h.VARIANTID)
+                );
+
+                // --- Fetch variant details from backend ---
+                const aContexts = await this.oModel.bindList("/getVariant", null, [], oFilters).requestContexts();
+                const variantDetailData = aContexts.map(ctx => ctx.getObject());
+                this.oGModel.setProperty("/fieldDetails", variantDetailData);
+
+                // --- Merge header + detail data ---
+                let mergedData = variantDetailData.map(detail => {
+                    const header = headerData.find(h => h.VARIANTID === detail.VARIANTID);
+                    return header ? { ...detail, ...header } : { ...detail };
+                });
+
+                // Normalize scope display
+                mergedData = mergedData.map(item => ({
+                    ...item,
+                    SCOPE: item.SCOPE === "Public" ? sap.m.SharingMode.Public : sap.m.SharingMode.Private
+                }));
+
+                this.oGModel.setProperty("/variantDetails", mergedData);
+
+                // --- Prepare unique variants ---
+                let uniqueVariants = this.removeDuplicate(mergedData, "VARIANTNAME");
+                const defaultDetails = [];
+                let defaultVariantName = null;
+
+                uniqueVariants.forEach(v => {
+                    if (v.DEFAULT === "Y" && v.USER === userVariant) {
+                        defaultVariantName = v.VARIANTNAME;
+                        defaultDetails.push({
+                            VARIANTNAME: v.VARIANTNAME,
+                            VARIANTID: v.VARIANTID,
+                            USER: v.USER,
+                            DEFAULT: v.DEFAULT
+                        });
+                    }
+                });
+
+                this.oGModel.setProperty("/defaultDetails", defaultDetails);
+                this.oGModel.setProperty("/fromFunction", "X");
+
+                // --- Always prepend Standard view ---
+                const standardVariant = {
+                    VARIANTNAME: "Standard",
+                    VARIANTID: "0",
+                    DEFAULT: defaultVariantName ? "N" : "Y",
+                    REMOVE: false,
+                    CHANGE: false,
+                    USER: "SAP",
+                    SCOPE: sap.m.SharingMode.Public
+                };
+
+                uniqueVariants.unshift(standardVariant);
+                this.oGModel.setProperty("/viewNames", uniqueVariants);
+
+                // --- Assign variant model to control ---
+                const variantModel = new sap.ui.model.json.JSONModel({ items12: uniqueVariants });
+                oVariantMgmt.setModel(variantModel);
+
+                // --- Determine active key ---
+                const newVariantFlag = this.oGModel.getProperty("/newVaraintFlag");
+                const newVariant = this.oGModel.getProperty("/newVariant");
+                let selectedKey = "0"; // default: Standard
+
+                if (newVariantFlag === "X" && newVariant?.length) {
+                    selectedKey = newVariant[0].VARIANTID;
+                    this.oGModel.setProperty("/newVaraintFlag", "");
+                    this.handleSelectPress(newVariant[0].VARIANTNAME);
+                } else if (defaultVariantName) {
+                    const defItem = uniqueVariants.find(v => v.VARIANTNAME === defaultVariantName);
+                    if (defItem) {
+                        selectedKey = defItem.VARIANTID;
+                        this.handleSelectPress(defaultVariantName);
+                    }
+                } else {
+                    this.handleSelectPress("Standard");
+                }
+
+                // --- Update variant management selection ---
+                this.UniqueDefKey = selectedKey;
+                oVariantMgmt.setDefaultKey(selectedKey);
+                oVariantMgmt.setSelectedKey(selectedKey);
+
+                sap.m.MessageToast.show("Variants loaded successfully");
+
+            } catch (err) {
+                console.error("Error in getTotalVariantDetails:", err);
+                sap.m.MessageToast.show("Error while loading variant details");
+            } finally {
+                sap.ui.core.BusyIndicator.hide();
+            }
+        },
+        removeDuplicate: function (array, key) {
+            var check = new Set();
+            return array.filter(
+                (obj) => !check.has(obj[key]) && check.add(obj[key])
+            );
+        },
+
+        onCreate: async function (oEvent) {
+            sap.ui.core.BusyIndicator.show();
+            try {
+                const sLocation = this.byId("LocationSelect").getSelectedKey();
+                const sProduct = this.byId("productSelect").getSelectedKey();
+
+                if (!sLocation && !sProduct) {
+                    return sap.m.MessageToast.show("No values selected in filters Location & Product");
+                }
+
+                const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
+                const varName = oEvent.getParameters().name;
+                const sDefault = oEvent.getParameters().def ? "Y" : "N";
+                const sScope = oEvent.getParameters().public ? "Public" : "Private";
+
+                const dataArray = [
+                    sLocation && { Field: "Location", Value: sLocation, Default: sDefault },
+                    sProduct && { Field: "Product", Value: sProduct }
+                ].filter(Boolean);
+                const bAlerts = this.byId("alertsPanel").getVisible();
+                const bLags = this.byId("lagsPanel").getVisible();
+                const bForecast = this.byId("idRow4").getVisible();
+
+                dataArray.push({ Field: "ALERTS_VISIBLE", Value: String(bAlerts) });
+                dataArray.push({ Field: "LAGS_VISIBLE", Value: String(bLags) });
+                dataArray.push({ Field: "FORECAST_VISIBLE", Value: String(bForecast) });
+
+                dataArray.forEach(d => {
+                    d.IDNAME = varName;
+                    d.App_Name = appName;
+                    d.SCOPE = sScope;
+                });
+
+                const oFunction = this.oModel.bindContext("/createVariant(...)");
+                oFunction.setParameter("Flag", oEvent.getParameters().overwrite ? "E" : "X");
+                oFunction.setParameter("USER", this.oGModel.getProperty("/UserId"));
+                oFunction.setParameter("VARDATA", JSON.stringify(dataArray));
+
+                const oCtx = await oFunction.execute().then(() => oFunction.getBoundContext());
+                const result = JSON.parse(oCtx.getObject().value.value);
+
+                this.oGModel.setProperty("/newVariant", result);
+                this.oGModel.setProperty("/newVaraintFlag", "X");
+                this.byId("idMatListVPD").setModified(false);
+                this.onAfterRendering();
+
+            } catch (err) {
+                console.error("Variant creation failed", err);
+                sap.m.MessageToast.show("Failed to create variant");
+            } finally {
+                sap.ui.core.BusyIndicator.hide();
+            }
+        },
+        onManage: async function (oEvent) {
+            sap.ui.core.BusyIndicator.show();
+
+            const totalVariantData = this.oGModel.getProperty("/VariantData");
+            const selected = oEvent.getParameters();
+            const variantUser = this.getUser()?.toLowerCase();
+
+            try {
+                // Deleted Variants
+                if (selected.deleted?.length) {
+                    const deletedArray = totalVariantData
+                        .filter(item => selected.deleted.includes(String(item.VARIANTID)))
+                        .map(item => ({ ID: item.VARIANTID, NAME: item.VARIANTNAME }));
+
+                    if (deletedArray.length) {
+                        const delFunc = this.oModel.bindContext("/createVariant(...)");
+                        delFunc.setParameter("Flag", "D");
+                        delFunc.setParameter("USER", variantUser);
+                        delFunc.setParameter("VARDATA", JSON.stringify(deletedArray));
+                        await delFunc.execute();
+                    }
+                }
+
+                // Update default variant
+                if (selected.def) {
+                    const defId = JSON.parse(selected.def);
+                    const isStandard = defId === 0;
+
+                    if (!isStandard) {
+                        const defFunc = this.oModel.bindContext("/updateVariant(...)");
+                        const newDefault = totalVariantData
+                            .filter(item => item.VARIANTID === defId)
+                            .map(v => ({ ...v, DEFAULT: "Y" }));
+
+                        defFunc.setParameter("VARDATA", JSON.stringify(newDefault));
+                        await defFunc.execute();
+                    }
+                }
+
+                this.onAfterRendering();
+
+            } catch (err) {
+                console.error("Error managing variants", err);
+                sap.m.MessageToast.show("Failed to manage variants");
+            } finally {
+                sap.ui.core.BusyIndicator.hide();
+            }
+        },
+        handleSelectPress: async function (oEvent) {
+            sap.ui.core.BusyIndicator.show();
+
+            try {
+                const oVariantDetails = this.oGModel.getProperty("/variantDetails") || [];
+                const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
+                const oView = this.getView();
+
+                let selectedVariantName =
+                    typeof oEvent === "string"
+                        ? oEvent
+                        : oEvent?.getSource?.().getTitle?.().getText?.() || "Standard";
+
+                this.oGModel.setProperty("/variantName", selectedVariantName);
+                this.finaloTokens = [];
+                this.oGModel.setProperty("/defaultLocation", []);
+                this.oGModel.setProperty("/defaultProduct", []);
+
+                // --- Standard Variant (reset to default UI) ---
+                if (selectedVariantName === "Standard") {
+                    ["alertsPanel", "lagsPanel", "idRow4"].forEach(id =>
+                        oView.byId(id).setVisible(true)
+                    );
+                    sap.m.MessageToast.show("Standard View Loaded");
+                    return;
+                }
+
+                // --- Fetch matching variant data ---
+                const filteredData = oVariantDetails.filter(item =>
+                    item.VARIANTNAME === selectedVariantName &&
+                    item.APPLICATION_NAME === appName
+                );
+
+                // --- Filters ---
+                const locData = filteredData.filter(f => f.FIELD === "Location");
+                const prodData = filteredData.filter(f => f.FIELD === "Product");
+
+                // --- Panel visibility ---
+                const alertsVisible = filteredData.find(f => f.FIELD === "ALERTS_VISIBLE")?.VALUE === "true";
+                const lagsVisible = filteredData.find(f => f.FIELD === "LAGS_VISIBLE")?.VALUE === "true";
+                const forecastVisible = filteredData.find(f => f.FIELD === "FORECAST_VISIBLE")?.VALUE === "true";
+
+                oView.byId("alertsPanel").setVisible(alertsVisible ?? true);
+                oView.byId("lagsPanel").setVisible(lagsVisible ?? true);
+                oView.byId("idRow4").setVisible(forecastVisible ?? true);
+
+                // --- Apply filters ---
+                if (locData.length) {
+                    const sLocValue = locData[0].VALUE;
+                    oView.byId("LocationSelect").setSelectedKey(sLocValue);
+                    this.oGModel.setProperty("/defaultLocation", sLocValue);
+                    locData.forEach(d => this.finaloTokens.push({ FIELD: d.FIELD, VALUE: d.VALUE }));
+                }
+
+                if (prodData.length) {
+                    const sProdValue = prodData[0].VALUE;
+                    oView.byId("productSelect").setSelectedKey(sProdValue);
+                    this.oGModel.setProperty("/defaultProduct", sProdValue);
+                    prodData.forEach(d => this.finaloTokens.push({ FIELD: d.FIELD, VALUE: d.VALUE }));
+                }
+
+                sap.m.MessageToast.show(`Loaded Variant: ${selectedVariantName}`);
+
+            } catch (err) {
+                console.error("Error applying variant", err);
+                sap.m.MessageToast.show("Error applying selected variant");
+            } finally {
+                sap.ui.core.BusyIndicator.hide();
+            }
+        },
+
+
+
 
     });
 });

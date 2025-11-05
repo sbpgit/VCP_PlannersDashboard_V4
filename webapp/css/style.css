@@ -1,54 +1,52 @@
+/* ========================================================= */
+/* === GLOBAL STYLES ======================================== */
+/* ========================================================= */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    color: #333;
+}
 
+.dashboard-container {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 20px;
+}
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
+.header {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    margin-bottom: 0 !important;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+}
 
-        .dashboard-container {
-            max-width: 1600px;
-            margin: 0 auto;
-            padding: 20px;
-        }
+.logo {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%; /* Perfectly round */
+    object-fit: cover;  /* Keeps image proportion intact */
+    padding: 3px; /* Space for gradient ring */
+    background: linear-gradient(135deg, #667eea, #764ba2); /* blue-purple ring */
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+    margin-right: 10px;
+}
 
-        .header {
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            margin-bottom: 0px !important;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-        }
+.logo img {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    display: block;
+}
 
-        .header-top {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
+.controls {
+    display: flex;
+    gap: 19px;
+}
 
-        .logo-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logo {
-            width: 50px;
-            height: 50px;
-            background: linear-gradient(45deg, #d3d5db);
-            border-radius: 12px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-            font-weight: bold;
-            font-size: 18px;
-        }
-
-        .title-section h1 {
+ .title-section h1 {
             font-size: 28px;
             color: #2c3e50;
             margin-bottom: 5px;
@@ -59,267 +57,192 @@
             font-size: 14px;
         }
 
-        .controls {
-            display: flex;
-            gap: 19px;
-        }
-
-        .control-group {
-            display: flex;
-            flex-direction:calc();
-            gap: 5px;
-        }
-
-        .control-group label {
-            font-size: 12px;
-            font-weight: 600;
-            color: #5a6c7d;
-        }
-
-     
-
-        select:hover, select:focus {
-            border-color: #667eea;
-            outline: none;
-        }
-
-        .main-content {
-            display: grid;
-            grid-template-columns: 2fr 1fr;
-            gap: 10px;
-            margin-bottom: 10px;
-        }
-        .card-content{
-            gap: 30px;
-           
-             justify-content: flex-start;
-             width: 100px !important;
-          
-          
-        }
-         .progress-bar {
-            height: 8px;
-            background: #e9ecef;
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 10px;
-        }
-/* 
-        .quickHelpRibbon {
-    position: fixed;
-    right: 13px;
-    top: 40%;
-    transform: rotate(-90deg);
-    transform-origin: right bottom;
-    color: white;
-    border-radius: 8px 8px 0 0;
-    padding: 0.5rem 1rem;
-    z-index: 1000;
-} */
-
-
-
+/* ========================================================= */
+/* === SCROLLBARS, LAYOUT, AND CARDS ======================== */
+/* ========================================================= */
 .scrollable-card .sapFCard .sapFCardContent {
-    max-height: 350px!important;
-    overflow-y: auto!important;
-    scrollbar-width: thin!important; /* Firefox */
-    scrollbar-color: #cccccc #f0f0f0!important; /* Firefox */
+    max-height: 350px !important;
+    overflow-y: auto !important;
+    scrollbar-width: thin !important;
+    scrollbar-color: #cccccc #f0f0f0 !important;
 }
 
-/* For Webkit browsers (Chrome, Safari) */
 .scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar {
-    width: 15px!important;
+    width: 15px !important;
 }
-
 .scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar-track {
-    background: #f0f0f0!important;
+    background: #f0f0f0 !important;
 }
-
 .scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar-thumb {
-    background: #cccccc!important;
-    border-radius: 4px!important;
-}
-
-/* === Dashboard Layout === */
-.main-dashboard {
-    margin-top: 0rem !important;
-    display: flex;
-    flex-direction: column;
-    gap: 5px; /* vertical spacing between rows */
-}
-
-/* Card container layout */
-.card-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-    align-items: flex-start;
-    gap: 5px;
-    margin: 0 !important;
-    padding: 0 !important;
-    margin-left: 3px !important;
-    margin-right: 0px !important;
-    max-width: 100% !important ;
-    
-}
-
-/* Card layout and base styling */
-.card-container card\:Card {
-    flex: 1 1 100%;
-    max-width: 100%;
-    min-width: 500px;
-    border-radius: 16px;
-    background: #fff;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    transform: translateY(0);
-    will-change: transform, box-shadow;
-}
-
-/* ✅ 3D Lift-Up Hover Effect */
-.card-container card\:Card:hover {
-    transform: translateY(-10px); /* Lifts up slightly */
-    box-shadow: 0 12px 25px rgba(0, 0, 0, 0.18);
-    z-index: 5;
-}
-
-/* ✅ Smooth fade-in animation on load */
-@keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(15px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.card-container card\:Card {
-    animation: fadeInUp 0.5s ease forwards;
-}
-
-/* Responsive design */
-@media (max-width: 1500px) {
-    .card-container card\:Card {
-        flex: 1 1 45%;
-        max-width: 95%;
-    }
-}
-
-@media (max-width: 800px) {
-    .card-container card\:Card {
-        flex: 1 1 90%;
-        max-width: 100% !important;
-    }
-}
-
-/* Fixed Quick Help Ribbon */
-.quickHelpRibbon {
-    position: fixed;
-    right: 13px;
-    top: 40%;
-    transform: rotate(-90deg);
-    transform-origin: right bottom;
-    color: white;
-    border-radius: 8px 8px 0 0;
-    padding: 0.5rem 1rem;
-    z-index: 1000;
-}
-
-
-/*Header color for card*/
-.sapFCardHeader {
-    /* background: #006BB8 !important; */
-    background: aliceblue !important;
-}
-
-/*Border for card1- System Alerts*/
-.sapFCardListItem {
-  border-bottom: 1px solid #d9d9d9 !important;
-  margin-bottom: 4px;
-  padding-bottom: 6px !important;
-}
-
-/* Optional: Remove the last border for neatness */
-.sapFCardListItem:last-child {
-  border-bottom: none !important;
-}
-
-.sapUiIntLCI.sapUiIntLCITwoLines .sapUiIntLCIIconAndLines, .sapUiIntLCI.sapUiIntLCIOneLine.sapUiIntLCIThumbnail .sapUiIntLCIIconAndLines {
-    height: calc(5rem - 1px);
-    align-items: center;
-    border-bottom: 1px solid #d9d9d9 !important;
-    margin-bottom: 0;
-    padding-bottom: 6px !important;
-}
-
-/*Border for List cards*/
-.sapUiSizeCompact .sapUiIntLCI.sapUiIntLCIOneLine .sapUiIntLCIIconAndLines {
-    height: calc(2rem - 1px);
-    border-bottom: 1px solid #d9d9d9 !important;
-    margin-bottom: 0;
-    padding-bottom: 4px !important;
-}
-
-.chart-scrollable .sapFCardContent {
-  overflow-x: auto !important;
-  overflow-y: hidden;
-  white-space: nowrap;
-}
-
-.chart-scrollable .sapUiIntegrationCardAnalyticalContent {
-  min-width: 1800px;
-}
-.sapMFlexItemAlignAuto sapMFlexBoxBGTransparent sapMFlexItem{
-    width : auto !important;
-}
-.sapMFlexBox sapMHBox sapMFlexBoxJustifySpaceAround sapMFlexBoxAlignItemsStart sapMFlexBoxWrapWrap sapMFlexBoxAlignContentStretch sapMFlexBoxBGTransparent card-container sapMFlexItem{
-    width: 75px!important;
-}
-
-
-.card-wrapper {
-  box-sizing: border-box;
-  min-width: 0 !important;
-}
-
-.card-wrapper .sapFCard {
-  width: 100%;
-}
-
-@media (max-width: 1024px) {
-  .card-wrapper {
-    width: 100% !important; /* stack cards on smaller screens */
-  }
-}
-
-.main-dashboard {
-  width: 100%;
-  margin-top: 1rem;
-}
-
-.header-top {
-  padding: 1rem;
-}
-
-.controls .control-group {
-  margin-left: 1rem;
-}
-
-.card-wrapper .sapFCard,
-.card-wrapper .sapMPanel {
-  width: 100%;
-  max-width: 100%;
-  box-sizing: border-box;
+    background: #cccccc !important;
+    border-radius: 4px !important;
 }
 
 .sapUiMediumMarginBottom {
     margin-bottom: 0rem !important;
 }
 
-.v-m-root{
-    background-color: aliceblue;
+.main-dashboard {
+    margin-top: 0 !important;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
 }
+
+.card-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.card-container card\:Card {
+    border-radius: 16px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.5s ease forwards;
+}
+.card-container card\:Card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+}
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* ========================================================= */
+/* === PANEL HEADER GRADIENTS =============================== */
+/* ========================================================= */
+.alerts-panel .sapMPanelHdr {
+    background: linear-gradient(to right, rgba(243,156,18,0.1), transparent);
+    border-radius: 6px;
+    padding-left: 8px;
+}
+
+.lags-panel .sapMPanelHdr {
+    background: linear-gradient(to right, rgba(10,110,209,0.1), transparent);
+    border-radius: 6px;
+    padding-left: 8px;
+}
+
+.wow-panel .sapMPanelHdr {
+    background: linear-gradient(to right, rgba(39,174,96,0.1), transparent);
+    border-radius: 6px;
+    padding-left: 8px;
+}
+
+/* ========================================================= */
+/* === SECTION OUTLINES (CARDS / LAGS / WOW) ================ */
+/* ========================================================= */
+
+/* Alerts Panel */
+.alerts-panel .card-wrapper {
+    border: 2px solid #27ae60;
+    border-radius: 12px;
+    padding: 0.5rem;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(243, 156, 18, 0.15);
+    transition: all 0.3s ease;
+}
+.alerts-panel .card-wrapper:hover {
+    box-shadow: 0 8px 16px rgba(243, 156, 18, 0.3);
+    transform: translateY(-3px);
+}
+
+/* Lags Panel */
+.lags-panel .lag-box {
+    border: 2px solid #27ae60;
+    border-radius: 10px;
+    padding: 0.75rem;
+    background-color: #f9fbff;
+    box-shadow: 0 4px 8px rgba(0, 112, 242, 0.15);
+    transition: all 0.3s ease;
+}
+.lags-panel .lag-box:hover {
+    box-shadow: 0 8px 16px rgba(0, 112, 242, 0.25);
+    transform: translateY(-3px);
+}
+
+/* WoW Variance (Row 4) */
+.wow-panel .card-wrapper {
+    border: 2px solid #27ae60;
+    border-radius: 12px;
+    padding: 0.5rem;
+    background-color: #ffffff;
+    box-shadow: 0 4px 8px rgba(39, 174, 96, 0.15);
+    transition: all 0.3s ease;
+}
+.wow-panel .card-wrapper:hover {
+    box-shadow: 0 8px 16px rgba(39, 174, 96, 0.3);
+    transform: translateY(-3px);
+}
+
+/* ========================================================= */
+/* === CARD HEADER COLOR ==================================== */
+/* ========================================================= */
+.sapFCardHeader {
+    background: aliceblue !important;
+}
+
+/* ========================================================= */
+/* === QUICK HELP RIBBON ==================================== */
+/* ========================================================= */
+.quickHelpRibbon {
+    position: fixed;
+    right: 40px; /* Pull slightly out of screen so rounded edge shows */
+    top: 40%;
+    transform: rotate(-90deg) translateY(50%);
+    transform-origin: right center;
+    background: #0070f2;
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    border: none;
+    border-radius: 8px 8px 0 0;
+    padding: 0.7rem 1.4rem;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+/* Hover effect */
+.quickHelpRibbon:hover {
+    background: #0059c1;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.25);
+    transform: rotate(-90deg) translateY(50%) scale(1.05);
+}
+
+/* Optional subtle glowing edge */
+.quickHelpRibbon::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 8px 8px 0 0;
+    box-shadow: 0 0 8px rgba(0, 112, 242, 0.4);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.quickHelpRibbon:hover::after {
+    opacity: 1;
+}
+
+
+/* ========================================================= */
+/* === UTILITIES ============================================ */
+/* ========================================================= */
 .hiddenPanel { display: none !important; }
 
+.v-m-root {
+    background-color: aliceblue;
+}
+/*For variant management*/
+.sapMVarMngmt .sapUiHLayout.sapMVarMngmtLayout.sapMVarMngmtLayoutModifiedHidden
+ {
+    grid-template-columns: minmax(0, 1fr) 1px 32px;
+    margin-left: 30px;
+}
