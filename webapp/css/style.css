@@ -98,7 +98,7 @@ body {
 
 .card-container card\:Card {
     border-radius: 16px;
-    background: #fff;
+    /* background: #fff; */
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
     transition: all 0.3s ease;
     animation: fadeInUp 0.5s ease forwards;
@@ -113,23 +113,46 @@ body {
     to { opacity: 1; transform: translateY(0); }
 }
 
+.sapFCard {
+    position: relative;
+    display: inline-flex
+;
+    flex-direction: column;
+    vertical-align: top;
+    box-sizing: border-box;
+    background: var(--sapTile_Background);
+    box-shadow: var(--sapContent_Shadow0);
+    border-radius: 0rem !important;
+    border: .0625rem solid var(--sapTile_BorderColor);
+    width: 100%;
+    height: auto;
+    font-family: var(--sapFontFamily);
+    font-size: var(--sapFontSize);
+    color: var(--sapGroup_TitleTextColor);
+    outline: none;
+}
+.sapFCard .sapFCardHeader {
+    border-bottom: .0625rem solid var(--sapTile_SeparatorColor);
+    border-radius: 0rem !important;
+}
+
 /* ========================================================= */
 /* === PANEL HEADER GRADIENTS =============================== */
 /* ========================================================= */
 .alerts-panel .sapMPanelHdr {
-    background: linear-gradient(to right, rgba(10,110,209,0.1), transparent);
+    /* background: linear-gradient(to right, rgba(10,110,209,0.1), transparent); */
     border-radius: 6px;
     padding-left: 8px;
 }
 
 .lags-panel .sapMPanelHdr {
-    background: linear-gradient(to right, rgba(10,110,209,0.1), transparent);
+    /* background: linear-gradient(to right, rgba(10,110,209,0.1), transparent); */
     border-radius: 6px;
     padding-left: 8px;
 }
 
 .wow-panel .sapMPanelHdr {
-    background: linear-gradient(to right, rgba(39,174,96,0.1), transparent);
+    /* background: linear-gradient(to right, rgba(39,174,96,0.1), transparent); */
     border-radius: 6px;
     padding-left: 8px;
 }
@@ -140,12 +163,13 @@ body {
 
 /* Alerts Panel */
 .alerts-panel .card-wrapper {
-    border: 2px solid #27ae60;
-    border-radius: 12px;
+   /* border: 2px solid black; */
+    /* border-radius: 12px; */
     padding: 0.5rem;
-    background-color: #ffffff;
+    /* background-color: #ffffff; */
     box-shadow:  0 4px 8px rgba(0, 112, 242, 0.15);
     transition: all 0.3s ease;
+        margin-top: 1rem !important;
 }
 .alerts-panel .card-wrapper:hover {
     box-shadow:  0 4px 8px rgba(0, 112, 242, 0.15);
@@ -154,12 +178,13 @@ body {
 
 /* Lags Panel */
 .lags-panel .lag-box {
-    border: 2px solid #27ae60;
-    border-radius: 10px;
+    /* border: 2px solid black; */
+    /* border-radius: 10px; */
     padding: 0.75rem;
-    background-color: #f9fbff;
+    /* background-color: #f9fbff; */
     box-shadow: 0 4px 8px rgba(0, 112, 242, 0.15);
     transition: all 0.3s ease;
+    margin-top: 1rem !important;
 }
 .lags-panel .lag-box:hover {
     box-shadow: 0 8px 16px rgba(0, 112, 242, 0.25);
@@ -168,12 +193,13 @@ body {
 
 /* WoW Variance (Row 4) */
 .wow-panel .card-wrapper {
-    border: 2px solid #27ae60;
-    border-radius: 12px;
+    /* border: 2px solid black; */
+    /* border-radius: 12px; */
     padding: 0.5rem;
-    background-color: #ffffff;
+    /* background-color: #ffffff; */
     box-shadow: 0 4px 8px rgba(39, 174, 96, 0.15);
     transition: all 0.3s ease;
+    margin-top: 1rem !important;
 }
 .wow-panel .card-wrapper:hover {
     box-shadow: 0 8px 16px rgba(39, 174, 96, 0.3);
@@ -244,5 +270,11 @@ body {
 .sapMVarMngmt .sapUiHLayout.sapMVarMngmtLayout.sapMVarMngmtLayoutModifiedHidden
  {
     grid-template-columns: minmax(0, 1fr) 1px 32px;
-    margin-left: 30px;
+    margin-left: 3rem !important;
+}
+
+.sapMVarMngmt .sapMTitle.sapMVarMngmtTitle {
+    color: var(--sapLinkColor);
+    text-shadow: var(--sapContent_TextShadow);
+    font-size: x-large;
 }

@@ -38,11 +38,11 @@ sap.ui.define([
             that.newChartData = [];
             that.CalendarData = [], that.assemblyData = [], that.cardData = [],
                 that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
-            that.rtrLineData = [], that.prdDmdData = [], that.wowData = [];
+            that.rtrLineData = [], that.prdDmdData = [], that.wowData = [], that._aSelectedWidgets = [];
             this.getLocProd();
             // this._showEmptyAlertsCard("WOW Variance", "MyCardIdFore");
             await this.loadAlertsCards();
-            // this.getVariantData();
+            this.getVariantData();
         },
         getLocationData: async function () {
             const iPageSize = 5000; // tune this depending on your service
@@ -412,6 +412,15 @@ sap.ui.define([
             var filteredProdData = this.prodData.filter(a => a.DEMAND_LOC === selectedData);
             var oJSONProduct = new sap.ui.model.json.JSONModel({ results2: filteredProdData });
             this.getView().setModel(oJSONProduct, "prodModel");
+            if (selectedData !== this.oGModel.getProperty("/defaultLocation")) {
+                that.byId("idMatListVPD").setModified(true);
+            }
+        },
+        onProductChange: function () {
+            var selectedProd = this.byId("productSelect").getSelectedKey();
+            if (selectedProd !== this.oGModel.getProperty("/defaultProduct")) {
+                that.byId("idMatListVPD").setModified(true);
+            }
         },
         onGetData: function () {
             this._loadForecastCard();
@@ -419,7 +428,7 @@ sap.ui.define([
             that.loadAllLags();
             this._loadCharCards();
         },
-        onResetData: function () {
+        onResetData: async function () {
             sap.ui.core.BusyIndicator.show();
             const oAssemblyModel = new sap.ui.model.json.JSONModel({ Assembly: [] });
             this.getView().setModel(oAssemblyModel, "assembly");
@@ -436,9 +445,9 @@ sap.ui.define([
             that.onFilterResetRtr();
             that.onFilterResetPrdDmd();
             that.onFilterResetWOW();
-            // that.loadAlertsCards();
-            that.onAfterRendering();
-
+            this.getLocProd();
+            await this.loadAlertsCards();
+           
         },
 
         // Main method to Data alerts using V4 OData
@@ -475,10 +484,12 @@ sap.ui.define([
 
                 } else {
                     console.warn("[V4 Alerts] No data received -> show empty cards");
+                     sap.ui.core.BusyIndicator.hide();
                     that._setEmptyAlertCards();
                 }
             }).catch(function (oError) {
                 console.error("[V4 Alerts] Error loading data:", oError);
+                 sap.ui.core.BusyIndicator.hide();
                 that._setEmptyAlertCards();
             });
         },
@@ -501,6 +512,7 @@ sap.ui.define([
 
             if (!results || results.length === 0) {
                 console.warn("[V4 Alerts] No alerts -> show empty cards");
+                 sap.ui.core.BusyIndicator.hide();
                 that._setEmptyAlertCards();
                 return;
             }
@@ -632,6 +644,7 @@ sap.ui.define([
                 // SYSTEM ALERTS CARD - Grouped counts
                 if (oSystemCard) {
                     if (systemAlertsCardData.length === 0) {
+                         sap.ui.core.BusyIndicator.hide();
                         that._showEmptyAlertsCard("System Alerts", "MyCardId");
                     } else {
                         oSystemCard.setManifest(
@@ -647,6 +660,7 @@ sap.ui.define([
                 // DATA ALERTS CARD - Individual messages
                 if (oDataCard) {
                     if (dataAlertsCardData.length === 0) {
+                         sap.ui.core.BusyIndicator.hide();
                         that._showEmptyAlertsCard("Data Alerts", "MyCardId1");
                     } else {
                         oDataCard.setManifest(
@@ -681,10 +695,11 @@ sap.ui.define([
                 }
 
                 console.log("[V4 Alerts] All three cards updated successfully");
-
+ sap.ui.core.BusyIndicator.hide();
             } catch (error) {
                 console.error("[V4 Alerts] Error binding cards:", error);
                 that._setEmptyAlertCards();
+                 sap.ui.core.BusyIndicator.hide();
             }
         },
 
@@ -1174,7 +1189,7 @@ sap.ui.define([
             var oPopOver = new sap.viz.ui5.controls.Popover({});
             oPopOver.connect(oVizFrame.getVizUid());
             oVizFrame.setVizProperties({
-                title: { visible: true, text: "WOW Variance" },
+                title: { visible: true, text: "WoW Variance" },
                 plotArea: {
                     dataLabel: { visible: true },
                     colorPalette: ["#5899DA", "#E8743B", "#19A979", "#ED4A7B", "#945ECF", "#13A4B4"]
@@ -2087,7 +2102,7 @@ sap.ui.define([
                 // ✅ Create random widget data before opening
                 const aWidgets = [];
                 const widgetNames = [
-                    "Alerts", "Lags", "WoW Variance Analysis"
+                    "Alerts", "Forecast Accuracy", "WoW Variance Analysis"
                 ];
 
                 for (let i = 0; i < 3; i++) {
@@ -2169,12 +2184,53 @@ sap.ui.define([
             oAlerts.setVisible(aNames.includes("Alerts"));
             oLags.setVisible(aNames.includes("Lags"));
             oForecast.setVisible(aNames.includes("WoW Variance Analysis"));
-
-
+            var defaultWidgets = that.oGModel.getProperty("/defaultWidgets");
+            defaultWidgets = defaultWidgets.sort(that.dynamicSortMultiple("ID"));
+            that._aSelectedWidgets = that._aSelectedWidgets.sort(that.dynamicSortMultiple("ID"));
+            if (
+                JSON.stringify(that._aSelectedWidgets) !== JSON.stringify(defaultWidgets)
+            ) {
+                that.byId("idMatListVPD").setModified(true);
+            }
             // Close popover
             if (this._oWidgetPopover) {
                 this._oWidgetPopover.close();
             }
+        },
+        dynamicSortMultiple: function () {
+            let props = arguments;
+            return function (obj1, obj2) {
+                var i = 0,
+                    result = 0,
+                    numberOfProperties = props.length;
+                /* try getting a different result from 0 (equal)
+                 * as long as we have extra properties to compare
+                 */
+                while (result === 0 && i < numberOfProperties) {
+                    result = that.dynamicSort(props[i])(obj1, obj2);
+                    i++;
+                }
+                return result;
+            };
+        },
+        dynamicSort: function (property) {
+            var sortOrder = 1;
+            if (property[0] === "-") {
+                sortOrder = -1;
+                property = property.substr(1);
+            }
+            return function (a, b) {
+                /* next line works with strings and numbers,
+                 * and you may want to customize it to your needs
+                 */
+                var result =
+                    a[property] < b[property]
+                        ? -1
+                        : a[property] > b[property]
+                            ? 1
+                            : 0;
+                return result * sortOrder;
+            };
         },
         onCloseWidget: function (oEvent) {
             const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
@@ -2200,8 +2256,8 @@ sap.ui.define([
         getVariantData: async function () {
             sap.ui.core.BusyIndicator.show();
             try {
-                // const variantUser = (this.getUser() || "").toLowerCase();
-                const variantUser = "pradeepkumardaka@sbpcorp.in"
+                const variantUser = (this.getUser() || "").toLowerCase();
+                // const variantUser = "pradeepkumardaka@sbpcorp.in"
                 const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
                 this.oGModel.setProperty("/UserId", variantUser);
 
@@ -2254,7 +2310,7 @@ sap.ui.define([
 
                     // Update model on VariantManagement
                     const oViewModel = new sap.ui.model.json.JSONModel({ items12: defaultVariant });
-                    oVariantMgmt.setModel(oViewModel,"viewDetails");
+                    oVariantMgmt.setModel(oViewModel, "viewDetails");
                     oVariantMgmt.setDefaultKey("0");
                     oVariantMgmt.setSelectedKey("0");
 
@@ -2296,7 +2352,7 @@ sap.ui.define([
 
                 // --- Configure VariantManagement UI ---
                 const oViewModel = new sap.ui.model.json.JSONModel({ items12: aProcessed });
-                oVariantMgmt.setModel(oViewModel,"viewDetails");
+                oVariantMgmt.setModel(oViewModel, "viewDetails");
 
                 if (sDefaultVariantId) {
                     oVariantMgmt.setDefaultKey(sDefaultVariantId);
@@ -2323,7 +2379,7 @@ sap.ui.define([
                 const userVariant = this.oGModel.getProperty("/UserId");
 
                 if (!headerData.length) {
-                    sap.m.MessageToast.show("No variant headers found.");
+                    // sap.m.MessageToast.show("No variant headers found.");
                     sap.ui.core.BusyIndicator.hide();
                     return;
                 }
@@ -2388,7 +2444,7 @@ sap.ui.define([
 
                 // --- Assign variant model to control ---
                 const variantModel = new sap.ui.model.json.JSONModel({ items12: uniqueVariants });
-                oVariantMgmt.setModel(variantModel,"viewDetails");
+                oVariantMgmt.setModel(variantModel, "viewDetails");
 
                 // --- Determine active key ---
                 const newVariantFlag = this.oGModel.getProperty("/newVaraintFlag");
@@ -2414,7 +2470,7 @@ sap.ui.define([
                 oVariantMgmt.setDefaultKey(selectedKey);
                 oVariantMgmt.setSelectedKey(selectedKey);
 
-                sap.m.MessageToast.show("Variants loaded successfully");
+                // sap.m.MessageToast.show("Variants loaded successfully");
 
             } catch (err) {
                 console.error("Error in getTotalVariantDetails:", err);
@@ -2431,97 +2487,94 @@ sap.ui.define([
         },
 
         onCreate: async function (oEvent) {
-    sap.ui.core.BusyIndicator.show();
+            sap.ui.core.BusyIndicator.show();
 
-    try {
-        const sLocation = this.byId("LocationSelect").getSelectedKey();
-        const sProduct = this.byId("productSelect").getSelectedKey();
+            try {
+                const sLocation = this.byId("LocationSelect").getSelectedKey();
+                const sProduct = this.byId("productSelect").getSelectedKey();
 
-        if (!sLocation && !sProduct) {
-            sap.m.MessageToast.show("No values selected in filters Location & Product");
-            return;
-        }
+                if (!sLocation && !sProduct) {
+                    sap.m.MessageToast.show("No values selected in filters Location & Product");
+                    return;
+                }
 
-        const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
-        const varName = oEvent.getParameters().name;
-        const sDefault = oEvent.getParameters().def ? "Y" : "N";
-        const sScope = oEvent.getParameters().public ? "Public" : "Private";
-        const flag = oEvent.getParameters().overwrite ? "E" : "X";
+                const appName = this.getOwnerComponent().getManifestEntry("/sap.app/id");
+                const varName = oEvent.getParameters().name;
+                const sDefault = oEvent.getParameters().def ? "Y" : "N";
+                const sScope = oEvent.getParameters().public ? "Public" : "Private";
+                const flag = oEvent.getParameters().overwrite ? "E" : "X";
 
-        // Capture current panel visibility
-        const bAlerts = this.byId("alertsPanel").getVisible();
-        const bLags = this.byId("lagsPanel").getVisible();
-        const bForecast = this.byId("idRow4").getVisible();
+                // Capture current panel visibility
+                const bAlerts = this.byId("alertsPanel").getVisible();
+                const bLags = this.byId("lagsPanel").getVisible();
+                const bForecast = this.byId("idRow4").getVisible();
 
-        // Build payload
-        const dataArray = [];
-        if (sLocation) dataArray.push({ Field: "Location", Value: sLocation, Default: sDefault });
-        if (sProduct) dataArray.push({ Field: "Product", Value: sProduct });
-        dataArray.push({ Field: "ALERTS_VISIBLE", Value: String(bAlerts) });
-        dataArray.push({ Field: "LAGS_VISIBLE", Value: String(bLags) });
-        dataArray.push({ Field: "FORECAST_VISIBLE", Value: String(bForecast) });
+                // Build payload
+                const dataArray = [];
+                if (sLocation) dataArray.push({ Field: "Location", FieldCenter: "1", Value: sLocation, Default: sDefault });
+                if (sProduct) dataArray.push({ Field: "Product", FieldCenter: "1", Value: sProduct });
+                dataArray.push({ Field: "ALERTS_VISIBLE", FieldCenter: "1", Value: String(bAlerts) });
+                dataArray.push({ Field: "LAGS_VISIBLE", FieldCenter: "1", Value: String(bLags) });
+                dataArray.push({ Field: "WOW_VISIBLE", FieldCenter: "1", Value: String(bForecast) });
+                if (flag === "X") {
+                    dataArray.forEach(d => {
+                        d.IDNAME = varName;
+                        d.App_Name = appName;
+                        d.SCOPE = sScope;
+                    });
+                }
+                else if (flag === "E") {
+                    dataArray.forEach(d => {
+                        d.ID = oEvent.getParameters().key
+                        d.IDNAME = varName;
+                        d.App_Name = appName;
+                        d.SCOPE = sScope;
+                    });
+                }
 
-        dataArray.forEach(d => {
-            d.IDNAME = varName;
-            d.App_Name = appName;
-            d.SCOPE = sScope;
-        });
+                // === Execute CAP function ===
+                const oFunction = this.oModel.bindContext("/createVariantPlanner(...)");
+                oFunction.setParameter("Flag", flag);
+                oFunction.setParameter("USER", this.oGModel.getProperty("/UserId"));
+                oFunction.setParameter("VARDATA", JSON.stringify(dataArray));
 
-        // === Execute CAP function ===
-        const oFunction = this.oModel.bindContext("/createVariant(...)");
-        oFunction.setParameter("Flag", flag);
-        oFunction.setParameter("USER", this.oGModel.getProperty("/UserId"));
-        oFunction.setParameter("VARDATA", JSON.stringify(dataArray));
+                await oFunction.execute();
+                const oCtx = oFunction.getBoundContext();
+                if (!oCtx) {
+                    sap.m.MessageToast.show("No response received from backend");
+                    return;
+                }
 
-        await oFunction.execute();
-        const oCtx = oFunction.getBoundContext();
-        if (!oCtx) {
-            sap.m.MessageToast.show("No response received from backend");
-            return;
-        }
+                const oResult = oCtx.getObject();
+                console.log("📦 createVariantPlanner response:", oResult); // debug once
 
-        const oResult = oCtx.getObject();
-        console.log("📦 createVariant response:", oResult); // debug once
+                let value = JSON.parse(oResult.value);
+                if (value.length > 0) {
+                    this.oGModel.setProperty("/newVariant", value);
+                    this.oGModel.setProperty("/newVaraintFlag", "X");
+                    this.byId("idMatListVPD").setModified(false);
+                    that.onResetData();
+                   this.getVariantData()
+                    sap.m.MessageToast.show("Variant created successfully");
+                }
+                else {
+                    sap.m.MessageToast.show("Failed to create variant");
+                }
 
-        // === Normalize response for all CAP versions ===
-        let result = [];
-        if (Array.isArray(oResult)) {
-            result = oResult; // ✅ direct array
-        } else if (oResult?.value && Array.isArray(oResult.value)) {
-            result = oResult.value; // ✅ OData structured array
-        } else if (typeof oResult?.value?.value === "string") {
-            result = JSON.parse(oResult.value.value); // ✅ legacy CAP JSON string
-        } else if (oResult && typeof oResult === "object") {
-            result = [oResult]; // ✅ single object wrapped
-        }
-
-        if (!result || result.length === 0) {
-            sap.m.MessageToast.show("Variant created but no data returned");
-            return;
-        }
-
-        // === Apply result to model ===
-        this.oGModel.setProperty("/newVariant", result);
-        this.oGModel.setProperty("/newVaraintFlag", "X");
-        this.byId("idMatList123VPD").setModified(false);
-        this.onAfterRendering();
-
-        sap.m.MessageToast.show("Variant created successfully");
-
-    } catch (err) {
-        console.error("❌ Variant creation failed:", err);
-        sap.m.MessageToast.show("Failed to create variant");
-    } finally {
-        sap.ui.core.BusyIndicator.hide();
-    }
-},
+            } catch (err) {
+                console.error("❌ Variant creation failed:", err);
+                sap.m.MessageToast.show("Failed to create variant");
+            } finally {
+                sap.ui.core.BusyIndicator.hide();
+            }
+        },
 
         onManage: async function (oEvent) {
             sap.ui.core.BusyIndicator.show();
 
             const totalVariantData = this.oGModel.getProperty("/VariantData");
             const selected = oEvent.getParameters();
-            const variantUser = this.getUser()?.toLowerCase();
+            const variantUser = this.oGModel.getProperty("/UserId");
 
             try {
                 // Deleted Variants
@@ -2531,7 +2584,7 @@ sap.ui.define([
                         .map(item => ({ ID: item.VARIANTID, NAME: item.VARIANTNAME }));
 
                     if (deletedArray.length) {
-                        const delFunc = this.oModel.bindContext("/createVariant(...)");
+                        const delFunc = this.oModel.bindContext("/createVariantPlanner(...)");
                         delFunc.setParameter("Flag", "D");
                         delFunc.setParameter("USER", variantUser);
                         delFunc.setParameter("VARDATA", JSON.stringify(deletedArray));
@@ -2545,7 +2598,7 @@ sap.ui.define([
                     const isStandard = defId === 0;
 
                     if (!isStandard) {
-                        const defFunc = this.oModel.bindContext("/updateVariant(...)");
+                        const defFunc = this.oModel.bindContext("/updateVariantPlanner(...)");
                         const newDefault = totalVariantData
                             .filter(item => item.VARIANTID === defId)
                             .map(v => ({ ...v, DEFAULT: "Y" }));
@@ -2554,8 +2607,8 @@ sap.ui.define([
                         await defFunc.execute();
                     }
                 }
-
-                this.onAfterRendering();
+                this.onResetData();
+                this.getVariantData();
 
             } catch (err) {
                 console.error("Error managing variants", err);
@@ -2579,15 +2632,16 @@ sap.ui.define([
 
                 this.oGModel.setProperty("/variantName", selectedVariantName);
                 this.finaloTokens = [];
-                this.oGModel.setProperty("/defaultLocation", []);
-                this.oGModel.setProperty("/defaultProduct", []);
+                this.oGModel.setProperty("/defaultLocation", '');
+                this.oGModel.setProperty("/defaultProduct", '');
+                this.oGModel.setProperty("/defaultWidgets", []);
 
                 // --- Standard Variant (reset to default UI) ---
                 if (selectedVariantName === "Standard") {
                     ["alertsPanel", "lagsPanel", "idRow4"].forEach(id =>
                         oView.byId(id).setVisible(true)
                     );
-                    sap.m.MessageToast.show("Standard View Loaded");
+                    // sap.m.MessageToast.show("Standard View Loaded");
                     return;
                 }
 
@@ -2604,28 +2658,45 @@ sap.ui.define([
                 // --- Panel visibility ---
                 const alertsVisible = filteredData.find(f => f.FIELD === "ALERTS_VISIBLE")?.VALUE === "true";
                 const lagsVisible = filteredData.find(f => f.FIELD === "LAGS_VISIBLE")?.VALUE === "true";
-                const forecastVisible = filteredData.find(f => f.FIELD === "FORECAST_VISIBLE")?.VALUE === "true";
-
+                const wowVisible = filteredData.find(f => f.FIELD === "WOW_VISIBLE")?.VALUE === "true";
+                if (alertsVisible) {
+                    var object = {};
+                    object.ID = 1;
+                    object.Name = "Alerts";
+                    that._aSelectedWidgets.push(object);
+                }
+                if (lagsVisible) {
+                    var object = {};
+                    object.ID = 2;
+                    object.Name = "Forecast Accuracy";
+                    that._aSelectedWidgets.push(object);
+                }
+                if (wowVisible) {
+                    var object = {};
+                    object.ID = 3;
+                    object.Name = "WoW Variance Analysis";
+                    that._aSelectedWidgets.push(object);
+                }
+                this.oGModel.setProperty("/defaultWidgets", that._aSelectedWidgets);
                 oView.byId("alertsPanel").setVisible(alertsVisible ?? true);
                 oView.byId("lagsPanel").setVisible(lagsVisible ?? true);
-                oView.byId("idRow4").setVisible(forecastVisible ?? true);
+                oView.byId("idRow4").setVisible(wowVisible ?? true);
 
                 // --- Apply filters ---
                 if (locData.length) {
                     const sLocValue = locData[0].VALUE;
                     oView.byId("LocationSelect").setSelectedKey(sLocValue);
                     this.oGModel.setProperty("/defaultLocation", sLocValue);
-                    locData.forEach(d => this.finaloTokens.push({ FIELD: d.FIELD, VALUE: d.VALUE }));
+                    oView.byId("LocationSelect").fireSelectionChange();
                 }
 
                 if (prodData.length) {
                     const sProdValue = prodData[0].VALUE;
                     oView.byId("productSelect").setSelectedKey(sProdValue);
                     this.oGModel.setProperty("/defaultProduct", sProdValue);
-                    prodData.forEach(d => this.finaloTokens.push({ FIELD: d.FIELD, VALUE: d.VALUE }));
                 }
 
-                sap.m.MessageToast.show(`Loaded Variant: ${selectedVariantName}`);
+                // sap.m.MessageToast.show(`Loaded Variant: ${selectedVariantName}`);
 
             } catch (err) {
                 console.error("Error applying variant", err);

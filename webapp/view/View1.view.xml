@@ -24,7 +24,7 @@
                             <Title text="VC Planner Dashboard" level="H1" />
                             <Text text="Sales &amp; Operations Planning for Configurable Products" />
                         </VBox>
-                         <VariantManagement xmlns="sap.m" id="idMatListVPD" select="handleSelectPress" save="onCreate" manage="onManage" supportFavorites="false" showFooter="true" popoverTitle="My Views" items="{viewDetails>/items12}" creationAllowed="true" supportPublic="true" supportApplyAutomatically="false" manageCancel="onManageCancel" cancel="onNameCancel" visible="false">
+                         <VariantManagement xmlns="sap.m" id="idMatListVPD" select="handleSelectPress" save="onCreate" manage="onManage" supportFavorites="false" showFooter="true" popoverTitle="My Views" items="{viewDetails>/items12}" creationAllowed="true" supportPublic="true" supportApplyAutomatically="false" manageCancel="onManageCancel" cancel="onNameCancel" visible="true">
                         <items>
                             <VariantItem key="{viewDetails>VARIANTID}" text="{viewDetails>VARIANTNAME}" author="{viewDetails>USER}" visible="true" remove="{path:'viewDetails>REMOVE', formatter:'.formatter.formatRemove'}" sharing="{viewDetails>SCOPE}" changeable="{path:'viewDetails>CHANGE', formatter:'.formatter.formatChange'}" rename="false" enabled="{path:'viewDetails>ENABLE', formatter:'.formatter.formatEnable'}"/>
                         </items>
@@ -137,7 +137,7 @@
                 <!-- === LAGS PANEL (2x2 Grid) =============================== -->
                 <!-- ========================================================= -->
                 <Panel id="lagsPanel"
-                       headerText="Lags"
+                       headerText="Forecast Accuracy"
                        expandable="true"
                        expanded="false"
                        width="100%"
