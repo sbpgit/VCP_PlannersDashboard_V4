@@ -1,224 +1,189 @@
-/* ========================================================= */
-/* === GLOBAL STYLES ======================================== */
-/* ========================================================= */
+/* =========================================================
+   🌐 GLOBAL LAYOUT
+   ========================================================= */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    min-height: 100vh;
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fb;
     color: #333;
+    margin: 0;
 }
 
+/* Dashboard container alignment */
 .dashboard-container {
     max-width: 1600px;
     margin: 0 auto;
     padding: 20px;
 }
 
+/* =========================================================
+   🧱 HEADER & TITLE AREA
+   ========================================================= */
 .header {
-    background: rgba(255, 255, 255, 0.95);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    padding: 30px;
-    margin-bottom: 0 !important;
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    width: 100% !important;
+    background: #ffffff;
+    padding: 1.5rem 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    box-sizing: border-box;
+    margin: 0 !important;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.header-top {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .logo {
     width: 50px;
     height: 50px;
-    border-radius: 50%; /* Perfectly round */
-    object-fit: cover;  /* Keeps image proportion intact */
-    padding: 3px; /* Space for gradient ring */
-    background: linear-gradient(135deg, #667eea, #764ba2); /* blue-purple ring */
+    border-radius: 50%;
+    object-fit: cover;
+    margin-right: 12px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    padding: 3px;
     box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
-    margin-right: 10px;
 }
 
-.logo img {
-    width: 100%;
-    height: 100%;
-    border-radius: 50%;
-    display: block;
+.title-section h1 {
+    font-size: 28px;
+    color: #2c3e50;
+    margin-bottom: 4px;
+}
+
+.title-section p {
+    color: #7f8c8d;
+    font-size: 14px;
 }
 
 .controls {
     display: flex;
-    gap: 19px;
+    gap: 16px;
+    align-items: flex-end;
 }
 
- .title-section h1 {
-            font-size: 28px;
-            color: #2c3e50;
-            margin-bottom: 5px;
-        }
+/* =========================================================
+   ✨ CARDS, PANELS & VIZ CHARTS
+   ========================================================= */
 
-        .title-section p {
-            color: #7f8c8d;
-            font-size: 14px;
-        }
-
-/* ========================================================= */
-/* === SCROLLBARS, LAYOUT, AND CARDS ======================== */
-/* ========================================================= */
-.scrollable-card .sapFCard .sapFCardContent {
-    max-height: 350px !important;
-    overflow-y: auto !important;
-    scrollbar-width: thin !important;
-    scrollbar-color: #cccccc #f0f0f0 !important;
-}
-
-.scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar {
-    width: 15px !important;
-}
-.scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar-track {
-    background: #f0f0f0 !important;
-}
-.scrollable-card .sapFCard .sapFCardContent::-webkit-scrollbar-thumb {
-    background: #cccccc !important;
-    border-radius: 4px !important;
-}
-
-.sapUiMediumMarginBottom {
-    margin-bottom: 0rem !important;
-}
-
-.main-dashboard {
-    margin-top: 0 !important;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-}
-
+/* Container layout */
 .card-container {
     display: flex;
     flex-wrap: wrap;
     justify-content: space-between;
-    gap: 10px;
+    gap: 12px !important;
+    align-items: stretch;
+    margin-bottom: 1.5rem !important;
 }
 
-.card-container card\:Card {
-    border-radius: 16px;
-    /* background: #fff; */
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
-    transition: all 0.3s ease;
-    animation: fadeInUp 0.5s ease forwards;
-}
-.card-container card\:Card:hover {
-    transform: translateY(-8px);
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.15);
+/* Remove background from wrappers */
+.card-wrapper,
+.lag-box {
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
 }
 
-@keyframes fadeInUp {
-    from { opacity: 0; transform: translateY(15px); }
-    to { opacity: 1; transform: translateY(0); }
+/* Primary card styling */
+.sapFCard,
+.vizFrame-container {
+    border-radius: 10px !important;
+    background-color: #ffffff !important;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08) !important;
+    padding: 1rem !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+    transition: all 0.25s ease-in-out;
+    animation: fadeInUp 0.4s ease forwards;
 }
 
-.sapFCard {
-    position: relative;
-    display: inline-flex
-;
-    flex-direction: column;
-    vertical-align: top;
-    box-sizing: border-box;
-    background: var(--sapTile_Background);
-    box-shadow: var(--sapContent_Shadow0);
-    border-radius: 0rem !important;
-    border: .0625rem solid var(--sapTile_BorderColor);
-    width: 100%;
-    height: auto;
-    font-family: var(--sapFontFamily);
-    font-size: var(--sapFontSize);
-    color: var(--sapGroup_TitleTextColor);
-    outline: none;
-}
-.sapFCard .sapFCardHeader {
-    border-bottom: .0625rem solid var(--sapTile_SeparatorColor);
-    border-radius: 0rem !important;
+/* Hover effect */
+.sapFCard:hover,
+.vizFrame-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15) !important;
+    background-color: #fdfdff !important;
+    border-color: rgba(0, 112, 242, 0.15) !important;
 }
 
-/* ========================================================= */
-/* === PANEL HEADER GRADIENTS =============================== */
-/* ========================================================= */
-.alerts-panel .sapMPanelHdr {
-    /* background: linear-gradient(to right, rgba(10,110,209,0.1), transparent); */
-    border-radius: 6px;
-    padding-left: 8px;
+/* Distinct category left color stripe */
+.alerts-panel .sapFCard {
+    border-left: 4px solid #ff5252 !important;
+}
+.lags-panel .sapFCard {
+    border-left: 4px solid #0070f2 !important;
+}
+.wow-panel .sapFCard {
+    border-left: 4px solid #2ecc71 !important;
 }
 
-.lags-panel .sapMPanelHdr {
-    /* background: linear-gradient(to right, rgba(10,110,209,0.1), transparent); */
-    border-radius: 6px;
-    padding-left: 8px;
+/* =========================================================
+   🧭 CATEGORY-SPECIFIC CHART BACKGROUNDS
+   ========================================================= */
+
+/* Alerts (soft red tint) */
+.alerts-panel .vizFrame-container {
+    background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%) !important;
+    border-left: 4px solid #ff5252 !important;
 }
 
-.wow-panel .sapMPanelHdr {
-    /* background: linear-gradient(to right, rgba(39,174,96,0.1), transparent); */
-    border-radius: 6px;
-    padding-left: 8px;
+/* Forecast Accuracy (soft blue tint) */
+.lags-panel .vizFrame-container {
+    background: linear-gradient(180deg, #f4f8ff 0%, #ffffff 100%) !important;
+    border-left: 4px solid #0070f2 !important;
 }
 
-/* ========================================================= */
-/* === SECTION OUTLINES (CARDS / LAGS / WOW) ================ */
-/* ========================================================= */
-
-/* Alerts Panel */
-.alerts-panel .card-wrapper {
-   /* border: 2px solid black; */
-    /* border-radius: 12px; */
-    padding: 0.5rem;
-    /* background-color: #ffffff; */
-    box-shadow:  0 4px 8px rgba(0, 112, 242, 0.15);
-    transition: all 0.3s ease;
-        margin-top: 1rem !important;
-}
-.alerts-panel .card-wrapper:hover {
-    box-shadow:  0 4px 8px rgba(0, 112, 242, 0.15);
-    transform: translateY(-3px);
+/* WoW Variance (soft green tint) */
+.wow-panel .vizFrame-container {
+    background: linear-gradient(180deg, #f4fff6 0%, #ffffff 100%) !important;
+    border-left: 4px solid #2ecc71 !important;
 }
 
-/* Lags Panel */
-.lags-panel .lag-box {
-    /* border: 2px solid black; */
-    /* border-radius: 10px; */
-    padding: 0.75rem;
-    /* background-color: #f9fbff; */
-    box-shadow: 0 4px 8px rgba(0, 112, 242, 0.15);
-    transition: all 0.3s ease;
-    margin-top: 1rem !important;
-}
-.lags-panel .lag-box:hover {
-    box-shadow: 0 8px 16px rgba(0, 112, 242, 0.25);
-    transform: translateY(-3px);
+/* Chart hover glow */
+.vizFrame-container:hover {
+    box-shadow: 0 10px 25px rgba(0, 112, 242, 0.15);
+    transform: translateY(-6px);
 }
 
-/* WoW Variance (Row 4) */
-.wow-panel .card-wrapper {
-    /* border: 2px solid black; */
-    /* border-radius: 12px; */
-    padding: 0.5rem;
-    /* background-color: #ffffff; */
-    box-shadow: 0 4px 8px rgba(39, 174, 96, 0.15);
-    transition: all 0.3s ease;
-    margin-top: 1rem !important;
-}
-.wow-panel .card-wrapper:hover {
-    box-shadow: 0 8px 16px rgba(39, 174, 96, 0.3);
-    transform: translateY(-3px);
+/* VizFrame inner canvas styling */
+.vizFrame-container .sapVizFrame {
+    border-radius: 8px;
+    background-color: transparent;
+    transition: background 0.25s ease, box-shadow 0.25s ease;
 }
 
-/* ========================================================= */
-/* === CARD HEADER COLOR ==================================== */
-/* ========================================================= */
+/* Chart hover glow intensifies */
+.vizFrame-container:hover .sapVizFrame {
+    background-color: rgba(0, 112, 242, 0.03);
+    box-shadow: 0 4px 16px rgba(0, 112, 242, 0.1);
+}
+
+/* =========================================================
+   💡 CARD HEADERS
+   ========================================================= */
 .sapFCardHeader {
-    background: aliceblue !important;
+    background: #f6f9ff !important;
+    border-bottom: 1px solid #e5e5e5 !important;
+    border-top-left-radius: 10px;
+    border-top-right-radius: 10px;
+    font-weight: 600;
+    padding: 0.75rem 1rem !important;
+    transition: background 0.3s ease;
 }
 
-/* ========================================================= */
-/* === QUICK HELP RIBBON ==================================== */
-/* ========================================================= */
+.sapFCard:hover .sapFCardHeader {
+    background: #e9f0ff !important;
+}
+
+/* =========================================================
+   🧩 QUICK HELP RIBBON
+   ========================================================= */
 .quickHelpRibbon {
     position: fixed;
-    right: 40px; /* Pull slightly out of screen so rounded edge shows */
+    right: 40px;
     top: 40%;
     transform: rotate(-90deg) translateY(50%);
     transform-origin: right center;
@@ -230,7 +195,7 @@ body {
     border-radius: 8px 8px 0 0;
     padding: 0.7rem 1.4rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 9999;
+    z-index: 1000;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -257,24 +222,241 @@ body {
     opacity: 1;
 }
 
-
-/* ========================================================= */
-/* === UTILITIES ============================================ */
-/* ========================================================= */
-.hiddenPanel { display: none !important; }
-
-.v-m-root {
-    background-color: aliceblue;
-}
-/*For variant management*/
-.sapMVarMngmt .sapUiHLayout.sapMVarMngmtLayout.sapMVarMngmtLayoutModifiedHidden
- {
-    grid-template-columns: minmax(0, 1fr) 1px 32px;
-    margin-left: 3rem !important;
+.vcpHelpPopover.sapMPopover,
+.vcpHelpPopover.sapMPopoverCont {
+    z-index: 12000 !important;
 }
 
+/* =========================================================
+   🧮 VARIANT MANAGEMENT
+   ========================================================= */
 .sapMVarMngmt .sapMTitle.sapMVarMngmtTitle {
     color: var(--sapLinkColor);
-    text-shadow: var(--sapContent_TextShadow);
     font-size: x-large;
+}
+
+.sapMVarMngmt .sapUiHLayout.sapMVarMngmtLayout.sapMVarMngmtLayoutModifiedHidden {
+    margin-left: 2rem !important;
+}
+
+/* =========================================================
+   💪 OBJECT PAGE CONTINUOUS FLOW & FULL WIDTH
+   ========================================================= */
+.sapUxAPObjectPageHeaderContent,
+.sapUxAPObjectPageHeaderTitle,
+.sapUxAPObjectPageHeader {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    box-shadow: none !important;
+}
+
+.sapUxAPObjectPageLayout,
+.sapUxAPObjectPageSectionContainer,
+.sapUxAPAnchorBar {
+    max-width: 100% !important;
+    width: 100% !important;
+}
+
+.sapUxAPObjectPageHeaderContent {
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Continuous flow layout */
+.sapUxAPObjectPageSection {
+    margin: 0 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 1.5rem !important;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.sapUxAPObjectPageSubSection {
+    margin-bottom: 1.5rem !important;
+}
+
+/* Section titles */
+.sapUxAPObjectPageSectionHeaderTitle {
+    font-weight: 700 !important;
+    color: #1a2b4c !important;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem !important;
+    text-transform: uppercase;
+}
+
+/* Sticky anchor bar */
+.sapUxAPAnchorBar {
+    position: sticky !important;
+    top: 90px;
+    z-index: 999;
+    background-color: #fff !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Unified background */
+.sapUxAPObjectPageContainer {
+    background: #f9fafc !important;
+}
+
+/* Smooth fade-in animation */
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   🎯 DISTINCT VIZ CHART STYLING PER ANALYSIS TYPE
+   ========================================================= */
+
+/* Base chart container */
+.vizFrame-container,
+.lag-box .sapVizFrame {
+    border-radius: 12px !important;
+    background: #ffffff !important;
+    padding: 1rem !important;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    transition: all 0.3s ease;
+}
+
+/* Hover interaction */
+.vizFrame-container:hover,
+.lag-box:hover .sapVizFrame {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ---------------------------------------------------------
+   🔵 Assembly Lag Analysis
+---------------------------------------------------------- */
+.lag-assembly .vizFrame-container,
+.lag-assembly .sapVizFrame {
+    background: linear-gradient(180deg, #f3f7ff 0%, #ffffff 100%) !important;
+    border-left: 5px solid #0070f2 !important;
+}
+
+/* ---------------------------------------------------------
+   🟣 Option Mix Lag Analysis
+---------------------------------------------------------- */
+.lag-option .vizFrame-container,
+.lag-option .sapVizFrame {
+    background: linear-gradient(180deg, #f9f4ff 0%, #ffffff 100%) !important;
+    border-left: 5px solid #764ba2 !important;
+}
+
+/* ---------------------------------------------------------
+   🔴 Restriction Lag Analysis
+---------------------------------------------------------- */
+.lag-restriction .vizFrame-container,
+.lag-restriction .sapVizFrame {
+    background: linear-gradient(180deg, #fff5f5 0%, #ffffff 100%) !important;
+    border-left: 5px solid #ff5252 !important;
+}
+
+/* ---------------------------------------------------------
+   🟢 Product Demand Lag Analysis
+---------------------------------------------------------- */
+.lag-demand .vizFrame-container,
+.lag-demand .sapVizFrame {
+    background: linear-gradient(180deg, #f5fff7 0%, #ffffff 100%) !important;
+    border-left: 5px solid #2ecc71 !important;
+}
+
+/* ---------------------------------------------------------
+   🪶 Title and text visual balance
+---------------------------------------------------------- */
+.lag-box h3,
+.lag-box .sapMLabel {
+    color: #1a2b4c !important;
+}
+
+.lag-box:hover h3 {
+    color: #0070f2 !important;
+    transition: color 0.3s ease;
+}
+
+/* ---------------------------------------------------------
+   📊 Inner chart padding adjustment
+---------------------------------------------------------- */
+.sapVizFrame {
+    padding: 0.5rem !important;
+    border-radius: 8px !important;
+}
+
+/* Subtle chart separation lines */
+.lag-box:not(:last-child) {
+    margin-bottom: 1.5rem !important;
+}
+/* =========================================================
+   ✅ WoW Variance chart styling (prefix-safe)
+   ========================================================= */
+
+/* Base "card" around the specific VizFrame */
+div[id$="MyCardIdFore"] {
+  background: linear-gradient(180deg, #f4fff8 0%, #ffffff 100%) !important;
+  border-left: 5px solid #2ecc71 !important;
+  border-radius: 12px !important;
+  padding: 12px !important;            /* gives breathing room */
+  box-shadow: 0 3px 8px rgba(0,0,0,0.08) !important;
+  border: 1px solid rgba(0,0,0,0.06) !important;
+  transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease;
+}
+
+/* Hover lift & green glow */
+div[id$="MyCardIdFore"]:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(46,204,113,.25) !important;
+  border-color: rgba(46,204,113,.3) !important;
+}
+
+/* Inner VizFrame canvas polish */
+div[id$="MyCardIdFore"] .sapVizFrame {
+  border-radius: 10px !important;
+  background-color: rgba(46,204,113,.03);
+  transition: background .25s ease, box-shadow .25s ease;
+}
+
+div[id$="MyCardIdFore"]:hover .sapVizFrame {
+  background-color: rgba(46,204,113,.06);
+  box-shadow: 0 4px 14px rgba(46,204,113,.1);
+}
+
+/* Ensure the small KPI card is untouched */
+div[id$="MyCardId2"] {
+  background: #fff !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  transform: none !important;
+}
+/*Stretching filter location, product, go and rest button*/
+.sapFDynamicPageTitleMain>.sapFDynamicPageTitleMainInner .sapFDynamicPageTitleMainHeading .sapFDynamicPageTitleMainHeadingInner {
+    min-width: 1px;
+    max-width: 100%;
+    color: var(--sapGroup_TitleTextColor);
+    margin-top: 0.1875rem;
+    width: 200vh;
+}
+/*Hidding header of section - ALERTS, FORECAST ACCURACY*/
+.sapUiSizeCompact .sapUxAPObjectPageSectionHeader, .sapUxAPObjectPageSectionHeader {
+    height: 2.75rem;
+    line-height: 2.25rem;
+    visibility: hidden;
+}
+.sapUiSizeCompact .sapUxAPObjectPageSectionHeader, .sapUxAPObjectPageSectionHeader {
+    height: 0px !important;
+    line-height: 0px !important;
+    visibility: collapse;
+}
+
+.sapUxAPObjectPageSection .sapUxAPObjectPageSectionContainer .sapUxAPObjectPageSubSection .sapUxAPBlockContainer {
+    padding-bottom: 0.5rem;
+    padding-top: 0.5rem;
+    padding-left: 0;
+    padding-right: 0;
+    background: #fff;
+    margin-left:  0px !important;
+    margin-right:  0px !important;
+    border-radius: .75rem;
 }

@@ -1,165 +1,180 @@
 <mvc:View
     controllerName="vcp.vcplannerdashboard.controller.View1"
     xmlns:mvc="sap.ui.core.mvc"
-    xmlns="sap.m"
+    xmlns:m="sap.m"
     xmlns:core="sap.ui.core"
+    xmlns:uxap="sap.uxap"
     xmlns:card="sap.ui.integration.widgets"
     xmlns:viz="sap.viz.ui5.controls"
     xmlns:viz.data="sap.viz.ui5.data"
-    xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds">
+    xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds"
+    height="100%">
 
-    <Page id="page" showHeader="false">
-        <content>
+    <uxap:ObjectPageLayout
+        id="ObjectPageLayout"
+        showTitleInHeaderContent="true"
+        useIconTabBar="false"
+        alwaysShowContentHeader="true"
+        showAnchorBar="true"
+        enableLazyLoading="false"
+        upperCaseAnchorBar="false">
 
-            <!-- ========================================================= -->
-            <!-- === HEADER SECTION ====================================== -->
-            <!-- ========================================================= -->
-            <VBox class="header">
-                <HBox class="header-top" alignItems="Center" justifyContent="SpaceBetween">
+        <!-- ========================================================= -->
+        <!-- === HEADER ============================================== -->
+        <!-- ========================================================= -->
+        <uxap:headerTitle>
+            <uxap:ObjectPageDynamicHeaderTitle class="header">
+                <uxap:expandedHeading>
+                    <m:VBox width="100%">
+                        <m:HBox class="header-top" alignItems="Center" justifyContent="SpaceBetween" width="100%">
+                            <!-- === Logo and Title === -->
+                            <m:HBox class="logo-section" alignItems="Center">
+                                <m:Image class="logo" id="idHeaderImage" />
+                                <m:VBox class="title-section">
+                                    <m:Title text="VC Planner Dashboard" level="H1" />
+                                    <m:Text text="Sales &amp; Operations Planning for Configurable Products" />
+                                </m:VBox>
 
-                    <!-- Logo & Title -->
-                    <HBox class="logo-section" alignItems="Center">
-                        <Image class="logo" id="idHeaderImage" />
-                        <VBox class="title-section">
-                            <Title text="VC Planner Dashboard" level="H1" />
-                            <Text text="Sales &amp; Operations Planning for Configurable Products" />
-                        </VBox>
-                         <VariantManagement xmlns="sap.m" id="idMatListVPD" select="handleSelectPress" save="onCreate" manage="onManage" supportFavorites="false" showFooter="true" popoverTitle="My Views" items="{viewDetails>/items12}" creationAllowed="true" supportPublic="true" supportApplyAutomatically="false" manageCancel="onManageCancel" cancel="onNameCancel" visible="true">
-                        <items>
-                            <VariantItem key="{viewDetails>VARIANTID}" text="{viewDetails>VARIANTNAME}" author="{viewDetails>USER}" visible="true" remove="{path:'viewDetails>REMOVE', formatter:'.formatter.formatRemove'}" sharing="{viewDetails>SCOPE}" changeable="{path:'viewDetails>CHANGE', formatter:'.formatter.formatChange'}" rename="false" enabled="{path:'viewDetails>ENABLE', formatter:'.formatter.formatEnable'}"/>
-                        </items>
-                    </VariantManagement>
-                    </HBox>
+                                <!-- === Variant Management === -->
+                                <m:VariantManagement
+                                    id="idMatListVPD"
+                                    select="handleSelectPress"
+                                    save="onCreate"
+                                    manage="onManage"
+                                    supportFavorites="false"
+                                    showFooter="true"
+                                    popoverTitle="My Views"
+                                    items="{viewDetails>/items12}"
+                                    creationAllowed="true"
+                                    supportPublic="true"
+                                    supportApplyAutomatically="false"
+                                    manageCancel="onManageCancel"
+                                    cancel="onNameCancel"
+                                    visible="true">
+                                    <m:items>
+                                        <m:VariantItem
+                                            key="{viewDetails>VARIANTID}"
+                                            text="{viewDetails>VARIANTNAME}"
+                                            author="{viewDetails>USER}"
+                                            visible="true"
+                                            remove="{path:'viewDetails>REMOVE', formatter:'.formatter.formatRemove'}"
+                                            sharing="{viewDetails>SCOPE}"
+                                            changeable="{path:'viewDetails>CHANGE', formatter:'.formatter.formatChange'}"
+                                            rename="false"
+                                            enabled="{path:'viewDetails>ENABLE', formatter:'.formatter.formatEnable'}" />
+                                    </m:items>
+                                </m:VariantManagement>
+                            </m:HBox>
 
-                    <!-- Controls -->
-                    <HBox class="controls" alignItems="Center" justifyContent="End">
-                        <VBox class="control-group">
-                            <Label text="Location" id="idLoc"/>
-                            <ComboBox id="LocationSelect"
-                                      items="{locModel>/results1}"
-                                      showSecondaryValues="true"
-                                      selectionChange=".onLocationChange"
-                                      placeholder="Select Location">
-                                <core:ListItem key="{locModel>DEMAND_LOC}"
-                                               text="{locModel>DEMAND_DESC}"
-                                               additionalText="{locModel>DEMAND_LOC}" />
-                            </ComboBox>
-                        </VBox>
+                            <!-- === Filters and Buttons === -->
+                            <m:HBox class="controls" alignItems="Center" justifyContent="End">
+                                <m:VBox class="control-group">
+                                    <m:Label text="Location" />
+                                    <m:ComboBox
+                                        id="LocationSelect"
+                                        items="{locModel>/results1}"
+                                        showSecondaryValues="true"
+                                        selectionChange=".onLocationChange"
+                                        placeholder="Select Location">
+                                        <core:ListItem
+                                            key="{locModel>DEMAND_LOC}"
+                                            text="{locModel>DEMAND_DESC}"
+                                            additionalText="{locModel>DEMAND_LOC}" />
+                                    </m:ComboBox>
+                                </m:VBox>
 
-                        <VBox class="control-group">
-                            <Label text="Product" id="idProd" />
-                            <ComboBox id="productSelect"
-                                      items="{prodModel>/results2}"
-                                      showSecondaryValues="true"
-                                      selectionChange=".onProductChange"
-                                      placeholder="Select Product">
-                                <core:ListItem key="{prodModel>PRODUCT_ID}"
-                                               text="{prodModel>PROD_DESC}"
-                                               additionalText="{prodModel>PRODUCT_ID}" />
-                            </ComboBox>
-                        </VBox>
+                                <m:VBox class="control-group">
+                                    <m:Label text="Product" />
+                                    <m:ComboBox
+                                        id="productSelect"
+                                        items="{prodModel>/results2}"
+                                        showSecondaryValues="true"
+                                        selectionChange=".onProductChange"
+                                        placeholder="Select Product">
+                                        <core:ListItem
+                                            key="{prodModel>PRODUCT_ID}"
+                                            text="{prodModel>PROD_DESC}"
+                                            additionalText="{prodModel>PRODUCT_ID}" />
+                                    </m:ComboBox>
+                                </m:VBox>
 
-                        <VBox>
-                            <Label text="" />
-                            <Button id="idBtnPD" press="onGetData" text="Go" type="Emphasized" />
-                        </VBox>
+                                <m:VBox>
+                                    <m:Label text="" />
+                                    <m:Button id="idBtnPD" press="onGetData" text="Go" type="Emphasized" />
+                                </m:VBox>
 
-                        <VBox>
-                            <Label text="" />
-                            <Button id="idResetPD" press="onResetData" text="Reset" />
-                        </VBox>
+                                <m:VBox>
+                                    <m:Label text="" />
+                                    <m:Button id="idResetPD" press="onResetData" text="Reset" />
+                                </m:VBox>
 
-                        <VBox>
-                            <Label text="" />
-                            <Button id="idWidget" press="onAdaptWidgets" text="Adapt Widgets" />
-                        </VBox>
-                    </HBox>
-                </HBox>
-            </VBox>
+                                <m:VBox>
+                                    <m:Label text="" />
+                                    <m:Button id="idWidget" press="onAdaptWidgets" text="Adapt Widgets" />
+                                </m:VBox>
+                            </m:HBox>
+                        </m:HBox>
+                    </m:VBox>
+                </uxap:expandedHeading>
+            </uxap:ObjectPageDynamicHeaderTitle>
+        </uxap:headerTitle>
 
-            <!-- ========================================================= -->
-            <!-- === MAIN DASHBOARD ====================================== -->
-            <!-- ========================================================= -->
-            <VBox class="main-dashboard" justifyContent="Start" width="100%">
-                <Button id="quickHelpRibbon"
-                        text="Quick Help"
-                        icon="sap-icon://sys-help"
-                        press="onOpenQuickHelp"
-                        class="quickHelpRibbon"/>
+        <!-- ========================================================= -->
+        <!-- === SECTIONS ============================================ -->
+        <!-- ========================================================= -->
+        <uxap:sections>
 
-                <!-- ========================================================= -->
-                <!-- === ALERTS PANEL ======================================== -->
-                <!-- ========================================================= -->
-                <Panel id="alertsPanel"
-                       headerText="Alerts"
-                       expandable="true"
-                       expanded="true"
-                       width="100%"
-                       class="sapUiNoContentPadding sapUiMediumMarginBottom alerts-panel">
-
-                    <VBox width="100%">
-                        <!-- ROW 1 -->
-                        <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
-                            <items>
-                                <VBox class="card-wrapper smallCard" width="30%">
-                                    <items>
+            <!-- 🟦 Alerts Section -->
+            <uxap:ObjectPageSection id="alertsPanel" title="Alerts">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <uxap:blocks>
+                            <m:VBox width="100%">
+                                <m:HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                                    <m:VBox class="card-wrapper smallCard" width="30%">
                                         <card:Card id="MyCardId" height="400px" />
-                                    </items>
-                                </VBox>
-
-                                <VBox class="card-wrapper largeCard" width="69%">
-                                    <items>
+                                    </m:VBox>
+                                    <m:VBox class="card-wrapper largeCard" width="69%">
                                         <card:Card id="MyCardId3" height="400px" />
-                                    </items>
-                                </VBox>
-                            </items>
-                        </HBox>
+                                    </m:VBox>
+                                </m:HBox>
 
-                        <!-- ROW 2 -->
-                        <HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
-                            <items>
-                                <VBox class="card-wrapper" width="49%">
-                                    <items>
+                                <m:HBox class="card-container" alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                                    <m:VBox class="card-wrapper" width="49%">
                                         <card:Card id="MyCardId1" height="400px" width="100%" />
-                                    </items>
-                                </VBox>
-                                <VBox class="card-wrapper" width="50%">
-                                    <items>
+                                    </m:VBox>
+                                    <m:VBox class="card-wrapper" width="50%">
                                         <card:Card id="MyCardId4" height="400px" width="100%" />
-                                    </items>
-                                </VBox>
-                            </items>
-                        </HBox>
-                    </VBox>
-                </Panel>
+                                    </m:VBox>
+                                </m:HBox>
+                            </m:VBox>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
 
-                <!-- ========================================================= -->
-                <!-- === LAGS PANEL (2x2 Grid) =============================== -->
-                <!-- ========================================================= -->
-                <Panel id="lagsPanel"
-                       headerText="Forecast Accuracy"
-                       expandable="true"
-                       expanded="false"
-                       width="100%"
-                       class="sapUiNoContentPadding sapUiMediumMarginBottom lags-panel">
-
-                    <VBox width="100%">
+            <!-- 🟩 Forecast Accuracy Section -->
+            <uxap:ObjectPageSection id="lagsPanel" title="Forecast Accuracy">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <uxap:blocks>
+                           <m:VBox width="100%">
 
                         <!-- ROW 1: Assembly + Option Mix -->
-                        <HBox class="sapUiMediumMarginBottom"
+                        <m:HBox class="sapUiMediumMarginBottom"
                               alignItems="Start"
                               justifyContent="SpaceBetween"
                               wrap="Wrap">
-                            <items>
+                            <m:items>
 
                                 <!-- ASSEMBLY LAG -->
-                                <VBox width="49%" class="lag-box lag-assembly sapUiSmallMarginEnd sapUiSmallMarginBottom">
-                                    <Title text="Assembly Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
-                                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
-                                        <items>
-                                            <VBox>
-                                                <Label id="idFac" text="Factory Location" required="true"/>
-                                                <ComboBox id="cbFactory"
+                                <m:VBox width="49%" class="lag-box lag-assembly sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                    <m:Title text="Assembly Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                                    <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                                        <m:items>
+                                            <m:VBox>
+                                                <m:Label id="idFac" text="Factory Location" required="true"/>
+                                                <m:ComboBox id="cbFactory"
                                                           items="{location>/Location}"
                                                           showSecondaryValues="true"
                                                           selectionChange=".onFacLocChange"
@@ -167,30 +182,30 @@
                                                     <core:ListItem key="{location>FACTORY_LOC}"
                                                                    text="{location>LOCATION_DESC}"
                                                                    additionalText="{location>FACTORY_LOC}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label id="idAss" text="Assembly" required="true"/>
-                                                <ComboBox id="cbAssembly"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label id="idAss" text="Assembly" required="true"/>
+                                                <m:ComboBox id="cbAssembly"
                                                           items="{assembly>/Assembly}"
                                                           showSecondaryValues="true"
                                                           selectionChange=".onAssemblyChange"
                                                           placeholder="Select Assembly">
                                                     <core:ListItem key="{assembly>ASSEMBLY}" text="{assembly>ASSEMBLY}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label id="idMonth" text="Month" required="true"/>
-                                                <ComboBox id="cbMonth"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label id="idMonth" text="Month" required="true"/>
+                                                <m:ComboBox id="cbMonth"
                                                           items="{calendar>/MONTH}"
                                                           showSecondaryValues="true"
                                                           selectionChange=".onAssemblyGo"
                                                           placeholder="Select Month">
                                                     <core:ListItem key="{calendar>MONTH}" text="{calendar>MONTH}" />
-                                                </ComboBox>
-                                            </VBox>
-                                        </items>
-                                    </HBox>
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                        </m:items>
+                                    </m:HBox>
 
                                     <viz:VizFrame id="idWFModel"
                                                   uiConfig="{applicationSet:'fiori'}"
@@ -212,16 +227,16 @@
                                             <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
                                         </viz:feeds>
                                     </viz:VizFrame>
-                                </VBox>
+                                </m:VBox>
 
                                 <!-- OPTION MIX LAG -->
-                                <VBox width="49%" class="lag-box lag-option sapUiSmallMarginBottom">
-                                    <Title text="Option Mix Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
-                                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
-                                        <items>
-                                            <VBox>
-                                                <Label text="Factory Location" required="true"/>
-                                                <ComboBox id="cbFactoryPL"
+                                <m:VBox width="49%" class="lag-box lag-option sapUiSmallMarginBottom">
+                                    <m:Title text="Option Mix Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                                    <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                                        <m:items>
+                                            <m:VBox>
+                                                <m:Label text="Factory Location" required="true"/>
+                                                <m:ComboBox id="cbFactoryPL"
                                                           items="{filters>/Factory_loc}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onOptFacChange"
@@ -229,40 +244,40 @@
                                                     <core:ListItem key="{filters>FACTORY_LOC}"
                                                                    text="{filters>LOCATION_DESC}"
                                                                    additionalText="{filters>FACTORY_LOC}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label text="Month" required="true"/>
-                                                <ComboBox id="cbMonthPL"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label text="Month" required="true"/>
+                                                <m:ComboBox id="cbMonthPL"
                                                           items="{calendarOpt>/Month}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onOptMonthChange"
                                                           placeholder="Select Month">
                                                     <core:ListItem key="{calendarOpt>MONTH}" text="{calendarOpt>MONTH}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label text="Char." required="true"/>
-                                                <ComboBox id="cbCharPL"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label text="Char." required="true"/>
+                                                <m:ComboBox id="cbCharPL"
                                                           items="{characteristic>/CHARA_NUM}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onOptCharChange"
                                                           placeholder="Select Characteristic">
                                                     <core:ListItem key="{characteristic>CHAR_NUM}" text="{characteristic>CHAR_NUM}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label text="Char. Value" required="true"/>
-                                                <ComboBox id="cbCharValPL"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label text="Char. Value" required="true"/>
+                                                <m:ComboBox id="cbCharValPL"
                                                           items="{characteristicValue>/CHARA_VALUE}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onOptMixGo"
                                                           placeholder="Select Char. Value">
                                                     <core:ListItem key="{characteristicValue>CHAR_VALUE}" text="{characteristicValue>CHAR_VALUE}" />
-                                                </ComboBox>
-                                            </VBox>
-                                        </items>
-                                    </HBox>
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                        </m:items>
+                                    </m:HBox>
 
                                     <viz:VizFrame id="idOptMixWF"
                                                   uiConfig="{applicationSet:'fiori'}"
@@ -284,23 +299,23 @@
                                             <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
                                         </viz:feeds>
                                     </viz:VizFrame>
-                                </VBox>
+                                </m:VBox>
 
-                            </items>
-                        </HBox>
+                            </m:items>
+                        </m:HBox>
 
                         <!-- ROW 2: Restriction + Product Demand -->
-                        <HBox alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
-                            <items>
+                        <m:HBox alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                            <m:items>
 
                                 <!-- RESTRICTION LAG -->
-                                <VBox width="49%" class="lag-box lag-restriction sapUiSmallMarginEnd sapUiSmallMarginBottom">
-                                    <Title text="Restriction Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
-                                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
-                                        <items>
-                                            <VBox>
-                                                <Label text="Factory Location" required="true"/>
-                                                <ComboBox id="cbFactoryPR"
+                                <m:VBox width="49%" class="lag-box lag-restriction sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                    <m:Title text="Restriction Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                                    <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                                        <m:items>
+                                            <m:VBox>
+                                                <m:Label text="Factory Location" required="true"/>
+                                                <m:ComboBox id="cbFactoryPR"
                                                           items="{filters>/Factory_loc}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onRtrLocChange"
@@ -308,40 +323,40 @@
                                                     <core:ListItem key="{filters>FACTORY_LOC}"
                                                                    text="{filters>LOCATION_DESC}"
                                                                    additionalText="{filters>FACTORY_LOC}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label text="Month" required="true"/>
-                                                <ComboBox id="cbMonthPR"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label text="Month" required="true"/>
+                                                <m:ComboBox id="cbMonthPR"
                                                           items="{calendarRtr>/MonthRtr}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onRtrMonthChange"
                                                           placeholder="Select Month">
                                                     <core:ListItem key="{calendarRtr>MONTH}" text="{calendarRtr>MONTH}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label text="Line" required="true"/>
-                                                <ComboBox id="cbLinePR"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label text="Line" required="true"/>
+                                                <m:ComboBox id="cbLinePR"
                                                           items="{LINEIDRT>/LINEIDRTR}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onRtrLineChange"
                                                           placeholder="Select Line">
                                                     <core:ListItem key="{LINEIDRT>LINE_ID}" text="{LINEIDRT>LINE_ID}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label text="Restriction" required="true"/>
-                                                <ComboBox id="cbRstrPR"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label text="Restriction" required="true"/>
+                                                <m:ComboBox id="cbRstrPR"
                                                           items="{RTRID>/RTR_ID}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onRtrGo"
                                                           placeholder="Select Restriction">
                                                     <core:ListItem key="{RTRID>RESTRICTION}" text="{RTRID>RESTRICTION}" />
-                                                </ComboBox>
-                                            </VBox>
-                                        </items>
-                                    </HBox>
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                        </m:items>
+                                    </m:HBox>
 
                                     <viz:VizFrame id="idRTRWF"
                                                   uiConfig="{applicationSet:'fiori'}"
@@ -363,16 +378,16 @@
                                             <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
                                         </viz:feeds>
                                     </viz:VizFrame>
-                                </VBox>
+                                </m:VBox>
 
                                 <!-- PRODUCT DEMAND LAG -->
-                                <VBox width="49%" class="lag-box lag-demand sapUiSmallMarginBottom">
-                                    <Title text="Product Demand Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
-                                    <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
-                                        <items>
-                                            <VBox>
-                                                <Label text="Factory Location" required="true"/>
-                                                <ComboBox id="cbFactoryDL"
+                                <m:VBox width="49%" class="lag-box lag-demand sapUiSmallMarginBottom">
+                                    <m:Title text="Product Demand Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                                    <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                                        <m:items>
+                                            <m:VBox>
+                                                <m:Label text="Factory Location" required="true"/>
+                                                <m:ComboBox id="cbFactoryDL"
                                                           items="{filters>/Factory_loc}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onPrdDmdLocChange"
@@ -380,20 +395,20 @@
                                                     <core:ListItem key="{filters>FACTORY_LOC}"
                                                                    text="{filters>LOCATION_DESC}"
                                                                    additionalText="{filters>FACTORY_LOC}" />
-                                                </ComboBox>
-                                            </VBox>
-                                            <VBox>
-                                                <Label text="Month" required="true"/>
-                                                <ComboBox id="cbMonthDL"
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                            <m:VBox>
+                                                <m:Label text="Month" required="true"/>
+                                                <m:ComboBox id="cbMonthDL"
                                                           items="{calendarPrdDmd>/MonthPrd}"
                                                           showSecondaryValues="true"
                                                           selectionChange="onPrdDmdGo"
                                                           placeholder="Select Month">
                                                     <core:ListItem key="{calendarPrdDmd>MONTH}" text="{calendarPrdDmd>MONTH}" />
-                                                </ComboBox>
-                                            </VBox>
-                                        </items>
-                                    </HBox>
+                                                </m:ComboBox>
+                                            </m:VBox>
+                                        </m:items>
+                                    </m:HBox>
 
                                     <viz:VizFrame id="idPRDDMDWF"
                                                   uiConfig="{applicationSet:'fiori'}"
@@ -415,85 +430,97 @@
                                             <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
                                         </viz:feeds>
                                     </viz:VizFrame>
-                                </VBox>
+                                </m:VBox>
 
-                            </items>
-                        </HBox>
+                            </m:items>
+                        </m:HBox>
 
-                    </VBox>
-                </Panel>
+                    </m:VBox>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
 
-                <!-- ========================================================= -->
-                <!-- === ROW 4 - WOW VARIANCE ================================ -->
-                <!-- ========================================================= -->
-                <HBox id="idRow4"
-                      class="card-container wow-panel sapUiMediumMarginBottom"
-                      alignItems="Start"
-                      justifyContent="SpaceBetween"
-                      wrap="Wrap">
-                    <items>
-                        <VBox class="card-wrapper" width="25%">
-                            <items>
-                                <card:Card id="MyCardId2" height="500px" width="100%" />
-                            </items>
-                        </VBox>
+            <!-- 🟨 WoW Variance Section -->
+            <uxap:ObjectPageSection id="idRow4" title="WoW Variance">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <uxap:blocks>
+                            <m:HBox
+                                id="idRow5"
+                                class="card-container wow-panel sapUiMediumMarginBottom"
+                                alignItems="Start"
+                                justifyContent="SpaceBetween"
+                                wrap="Wrap">
+                                <!-- <m:VBox class="card-wrapper" width="25%">
+                                    <card:Card id="MyCardId2" height="500px" width="100%" />
+                                </m:VBox> -->
 
-                        <VBox class="card-wrapper" width="74%">
-                            <items>
-                                <Title text="WoW Variance Analysis" level="H3" class="sapUiSmallMarginBottom" />
-                                <HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
-                                    <items>
-                                        <VBox>
-                                            <Label text="Type" required="true" />
-                                            <ComboBox id="idWOW"
+                                <m:VBox class="card-wrapper" width="99%">
+                                    <m:Title text="WoW Variance Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                                    <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
+                                    <m:items>
+                                        <m:VBox>
+                                            <m:Label text="Type" required="true" />
+                                            <m:ComboBox id="idWOW"
                                                       items="{wowModel>/options}"
                                                       selectedKey="{wowModel>/selectedKey}"
                                                       showSecondaryValues="true"
                                                       placeholder="Select Type"
                                                       selectionChange=".onTypeChange">
                                                 <core:ListItem key="{wowModel>key}" text="{wowModel>text}" />
-                                            </ComboBox>
-                                        </VBox>
-                                        <VBox>
-                                            <Label text="Variance" required="true"/>
-                                            <ComboBox id="idVariance"
+                                            </m:ComboBox>
+                                        </m:VBox>
+                                        <m:VBox>
+                                            <m:Label text="Variance" required="true"/>
+                                            <m:ComboBox id="idVariance"
                                                       items="{wowModelVariance>/Variance}"
                                                       selectedKey="{wowModelVariance>/selectedKey}"
                                                       showSecondaryValues="true"
                                                       placeholder="Select Variance"
                                                       selectionChange=".onVarianceChange">
                                                 <core:ListItem key="{wowModelVariance>key}" text="{wowModelVariance>text}" />
-                                            </ComboBox>
-                                        </VBox>
-                                    </items>
-                                </HBox>
+                                            </m:ComboBox>
+                                        </m:VBox>
+                                    </m:items>
+                                </m:HBox>
+                                    <viz:VizFrame
+                                        id="MyCardIdFore"
+                                        uiConfig="{applicationSet:'fiori'}"
+                                        vizType="column"
+                                        height="400px"
+                                        width="100%">
+                                        <viz:dataset>
+                                            <viz.data:FlattenedDataset data="{wowVariance>/wowVarianceType}">
+                                                <viz.data:dimensions>
+                                                    <viz.data:DimensionDefinition name="Week Desc" value="{wowVariance>THIS_WEEK_DATE}" />
+                                                </viz.data:dimensions>
+                                                <viz.data:measures>
+                                                    <viz.data:MeasureDefinition name="Percentage Variance" value="{wowVariance>PERCENT_DIFF_WOW}" />
+                                                </viz.data:measures>
+                                            </viz.data:FlattenedDataset>
+                                        </viz:dataset>
+                                        <viz:feeds>
+                                            <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Week Desc" />
+                                            <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Percentage Variance" />
+                                        </viz:feeds>
+                                    </viz:VizFrame>
+                                </m:VBox>
+                            </m:HBox>
+                        </uxap:blocks>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
 
-                                <viz:VizFrame id="MyCardIdFore"
-                                              uiConfig="{applicationSet:'fiori'}"
-                                              vizType="column"
-                                              height="400px"
-                                              width="100%">
-                                    <viz:dataset>
-                                        <viz.data:FlattenedDataset data="{wowVariance>/wowVarianceType}">
-                                            <viz.data:dimensions>
-                                                <viz.data:DimensionDefinition name="Week Desc" value="{wowVariance>THIS_WEEK_DATE}" />
-                                            </viz.data:dimensions>
-                                            <viz.data:measures>
-                                                <viz.data:MeasureDefinition name="Percentage Variance" value="{wowVariance>PERCENT_DIFF_WOW}" />
-                                            </viz.data:measures>
-                                        </viz.data:FlattenedDataset>
-                                    </viz:dataset>
-                                    <viz:feeds>
-                                        <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Week Desc" />
-                                        <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Percentage Variance" />
-                                    </viz:feeds>
-                                </viz:VizFrame>
-                            </items>
-                        </VBox>
-                    </items>
-                </HBox>
+        </uxap:sections>
+    </uxap:ObjectPageLayout>
 
-            </VBox>
-        </content>
-    </Page>
+    <!-- Floating Quick Help Button -->
+    <m:Button
+        id="quickHelpRibbon"
+        text="Quick Help"
+        icon="sap-icon://sys-help"
+        press="onOpenQuickHelp"
+        class="quickHelpRibbon"
+         />
 </mvc:View>

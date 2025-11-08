@@ -43,6 +43,7 @@ sap.ui.define([
             // this._showEmptyAlertsCard("WOW Variance", "MyCardIdFore");
             await this.loadAlertsCards();
             this.getVariantData();
+             this.addStyleClass("vcpHelpPopover");
         },
         getLocationData: async function () {
             const iPageSize = 5000; // tune this depending on your service
@@ -127,7 +128,7 @@ sap.ui.define([
             this.byId("productSelect").setSelectedKey("");
 
             // Load cards
-            this._loadForecastCard();
+            // this._loadForecastCard();
             // this.loadProcessAlertsCard();
         },
 
@@ -423,7 +424,7 @@ sap.ui.define([
             }
         },
         onGetData: function () {
-            this._loadForecastCard();
+            // this._loadForecastCard();
             this.loadAlertsCards();
             that.loadAllLags();
             this._loadCharCards();
@@ -436,7 +437,7 @@ sap.ui.define([
             that.getView().setModel(calendarModel, "calendar");
             const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: [] });
             this.getView().setModel(oModel, "filters");
-            that.byId("lagsPanel").setExpanded(false);
+            // that.byId("lagsPanel").setExpanded(false);
             this.byId("LocationSelect").setSelectedKey("");
             this.byId("productSelect").setSelectedKey("");
             //Reset asselbly lag
@@ -447,7 +448,7 @@ sap.ui.define([
             that.onFilterResetWOW();
             this.getLocProd();
             await this.loadAlertsCards();
-           
+
         },
 
         // Main method to Data alerts using V4 OData
@@ -484,12 +485,12 @@ sap.ui.define([
 
                 } else {
                     console.warn("[V4 Alerts] No data received -> show empty cards");
-                     sap.ui.core.BusyIndicator.hide();
+                    sap.ui.core.BusyIndicator.hide();
                     that._setEmptyAlertCards();
                 }
             }).catch(function (oError) {
                 console.error("[V4 Alerts] Error loading data:", oError);
-                 sap.ui.core.BusyIndicator.hide();
+                sap.ui.core.BusyIndicator.hide();
                 that._setEmptyAlertCards();
             });
         },
@@ -512,7 +513,7 @@ sap.ui.define([
 
             if (!results || results.length === 0) {
                 console.warn("[V4 Alerts] No alerts -> show empty cards");
-                 sap.ui.core.BusyIndicator.hide();
+                sap.ui.core.BusyIndicator.hide();
                 that._setEmptyAlertCards();
                 return;
             }
@@ -644,7 +645,7 @@ sap.ui.define([
                 // SYSTEM ALERTS CARD - Grouped counts
                 if (oSystemCard) {
                     if (systemAlertsCardData.length === 0) {
-                         sap.ui.core.BusyIndicator.hide();
+                        sap.ui.core.BusyIndicator.hide();
                         that._showEmptyAlertsCard("System Alerts", "MyCardId");
                     } else {
                         oSystemCard.setManifest(
@@ -660,7 +661,7 @@ sap.ui.define([
                 // DATA ALERTS CARD - Individual messages
                 if (oDataCard) {
                     if (dataAlertsCardData.length === 0) {
-                         sap.ui.core.BusyIndicator.hide();
+                        sap.ui.core.BusyIndicator.hide();
                         that._showEmptyAlertsCard("Data Alerts", "MyCardId1");
                     } else {
                         oDataCard.setManifest(
@@ -695,11 +696,11 @@ sap.ui.define([
                 }
 
                 console.log("[V4 Alerts] All three cards updated successfully");
- sap.ui.core.BusyIndicator.hide();
+                sap.ui.core.BusyIndicator.hide();
             } catch (error) {
                 console.error("[V4 Alerts] Error binding cards:", error);
                 that._setEmptyAlertCards();
-                 sap.ui.core.BusyIndicator.hide();
+                sap.ui.core.BusyIndicator.hide();
             }
         },
 
@@ -812,7 +813,7 @@ sap.ui.define([
                     },
                     "footer": {
                         "paginator": {
-                            "pageSize": 7
+                            "pageSize": 6
                         }
                     }
                 }
@@ -865,7 +866,7 @@ sap.ui.define([
                     },
                     "footer": {
                         "paginator": {
-                            "pageSize": 7
+                            "pageSize": 6
                         }
                     }
                 }
@@ -913,7 +914,7 @@ sap.ui.define([
                     },
                     "footer": {
                         "paginator": {
-                            "pageSize": 7
+                            "pageSize": 6
                         }
                     }
                 }
@@ -2073,81 +2074,66 @@ sap.ui.define([
         },
         // 
         onAdaptWidgets: function (oEvent) {
-            var oView = this.getView();
-            var oButton = oEvent.getSource();
-            var that = this;
+            const oView = this.getView();
+            const oButton = oEvent.getSource();
+            const that = this;
 
+            // ✅ Helper function to (re)apply selections
+            function applyWidgetSelections(oPopover) {
+                const oTable = sap.ui.core.Fragment.byId(oView.getId(), "idWidgetTable");
+                if (!oTable) return;
+
+                if (that._aSelectedWidgets && that._aSelectedWidgets.length > 0) {
+                    oTable.removeSelections(); // clear before re-selecting
+                    oTable.getItems().forEach(item => {
+                        const oData = item.getBindingContext().getObject();
+                        if (that._aSelectedWidgets.some(w => w.ID === oData.ID)) {
+                            oTable.setSelectedItem(item, true);
+                        }
+                    });
+                } 
+            }
+
+            // ✅ If popover already exists, reuse it
             if (this._oWidgetPopover) {
-                try {
-                    if (this._oWidgetPopover.isOpen && this._oWidgetPopover.isOpen()) {
-                        this._oWidgetPopover.close();
-                    } else {
-                        this._oWidgetPopover.openBy(oButton);
-                    }
-                } catch (e) {
-                    console.error("Error toggling popover:", e);
+                if (this._oWidgetPopover.isOpen && this._oWidgetPopover.isOpen()) {
+                    this._oWidgetPopover.close();
+                } else {
+                    applyWidgetSelections(this._oWidgetPopover); // 🔁 re-apply selection each time it opens
+                    this._oWidgetPopover.openBy(oButton);
                 }
                 return;
             }
 
-            // Load fragment only once
-            Fragment.load({
+            // ✅ Load fragment first time
+            sap.ui.core.Fragment.load({
                 id: oView.getId(),
                 name: "vcp.vcplannerdashboard.view.AdaptWidgets",
                 controller: this
             }).then(function (oPopover) {
-
                 oView.addDependent(oPopover);
                 that._oWidgetPopover = oPopover;
-                // ✅ Create random widget data before opening
-                const aWidgets = [];
-                const widgetNames = [
-                    "Alerts", "Forecast Accuracy", "WoW Variance Analysis"
-                ];
 
-                for (let i = 0; i < 3; i++) {
-                    aWidgets.push({
-                        ID: i + 1,
-                        Name: widgetNames[i]
-                    });
-                }
+                // Mock widget data
+                const widgetNames = ["Alerts", "Forecast Accuracy", "WoW Variance Analysis"];
+                const aWidgets = widgetNames.map((name, i) => ({ ID: i + 1, Name: name }));
 
-                // ✅ Create JSON model and set to popover
                 const oWidgetModel = new sap.ui.model.json.JSONModel({
                     widgetCollection: aWidgets
                 });
                 oPopover.setModel(oWidgetModel);
 
-                if (typeof oPopover.openBy === "function") {
-                    oPopover.attachAfterOpen(function () {
-                        const oTable = Fragment.byId(oView.getId(), "idWidgetTable");
+                // Attach afterOpen for first-time rendering
+                oPopover.attachAfterOpen(function () {
+                    applyWidgetSelections(oPopover);
+                });
 
-                        if (that._aSelectedWidgets && that._aSelectedWidgets.length > 0) {
-                            // reselect previously saved ones
-                            oTable.getItems().forEach(item => {
-                                const oData = item.getBindingContext().getObject();
-                                if (that._aSelectedWidgets.some(w => w.ID === oData.ID)) {
-                                    oTable.setSelectedItem(item, true);
-                                }
-                            });
-                        } else {
-                            // first time: select all
-                            if (oTable && oTable.selectAll) {
-                                oTable.selectAll();
-                            }
-                        }
-                    });
-                    oPopover.openBy(oButton);
-                    console.log("AdaptWidgets popover opened");
-                } else {
-                    console.error("Loaded fragment does not support openBy()");
-
-                }
+                oPopover.openBy(oButton);
             }).catch(function (oError) {
-                console.error("Failed to load fragment");
-
+                console.error("Failed to load AdaptWidgets fragment:", oError);
             });
         },
+
         onWidgetSearch: function (oEvent) {
             const sQuery = oEvent.getParameter("newValue");
             const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
@@ -2182,7 +2168,7 @@ sap.ui.define([
             const oForecast = this.byId("idRow4");
 
             oAlerts.setVisible(aNames.includes("Alerts"));
-            oLags.setVisible(aNames.includes("Lags"));
+            oLags.setVisible(aNames.includes("Forecast Accuracy"));
             oForecast.setVisible(aNames.includes("WoW Variance Analysis"));
             var defaultWidgets = that.oGModel.getProperty("/defaultWidgets");
             defaultWidgets = defaultWidgets.sort(that.dynamicSortMultiple("ID"));
@@ -2554,7 +2540,7 @@ sap.ui.define([
                     this.oGModel.setProperty("/newVaraintFlag", "X");
                     this.byId("idMatListVPD").setModified(false);
                     that.onResetData();
-                   this.getVariantData()
+                    this.getVariantData()
                     sap.m.MessageToast.show("Variant created successfully");
                 }
                 else {
@@ -2641,7 +2627,18 @@ sap.ui.define([
                     ["alertsPanel", "lagsPanel", "idRow4"].forEach(id =>
                         oView.byId(id).setVisible(true)
                     );
-                    // sap.m.MessageToast.show("Standard View Loaded");
+                    var object = {};
+                    object.ID = 1;
+                    object.Name = "Alerts";
+                    that._aSelectedWidgets.push(object);
+                    var object = {};
+                    object.ID = 2;
+                    object.Name = "Forecast Accuracy";
+                    that._aSelectedWidgets.push(object);
+                    var object = {};
+                    object.ID = 3;
+                    object.Name = "WoW Variance Analysis";
+                    that._aSelectedWidgets.push(object);
                     return;
                 }
 
