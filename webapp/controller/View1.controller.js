@@ -222,21 +222,31 @@ sap.ui.define([
         },
         onResetData: async function () {
             sap.ui.core.BusyIndicator.show();
-            const oAssemblyModel = new sap.ui.model.json.JSONModel({ Assembly: [] });
-            this.getView().setModel(oAssemblyModel, "assembly");
-            const calendarModel = new sap.ui.model.json.JSONModel({ MONTH: [] });
-            that.getView().setModel(calendarModel, "calendar");
-            const oModel = new sap.ui.model.json.JSONModel({ Factory_loc: [] });
-            this.getView().setModel(oModel, "filters");
-            // that.byId("lagsPanel").setExpanded(false);
+            const calendarModelStart = new sap.ui.model.json.JSONModel({ MONTHDATA: [] });
+            that.getView().setModel(calendarModelStart, "calendarStart");
+            const calendarModelEnd = new sap.ui.model.json.JSONModel({ MONTHDATAEND: [] });
+            that.getView().setModel(calendarModelEnd, "calendarEnd");
+            const olocModel = new sap.ui.model.json.JSONModel({ Location: [] });
+            this.getView().setModel(olocModel, "location");
             this.byId("LocationSelect").setSelectedKey("");
             this.byId("productSelect").setSelectedKey("");
-            //Reset asselbly lag
-            that.onFilterResetAssembly();
-            that.onFilterResetOptMix();
-            that.onFilterResetRtr();
-            that.onFilterResetPrdDmd();
-            that.onFilterResetWOW();
+            this.byId("cbFactory").setSelectedKey("");
+            this.byId("cbStartMonth").setSelectedKey("");
+            this.byId("cbEndMonth").setSelectedKey("");
+
+            // that.totalFilterData = undefined;
+            that.oGModel.setProperty("/showPivot", false);
+            that.oGModel.setProperty("/tableType", 'Table');
+            sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
+            that.allData = [];
+            var existingDiv = document.querySelector('[id*="mainDivLag"]');
+            if (existingDiv.children.length > 0) {
+                while (existingDiv.firstChild) {
+                    existingDiv.removeChild(existingDiv.firstChild);
+                }
+            }
+            var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: [] });
+            this.getView().setModel(oModel, "wowVariance");
             this.getLocProd();
             await this.loadAlertsCards();
 
