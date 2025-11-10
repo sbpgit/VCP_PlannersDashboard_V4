@@ -64,7 +64,7 @@ sap.ui.define([
                     })
                 ]
             });
-            
+
             if (!that.keyFrag) {
                 that.keyFrag = sap.ui.xmlfragment("vcp.vcplannerdashboard.fragments.keyFigure", that);
                 that.getView().addDependent(that.keyFrag);
@@ -235,7 +235,7 @@ sap.ui.define([
             // that.totalFilterData = undefined;
             that.oGModel.setProperty("/showPivot", false);
             that.oGModel.setProperty("/tableType", 'Table');
-            sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
+            // sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
             that.allData = [];
             var existingDiv = document.querySelector('[id*="mainDivLag"]');
             if (existingDiv.children.length > 0) {
@@ -1168,8 +1168,9 @@ sap.ui.define([
         },
         onFacLocChange: async function (oEvent) {
             sap.ui.core.BusyIndicator.show();
-            var calendarDate = that.totalAssemblyData.filter(id => id.FACTORY_LOC === oEvent.getParameters().selectedItem.getKey());
-            calendarDate = that.removeDuplicates(that.totalAssemblyData, "MONTH");
+            // var calendarDate = that.totalAssemblyData.filter(id => id.FACTORY_LOC === oEvent.getParameters().selectedItem.getKey());
+            var calendarDate = that.oGModel.getProperty("/CalendarData");
+            // calendarDate = that.removeDuplicates(that.totalAssemblyData, "MONTH");
             var calendarDateEnd = calendarDate;
             const calendarModelStart = new sap.ui.model.json.JSONModel({ MONTHDATA: calendarDate });
             that.getView().setModel(calendarModelStart, "calendarStart");
@@ -1177,38 +1178,52 @@ sap.ui.define([
             that.getView().setModel(calendarModelEnd, "calendarEnd");
             var oCalendarStart = this.byId("cbStartMonth");
             var oCalendarEnd = this.byId("cbEndMonth");
+            const date = new Date();
+            const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000)
+                .toISOString()
+                .split("T")[0];
             setTimeout(() => {
-                var aItems = calendarDate;
+                const aItems = calendarDate;
                 if (aItems.length > 0) {
-                    oCalendarStart.setSelectedKey(aItems[0].MONTH);
-                    // oCalendarStart.fireSelectionChange({ selectedItem: aItems[0] });
-                    oCalendarEnd.setSelectedKey(aItems[0].MONTH);
-                    oCalendarEnd.fireSelectionChange({ selectedItem: aItems[0] });
+                    const index = aItems.findIndex(id =>
+                        id.WEEK_STARTDATE <= local && id.WEEK_ENDDATE >= local
+                    );
+
+                    if (index !== -1) {
+                        const endIndex = (index + 4 < aItems.length) ? index + 4 : aItems.length - 1;
+
+                        oCalendarStart.setSelectedKey(aItems[index].PERIODDESC);
+                        oCalendarEnd.setSelectedKey(aItems[endIndex].PERIODDESC);
+
+                        // Fire selection events if required
+                        // oCalendarStart.fireSelectionChange({ selectedItem: aItems[index] });
+                        oCalendarEnd.fireSelectionChange({ selectedItem: aItems[endIndex] });
+                    }
                 }
             }, 200);
             sap.ui.core.BusyIndicator.hide();
         },
-        onAssemblyChange: function (oEvent) {
-            var startSelected = oEvent.getParameters().selectedItem.getKey();
-            var facLoc = that.byId("cbFactory").getSelectedKey();
-            var aAllResults = that.totalAssemblyData.filter(id => id.FACTORY_LOC === facLoc);
-            aAllResults = that.removeDuplicates(aAllResults, "MONTH");
-            function parseFiscalMonth(fm) {
-                const [, year, period] = fm.match(/FY(\d{2}) P(\d{2})/) || [];
-                return year && period ? Number(year) * 100 + Number(period) : 0;
-            }
-            aAllResults = aAllResults.filter(d => parseFiscalMonth(d.MONTH) >= parseFiscalMonth(startSelected));
-            const calendarModelEnd = new sap.ui.model.json.JSONModel({ MONTHDATAEND: aAllResults });
-            that.getView().setModel(calendarModelEnd, "calendarEnd");
-            var oCalendar = this.byId("cbEndMonth");
-            setTimeout(() => {
-                var aItems = aAllResults;
-                if (aItems.length > 0) {
-                    oCalendar.setSelectedKey(aItems[0].MONTH);
-                    oCalendar.fireSelectionChange({ selectedItem: aItems[0] });
-                }
-            }, 200);
-        },
+        // onAssemblyChange: function (oEvent) {
+        //     var startSelected = oEvent.getParameters().selectedItem.getKey();
+        //     var facLoc = that.byId("cbFactory").getSelectedKey();
+        //     var aAllResults = that.totalAssemblyData.filter(id => id.FACTORY_LOC === facLoc);
+        //     aAllResults = that.removeDuplicates(aAllResults, "MONTH");
+        //     function parseFiscalMonth(fm) {
+        //         const [, year, period] = fm.match(/FY(\d{2}) P(\d{2})/) || [];
+        //         return year && period ? Number(year) * 100 + Number(period) : 0;
+        //     }
+        //     aAllResults = aAllResults.filter(d => parseFiscalMonth(d.MONTH) >= parseFiscalMonth(startSelected));
+        //     const calendarModelEnd = new sap.ui.model.json.JSONModel({ MONTHDATAEND: aAllResults });
+        //     that.getView().setModel(calendarModelEnd, "calendarEnd");
+        //     var oCalendar = this.byId("cbEndMonth");
+        //     setTimeout(() => {
+        //         var aItems = aAllResults;
+        //         if (aItems.length > 0) {
+        //             oCalendar.setSelectedKey(aItems[0].MONTH);
+        //             oCalendar.fireSelectionChange({ selectedItem: aItems[0] });
+        //         }
+        //     }, 200);
+        // },
 
         onGo: async function () {
             try {
@@ -1254,7 +1269,7 @@ sap.ui.define([
                     });
                     data = oRes;
                     that.staticColumns = ["Line", "Restriction", "Lag Month"]
-                     that.byId("idkeyFig").setVisible(false);
+                    that.byId("idkeyFig").setVisible(false);
                 }
                 if (type === "Characteristic") {
                     oRes = await that.callFunction("getOptPercentLagFun", {
@@ -1262,7 +1277,7 @@ sap.ui.define([
                     });
                     data = oRes;
                     that.staticColumns = ["Characteristic", "Characteristic value", "Lag Month"]
-                     that.byId("idkeyFig").setVisible(false);
+                    that.byId("idkeyFig").setVisible(false);
                 }
                 that.allData = data;
                 // that.allData.forEach(o => {
@@ -1398,7 +1413,7 @@ sap.ui.define([
             var oBinding = oEvent.getSource().getBinding("items");
             oBinding.filter([oFilter]);
         },
-       updateQty() {
+        updateQty() {
             that.ActualQty = [];
             that.NormalQty = [];
 
@@ -1547,7 +1562,7 @@ sap.ui.define([
                         existingDiv.removeChild(existingDiv.firstChild);
                     }
                 }
-                return MessageToast.show("No Data");
+                return MessageToast.show("No Data in Forecast accuracy for the selections");
             }
 
             that.oGModel.setProperty("/showPivot", true);

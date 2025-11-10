@@ -193,7 +193,7 @@
                                                           showSecondaryValues="true"
                                                           selectionChange=".onAssemblyChange"
                                                           placeholder="Select Start Month">
-                                                    <core:ListItem key="{calendarStart>MONTH}" text="{calendarStart>MONTH}" />
+                                                    <core:ListItem key="{calendarStart>PERIODDESC}" text="{calendarStart>PERIODDESC}" />
                                                 </m:ComboBox>
                                             </m:VBox>
                                             <m:VBox>
@@ -203,7 +203,7 @@
                                                           showSecondaryValues="true"
                                                           selectionChange=".onGo"
                                                           placeholder="Select End Month">
-                                                    <core:ListItem key="{calendarEnd>MONTH}" text="{calendarEnd>MONTH}" />
+                                                    <core:ListItem key="{calendarEnd>PERIODDESC}" text="{calendarEnd>PERIODDESC}" />
                                                 </m:ComboBox>
                                             </m:VBox>
                                         </m:items>
