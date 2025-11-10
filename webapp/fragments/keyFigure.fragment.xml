@@ -1,0 +1,44 @@
+<core:FragmentDefinition
+    xmlns="sap.m"
+    xmlns:core="sap.ui.core"
+>
+    <Dialog
+        contentHeight="25vh"
+        contentWidth="20vw"
+        title="Key Figures"
+        draggable="true"
+        resizable="true"
+    >
+        <Table
+            id="idkeyTablelag"
+            selectionChange="checkSelect"
+            items="{
+    path: '/data',
+    templateShareable: true
+}"
+            showNoData="false"
+            mode="MultiSelect"
+        >
+            <columns>
+                <Column />
+                <Column />
+                <Column />
+            </columns>
+            <items>
+                <ColumnListItem selected="{select}">
+                    <cells>
+                        <Text text="{field}" />
+                    </cells>
+                </ColumnListItem>
+            </items>
+        </Table>
+        <beginButton>
+            <Button
+                tooltip="OK"
+                text="OK"
+                type="Emphasized"
+                press="onAddKey"
+            />
+        </beginButton>
+    </Dialog>
+</core:FragmentDefinition>

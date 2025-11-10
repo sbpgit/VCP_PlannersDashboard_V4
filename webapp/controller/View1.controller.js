@@ -42,7 +42,10 @@ sap.ui.define([
             that.rtrLineData = [], that.prdDmdData = [], that.wowData = [], that._aSelectedWidgets = [];
             that.oGModel.setProperty("/showPivot", false);
             that.oGModel.setProperty("/tableType", 'Table');
-            that.staticColumns = ["Assembly", "Lag Month"]
+            that.staticColumns = ["Assembly", "Lag Month"];
+            const afilter = [
+                new Filter("LEVEL", FilterOperator.EQ, "M")
+            ];
             that.loadFragments();
             this.getLocProd();
             // this._showEmptyAlertsCard("WOW Variance", "MyCardIdFore");
@@ -61,15 +64,10 @@ sap.ui.define([
                     })
                 ]
             });
-            if (!that._valueHelpDialogAsmb) {
-                that._valueHelpDialogAsmb = sap.ui.xmlfragment("vcp.vcplannerdashboard.fragments.Assembly", that);
-                that.getView().addDependent(that._valueHelpDialogAsmb);
-                that.oHBox.getItems()[0].setText("Assembly");
-                that._valueHelpDialogAsmb._oDialog.insertContent(that.oHBox.clone(), 1);
-            }
-            if (!that.AsmbTable) {
-                that.AsmbTable = sap.ui.xmlfragment("vcp.vcplannerdashboard.fragments.AsmbTable", that);
-                that.getView().addDependent(that.AsmbTable);
+            
+            if (!that.keyFrag) {
+                that.keyFrag = sap.ui.xmlfragment("vcp.vcplannerdashboard.fragments.keyFigure", that);
+                that.getView().addDependent(that.keyFrag);
             }
         },
         getLocationData: async function () {
@@ -233,7 +231,7 @@ sap.ui.define([
             this.byId("cbFactory").setSelectedKey("");
             this.byId("cbStartMonth").setSelectedKey("");
             this.byId("cbEndMonth").setSelectedKey("");
-
+            that.keySettingData = undefined
             // that.totalFilterData = undefined;
             that.oGModel.setProperty("/showPivot", false);
             that.oGModel.setProperty("/tableType", 'Table');
@@ -1237,7 +1235,10 @@ sap.ui.define([
                     });
                     data = oRes;
                     that.staticColumns = ["Assembly", "Lag Month"];
-                    that.byId("idAsmBtn").setVisible(true);
+                    if (that.KeyFig) {
+                        that.staticColumns = that.KeyFig;
+                    }
+                    that.byId("idkeyFig").setVisible(true);
                 }
                 if (type === "Product") {
                     oRes = await that.callFunction("getPrdDmdLagFun", {
@@ -1245,7 +1246,7 @@ sap.ui.define([
                     });
                     data = oRes;
                     that.staticColumns = ["Location", "Product", "Lag Month"]
-                    that.byId("idAsmBtn").setVisible(false);
+                    that.byId("idkeyFig").setVisible(false);
                 }
                 if (type === "Restriction") {
                     oRes = await that.callFunction("getRestrictionLagFun", {
@@ -1253,7 +1254,7 @@ sap.ui.define([
                     });
                     data = oRes;
                     that.staticColumns = ["Line", "Restriction", "Lag Month"]
-                    that.byId("idAsmBtn").setVisible(false);
+                     that.byId("idkeyFig").setVisible(false);
                 }
                 if (type === "Characteristic") {
                     oRes = await that.callFunction("getOptPercentLagFun", {
@@ -1261,17 +1262,17 @@ sap.ui.define([
                     });
                     data = oRes;
                     that.staticColumns = ["Characteristic", "Characteristic value", "Lag Month"]
-                    that.byId("idAsmBtn").setVisible(false);
+                     that.byId("idkeyFig").setVisible(false);
                 }
                 that.allData = data;
-                that.allData.forEach(o => {
-                    if (o.ASSEMBLY_DESC)
-                        if (!assembly.includes(o.ASSEMBLY_DESC))
-                            assembly.push(o.ASSEMBLY_DESC);
-                })
+                // that.allData.forEach(o => {
+                //     if (o.ASSEMBLY_DESC)
+                //         if (!assembly.includes(o.ASSEMBLY_DESC))
+                //             assembly.push(o.ASSEMBLY_DESC);
+                // })
                 that.updateQty();
-                if (type === "Assembly")
-                    sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel({ asmDetails: assembly.map(a => { return { ASSEMBLY_DESC: a } }) }));
+                // if (type === "Assembly")
+                //     sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel({ asmDetails: assembly.map(a => { return { ASSEMBLY_DESC: a } }) }));
                 that.loadPivotTable(that.allData);
                 that.getView().setBusy(false);
             } catch (error) {
@@ -1319,29 +1320,77 @@ sap.ui.define([
         onChnageType() {
             that.onGo();
         },
-        onOpenAsm() {
-            that.AsmbTable.open();
-            // sap.ui.getCore().byId("charDetailsDialog").setModel(that.CharModel);
-            sap.ui.getCore().byId("asmDetailsDialog").fireSearch({
-                value: ""
-            });
-        },
-        onAssemblySelectionFinish: async function (oEvent) {
-
-            const aSelectedItems = oEvent.getParameter("selectedItems");
-            that.selectChar = aSelectedItems;
-            if (aSelectedItems.length == 0) {
-                that.loadPivotTable(that.allData);
-                return;
+        onPressKey() {
+            that.keyFrag.open();
+            const table = sap.ui.getCore().byId("idkeyTablelag");
+            that.table = table;
+            if (!that.keySettingData) {
+                that.keySettingData = [{
+                    field: "Assembly",
+                    select: true
+                },
+                {
+                    field: "MRP Group",
+                    select: false
+                },
+                {
+                    field: "Lag Month",
+                    select: true
+                }
+                ];
+                var oModel = new JSONModel({
+                    data: that.keySettingData,
+                });
+                table.setModel(oModel);
             }
-            let tempdata = JSON.parse(JSON.stringify(that.allData));
-            const asm = [];
-            aSelectedItems.forEach(function (item) {
+        },
+        onPressKey() {
+            that.keyFrag.open();
+            const table = sap.ui.getCore().byId("idkeyTablelag");
+            that.table = table;
+            if (!that.keySettingData) {
+                that.keySettingData = [{
+                    field: "Assembly",
+                    select: true
+                },
+                {
+                    field: "MRP Group",
+                    select: false
+                },
+                {
+                    field: "Lag Month",
+                    select: true
+                }
+                ];
+                var oModel = new JSONModel({
+                    data: that.keySettingData,
+                });
+                table.setModel(oModel);
+            }
+        },
+        onAddKey: function () {
+            try {
+                const dataTable = that.table;
+                const selectItems = dataTable.getSelectedItems();
+                const keyFig = selectItems.map((col) => {
+                    return col.getBindingContext().getObject().field
+                });
+                that.KeyFig = keyFig;
+                that.staticColumns = keyFig;
+                that.loadPivotTable(that.allData);
+                that.keyFrag.close();
+            } catch (error) {
+                console.error("Error in onAddColumn:", error);
+            }
+        },
+        checkSelect: function () {
+            const table = that.table;
+            table.getItems().forEach((item, index) => {
                 const obj = item.getBindingContext().getObject();
-                asm.push(obj.ASSEMBLY_DESC);
+                if (obj.field === "Assembly" || obj.field === "Lag Month") {
+                    item.setSelected(true);
+                }
             });
-            tempdata = tempdata.filter(o => asm.includes(o.ASSEMBLY_DESC));
-            that.loadPivotTable(tempdata);
         },
         handleSearchs: function (oEvent) {
             var sValue = oEvent.getParameter("value");
@@ -1349,29 +1398,52 @@ sap.ui.define([
             var oBinding = oEvent.getSource().getBinding("items");
             oBinding.filter([oFilter]);
         },
-        updateQty() {
+       updateQty() {
             that.ActualQty = [];
             that.NormalQty = [];
-            let text = that.byId("idMapTypeGroup").getSelectedButton().getText()
+
+            let text = that.byId("idMapTypeGroup").getSelectedButton().getText();
             let val;
             if (text === "MAPE") {
-                val = "MAPE"
+                val = "MAPE";
+            } else if (text === "MAPE Quantity") {
+                val = "MAPE_QTY";
+            } else if (text === "Lag Quantity") {
+                val = "LAG_QTY";
             }
-            else if (text === "MAPE Quantity") {
-                val = "MAPE_QTY"
-            }
-            else if (text === "Lag Quantity") {
-                val = "LAG_QTY"
-            }
+
+            const type = that.byId("idTypeBox").getSelectedKey();
+
+            // Using Maps to aggregate values by key
+            const actualMap = new Map();
+            const normalMap = new Map();
+
             that.allData.forEach(o => {
-                if (o.LAG_MONTH == 0)
-                    that.ActualQty.push(o[val]);
-                else
-                    that.NormalQty.push(o[val]);
-                // if (o.ASSEMBLY)
-                //     if (!assembly.includes(o.ASSEMBLY))
-                //         assembly.push(o.ASSEMBLY);
-            })
+                let key;
+                if (type === "Assembly") {
+                    key = `${o.ASSEMBLY_DESC}_${o.SELECTED_MONTH}`;
+                } else if (type === "Product") {
+                    key = `${o.LOCATION_ID}_${o.PRODUCT_ID}_${o.SELECTED_MONTH}`;
+                } else if (type === "Restriction") {
+                    key = `${o.LINE_ID}_${o.RESTRICTION}_${o.SELECTED_MONTH}`;
+                } else if (type === "Characteristic") {
+                    key = `${o.CHAR_DESC}_${o.CHARVAL_DESC}_${o.SELECTED_MONTH}`;
+                }
+
+                const value = o[val] || 0;
+
+                if (o.LAG_MONTH == 0) {
+                    // Sum values for ActualQty
+                    actualMap.set(key, (actualMap.get(key) || 0) + value);
+                } else {
+                    // Sum values for NormalQty
+                    normalMap.set(key, (normalMap.get(key) || 0) + value);
+                }
+            });
+
+            // Convert Maps to arrays
+            that.ActualQty = Array.from(actualMap.values());
+            that.NormalQty = Array.from(normalMap.values());
         },
         onSelectMapType(e) {
             that.updateQty();
@@ -1384,10 +1456,16 @@ sap.ui.define([
                 let label;
                 switch (key) {
                     case "CHAR_NUM":
+                        label = "Characteristic Id";
+                        break;
+                    case "CHAR_DESC":
                         label = "Characteristic";
                         break;
-                    case "CHARVAL_NUM":
+                    case "CHARVAL_DESC":
                         label = "Characteristic value";
+                        break;
+                    case "CHARVAL_NUM":
+                        label = "Characteristic Id value";
                         break;
                     case "LINE_ID":
                         label = "Line";
@@ -1396,13 +1474,19 @@ sap.ui.define([
                         label = "Restriction";
                         break;
                     case "FACTORY_LOC":
-                        label = "Factory Location";
+                        label = "Manufacturing Location";
                         break;
                     case "LOCATION_ID":
                         label = "Location";
                         break;
+                    case "LOCATION_DESC":
+                        label = "Location Description";
+                        break;
                     case "PRODUCT_ID":
                         label = "Product"
+                        break;
+                    case "PROD_DESC":
+                        label = "Product Description"
                         break;
                     case "ASSEMBLY":
                         label = "Assembly ID";
@@ -1437,6 +1521,9 @@ sap.ui.define([
                     case "MAPE_QTY_ABS":
                         label = "MAPE Quantity (Absolute)";
                         break;
+                    case "MRP_GROUP":
+                        label = "MRP Group";
+                        break;
                     case "MAPE_QTY":
                         label = "MAPE Quantity";
                         break;
@@ -1452,7 +1539,7 @@ sap.ui.define([
         },
         loadPivotTable: function (data, rows, val) {
             if (!data.length) {
-                that.oGModel.setProperty("/showPivot", false);
+                // that.oGModel.setProperty("/showPivot", false);
                 that.byId('pivotPageLag').setBusy(false);
                 var existingDiv = document.querySelector(`[id*=mainDiv]`);
                 if (existingDiv && existingDiv.children.length > 0) {
@@ -1506,17 +1593,52 @@ sap.ui.define([
                 that.value = val;
                 let
                     // cols = ["Telescopic Week", "Actual Quantity"]
-                    cols = ["Telescopic Week"]
+                    cols = ["Telescopic Week"];
+                const labels = [
+                    "Characteristic",
+                    "Characteristic value",
+                    "Characteristic Id",
+                    "Characteristic Id value",
+                    "Location Description",
+                    "Product Description",
+                    "Line",
+                    "Restriction",
+                    "Manufacturing Location",
+                    "Location",
+                    "Product",
+                    "Assembly ID",
+                    "Assembly",
+                    "MRP Group",
+                    "MRP Type",
+                    "Telescopic Week",
+                    "Lag Month",
+                    "Actual Month"
+                ];
+
+                const remaainlabel = labels.filter(l => !rows.includes(l) && !cols.includes(l));
+
+                remaainlabel.push("Lag Quantity",
+                    "Actual Quantity",
+                    "MAPE",
+                    "MAPE Quantity (Absolute)",
+                    "MAPE Quantity");
+
                 $(pivotDiv).pivotUI(pivotData, {
                     rows: rows,
                     cols: cols,
                     vals: val, // Just use one value for simple sum
                     aggregatorName: "Sum",
                     rendererName: "Heatmap",
-                    showUI: false,
+                    showUI: that.byId("idFilterCheck").getSelected(),
+                    // hiddenAttributes: remaainlabel,
+                    // onRefresh: function (config) {
+
+                    // },
+                    hiddenFromDragDrop: remaainlabel,
                     sorters: {
                         // [cols]: () => 0
                     },
+
                     renderers: $.extend(
                         $.pivotUtilities.renderers,
                         $.pivotUtilities.plotly_renderers
@@ -1527,7 +1649,7 @@ sap.ui.define([
                             rowTotals: false
                         },
                         heatmap: {
-                            colorScaleGenerator: function (values, _) {
+                            colorScaleGenerator: function (values) {
                                 const ignoreValues = that.ActualQty;
                                 const normalValue = that.NormalQty;
 
@@ -1560,24 +1682,29 @@ sap.ui.define([
                         }
                     }
                 });
-                if (isTableType) {
-                    // Call function for table-type visualization
+                that.loadPivotCss();
+                $('.pvtFilterBox button:contains("Apply")').on('click.myTracker', function (e) {
                     that.loadPivotCss();
-                } else {
-                    setTimeout(that.makeChartResponsiveWidth, 500);
-                    // Call function for chart-type visualization
-                }
-
+                });
                 that.byId('pivotPageLag').setBusy(false);
             } else {
                 console.error("Pivot.js or jQuery is not loaded yet.");
                 that.byId('pivotPageLag').setBusy(false);
             }
         },
+        onFilter() {
+            that.loadPivotTable(that.allData);
+        },
         loadPivotCss() {
             $(".pvtTable").ready(function () {
                 setTimeout(function () {
                     // Handle chart renderer control
+
+
+                    // Hide last row (totals row)
+                    // $(".pvtTable").find("tr:last").hide();
+                    // $(".pvtTable").find('thead:first tr:first th:last-child').hide();
+
                     // Adjust vertical alignment for headers with large rowspan
                     $(".pvtTable").find('th[rowspan]').each(function () {
                         if (parseInt($(this).attr('rowspan')) > 7) {
@@ -1586,10 +1713,116 @@ sap.ui.define([
                     });
 
                     $(".pvtTable").find('th').each(function () {
-                        if ($(this).text().trim() === '0') {
+                        const text = $(this).text().trim();
+
+                        // Replace '0' with 'Actual'
+                        if (text === '0') {
                             $(this).html("Actual");
                         }
+
+                        // Highlight the header that matches curWeek
+                        if (text === that.curWeek) {
+                            $(this).css("background-color", "#ffe08a"); // light yellow highlight
+                        }
                     });
+
+                    const allWeek = $(".mainDivClass .pvtTable").find("thead tr:first th");
+
+                    if (that.calWeekData && that.calWeekData.length)
+                        $(allWeek).each(function (e) {
+                            const cellText = $(this).text();
+                            $(this).addClass("weekHeader");
+
+                            const popoverHtml = `
+                    <div class="popover">
+                        <div class="popover-content">
+                            <div class="date-row">
+                                <span class="date-label">From:</span>
+                                <span class="From${cellText}">28 April 2025</span>
+                            </div>
+                            <div class="date-row">
+                                <span class="date-label">To:</span>
+                                <span class="To${cellText}">05 May 2025</span>
+                            </div>
+                        </div>
+                    </div>`;
+
+                            // Add popover to header cell
+                            $(this).append(popoverHtml);
+
+                            // On hover, update date
+                            $(this).hover(function () {
+                                that.updateDate(cellText);
+                            });
+                        });
+
+
+
+                    // $(".pvtTable").find('tbody tr').each(function () {
+                    //     var hasEmptyCell = false;
+                    //     $(this).find('th').each(function (e) {
+                    //         if ($(this).text().trim() === "") {
+                    //             hasEmptyCell = true;
+                    //         }
+                    //     });
+                    //     if (hasEmptyCell) {
+                    //         $(this).find('td').each(function (e) {
+                    //             $(this).addClass('highlight-row');
+                    //         });
+                    //     }
+                    //     // $(this).find('td:last').remove();
+                    // })
+
+                    // if (that.weekType === "TELESCOPIC_WEEK") {
+                    // const allWeek = $(".pvtTable").find('thead tr:first th');
+                    // $(allWeek).each(function (e) {
+                    //     const cellText = $(this).text();
+                    //     if (that.weekType === "TELESCOPIC_WEEK") {
+
+                    //         if (that.telMonth.includes(cellText))
+                    //             $(this).css('background-color', '#ced4da');
+
+                    //         if (that.telQ.includes(cellText))
+                    //             $(this).css('background-color', '#adb5bd');
+
+                    //         if (e === allWeek.length - 1)
+                    //             $(this).css('background-color', '#adb5bd');
+                    //     }
+
+                    //     $(this).addClass('weekHeader');
+
+
+                    //     const popoverHtml = `<div class="popover">
+                    //         <div class="popover-content">
+                    //             <div class="date-row">
+                    //                 <span class="date-label">From:</span>
+                    //                 <span class="From${cellText}">28 April 2025</span>
+                    //             </div>
+                    //             <div class="date-row">
+                    //                 <span class="date-label">To:</span>
+                    //                 <span class="To${cellText}">05 May 2025</span>
+                    //             </div>
+                    //         </div>
+                    //     </div>`;
+
+                    //     // Add popover to body
+                    //     $(this).append(popoverHtml);
+
+                    //     $(this).hover(
+                    //         function () {
+                    //             // Mouse enters
+                    //             that.updateDate(cellText);
+                    //         }
+                    //         // ,
+                    //         // function () {
+                    //         //     // Mouse leaves
+                    //         //     yourFunctionOut();
+                    //         // }
+                    //     );
+                    // });
+
+
+                    // }
 
                     // Freeze columns in thead
                     function freezeHeaderColumns() {
@@ -1732,7 +1965,7 @@ sap.ui.define([
         updateDate(week) {
             try {
                 const Calendar = Array.isArray(that.calWeekData)
-                    ? that.calWeekData.filter(o => o && o[that.weekType] == week)
+                    ? that.calWeekData.filter(o => o && o.PERIODDESC == week)
                     : [];
 
                 const fromElem = document.getElementsByClassName(`From${week}`)[0];
@@ -1758,17 +1991,6 @@ sap.ui.define([
 
             } catch (e) {
                 console.error("Error in updateDate:", e);
-            }
-        },
-        handleCheckboxChange: function (event) {
-            var controlId = event.getSource().getParent().getParent().sId.split("-")[0];
-            if (event.getParameters().selected) {
-                let items = sap.ui.getCore().byId(`${controlId}`).getItems();
-                items.forEach(i => {
-                    i.setSelected(true);
-                });
-            } else {
-                sap.ui.getCore().byId(`${controlId}`).clearSelection();
             }
         },
         // 

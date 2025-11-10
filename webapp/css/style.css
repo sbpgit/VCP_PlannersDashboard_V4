@@ -496,3 +496,8 @@ div[id$="MyCardId2"] {
 .sapUxAPObjectPageSubSection {
     margin-bottom: 0rem !important;
 }
+
+.actual {
+    background-color: white !important;
+    color: black !important;
+}

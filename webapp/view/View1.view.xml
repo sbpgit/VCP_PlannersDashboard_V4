@@ -218,7 +218,8 @@
                         <core:Item key="Restriction" text="Restriction" />
                         <core:Item key="Characteristic" text="Characteristic" />
                     </m:ComboBox>
-                    <m:Button id="idAsmBtn" text="Assembly" press="onOpenAsm" visible="false"></m:Button>
+                    <m:CheckBox id="idFilterCheck" selected="true" text="Show Filter" select="onFilter"></m:CheckBox>
+                    <m:Button text="Key Figure" id="idkeyFig" press="onPressKey"></m:Button>
                     <m:ToolbarSpacer />
                     <m:RadioButtonGroup id="idMapTypeGroup" columns="3" selectedIndex="0" select="onSelectMapType">
                         <m:RadioButton id="idMapBox" text="MAPE" />
