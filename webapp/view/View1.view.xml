@@ -175,12 +175,12 @@
                                     <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
                                         <m:items>
                                             <m:VBox>
-                                                <m:Label id="idFac" text="Factory Location" required="true"/>
+                                                <m:Label id="idFac" text="Manufacturing Location" required="true"/>
                                                 <m:ComboBox id="cbFactory"
                                                           items="{location>/Location}"
                                                           showSecondaryValues="true"
                                                           selectionChange=".onFacLocChange"
-                                                          placeholder="Select Factory Location">
+                                                          placeholder="Select Manufacturing Location">
                                                     <core:ListItem key="{location>FACTORY_LOC}"
                                                                    text="{location>LOCATION_DESC}"
                                                                    additionalText="{location>FACTORY_LOC}" />
