@@ -1,0 +1,356 @@
+/* Consolidated Pivot Table CSS (prioritizing Horizon theme) */
+
+/* Base container styles */
+.pvtUi {
+    color: #1a1a1a;
+    font-family: "72", "Arial", sans-serif;
+}
+
+/* Main table styling */
+table.pvtTable {
+    width: 80vw;
+    height: 49vh;
+    font-size: 9pt;
+    text-align: center;
+    border-collapse: separate;
+    border-spacing: 0;
+    background-color: #ffffff;
+    border: 0px solid #d9dadb;
+    border-radius: 4px;
+}
+
+/* Header row styling */
+table.pvtTable thead th {
+    background-color: #f2f2f2;
+    color: #0b74de;
+    padding: 2px;
+    font-size: 10pt;
+    text-align: center;
+    border-bottom: 0px solid #d9dadb;
+    border-top: 0px solid #d9dadb;
+}
+
+/* Row headers */
+table.pvtTable tbody tr th {
+    background-color: #f9fafb;
+    color: #0b74de;
+    padding: 1px;
+    font-size: 9pt;
+    text-align: center;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+/* Data cells */
+table.pvtTable tbody tr td {
+    padding: 2px;
+    border: 0px solid #d9dadb;
+    text-align: center;
+    color: white;
+    background-color: #ffffff;
+    vertical-align: top;
+}
+
+/* Alternating row styling */
+table.pvtTable tbody tr:nth-child(even) td {
+    background-color: #ffffff;
+}
+
+/* Column label styling */
+table.pvtTable .pvtColLabel {
+    font-weight: bold;
+    background-color: #f2f2f2;
+    color: #0b74de;
+    padding: 2px;
+}
+
+/* Total label styling */
+table.pvtTable .pvtTotalLabel {
+    background-color: #f9fafb;
+    color: #0b74de;
+    padding: 2px;
+    font-weight: bold;
+    text-align: center;
+}
+
+/* Total and grand total values */
+.pvtGrandTotal,
+.pvtTotal {
+    font-weight: bold;
+    background-color: #f2f2f2;
+    color: #0b74de;
+    padding: 2px;
+}
+
+/* Values container */
+.pvtVals {
+    white-space: nowrap;
+    padding: 2px;
+    color: #1a1a1a;
+    border: 1px solid #d9dadb;
+    background-color: #ffffff;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+/* Ordering controls */
+.pvtColOrder,
+.pvtRowOrder {
+    cursor: pointer;
+    width: 15px;
+    margin-left: 5px;
+    display: inline-block;
+}
+
+/* Aggregator controls */
+.pvtAggregator {
+    margin-bottom: 5px;
+}
+
+/* Axis containers */
+.pvtAxisContainer {
+    border: 1px solid #d9dadb;
+    background-color: #ffffff;
+    padding: 2px;
+    min-width: 20px;
+    min-height: 20px;
+}
+
+/* Axis items */
+.pvtAxisContainer li {
+    list-style-type: none;
+    background-color: #ffffff;
+    border: 1px solid #d9dadb;
+    padding: 6px;
+    margin: 5px 0;
+    border-radius: 4px;
+    cursor: move;
+}
+
+/* Placeholder items */
+.pvtAxisContainer li.pvtPlaceholder {
+    background-color: #f9fafb;
+    border: 1px dashed #d9dadb;
+    border-radius: 4px;
+    padding: 3px 15px;
+}
+
+/* Attribute spans */
+.pvtAxisContainer li span.pvtAttr {
+    background-color: #ffffff;
+    border: 1px solid #d9dadb;
+    padding: 5px;
+    border-radius: 4px;
+    white-space: nowrap;
+}
+
+/* Triangle controls */
+.pvtTriangle {
+    cursor: pointer;
+    color: #6a6d70;
+}
+
+/* Horizontal lists */
+.pvtHorizList li {
+    display: inline;
+}
+
+/* Vertical lists */
+.pvtVertList {
+    vertical-align: top;
+}
+
+/* Filtered attributes */
+.pvtFilteredAttribute {
+    font-style: italic;
+}
+
+/* Filter box */
+.pvtFilterBox {
+    z-index: 100;
+    width: 300px;
+    background-color: #ffffff;
+    border: 1px solid #d9dadb;
+    padding: 2px;
+    position: absolute;
+    text-align: center;
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Filter box header */
+.pvtFilterBox h4 {
+    margin: 10px 0;
+}
+
+/* Filter box paragraphs */
+.pvtFilterBox p {
+    margin: 10px auto;
+}
+
+/* Filter box labels */
+.pvtFilterBox label {
+    font-weight: 400;
+}
+
+/* Filter box checkboxes */
+.pvtFilterBox input[type=checkbox] {
+    margin-right: 10px;
+    margin-left: 10px;
+}
+
+/* Filter box text inputs */
+.pvtFilterBox input[type=text] {
+    width: 230px;
+}
+
+/* Filter count */
+.pvtFilterBox .count {
+    color: gray;
+    font-weight: 400;
+    margin-left: 3px;
+}
+
+/* Check container */
+.pvtCheckContainer {
+    text-align: center;
+    font-size: 13px;
+    white-space: nowrap;
+    overflow-y: auto;
+    width: 100%;
+    max-height: 250px;
+    border-top: 1px solid #d9dadb;
+    border-bottom: 1px solid #d9dadb;
+}
+
+/* Check container paragraphs */
+.pvtCheckContainer p {
+    margin: 5px;
+}
+
+/* Rows values width */
+.pvtRows .pvtVals {
+    width: 50px !important;
+}
+
+/* Renderer area */
+.pvtRendererArea {
+    padding: 0;
+}
+
+/* Sticky header styling */
+table th {
+    position: sticky;
+    top: 0px;
+    background: #E8D468;
+    text-align: center;
+    color: #fff;
+    border: 1px solid #ccc;
+    font-size: 16px;
+    z-index: 2;
+}
+
+/* Cell dimensions */
+.pvtTable tbody tr th,
+.pvtTable thead tr th,
+.pvtTable tbody tr td {
+    height: auto;
+}
+
+/* Box sizing for tables */
+table {
+    box-sizing: border-box;
+}
+
+th.frezz {
+    position: sticky;
+    z-index: 3;
+}
+
+th.frezzThead {
+    position: sticky;
+    z-index: 200;
+}
+
+
+
+.c3-line,
+.c3-focused {
+    stroke-width: 3px !important;
+}
+
+.c3-bar {
+    stroke: white !important;
+    stroke-width: 1;
+}
+
+.c3 text {
+    font-size: 12px;
+    color: grey;
+}
+
+.tick line {
+    stroke: white;
+}
+
+.c3-axis path {
+    stroke: grey;
+}
+
+.c3-circle {
+    opacity: 1 !important;
+}
+
+.ui-sortable {
+    display: none !important;
+}
+
+.c3-line,
+.c3-focused {
+    stroke-width: 3px !important;
+}
+
+.c3-bar {
+    stroke: white !important;
+    stroke-width: 1;
+}
+
+.c3 text {
+    font-size: 12px;
+    color: grey;
+}
+
+.tick line {
+    stroke: white;
+}
+
+.c3-axis path {
+    stroke: grey;
+}
+
+.c3-circle {
+    opacity: 1 !important;
+}
+
+.ui-sortable {
+    display: none;
+}
+
+td.pvtVals {
+    display: none;
+}
+
+/* Hide the "Compare data on hover" button */
+.modebar-btn[data-title="Compare data on hover"] {
+    display: none;
+}
+
+/* Hide the Plotly logo/link button */
+.modebar-btn.plotlyjsicon.modebar-btn--logo {
+    display: none;
+}
+
+table.pvtTable thead th.pvtAxisLabel,
+table.pvtTable tbody tr th.pvtRowLabel {
+    width: 5% !important;
+    white-space: nowrap !important;
+    padding: 2px 2px !important;
+}

@@ -1,0 +1,52 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+	<TableSelectDialog
+    contentWidth="40%"
+		id="asmDetailsDialog"
+		noDataText="No Assembly Found"
+		title="Select Assembly"
+		search=".handleSearchs"
+        showClearButton="true"
+        
+        liveChange="handleSearchs"
+		growing="true"
+		growingThreshold="50"
+        rememberSelections="true"
+		confirm=".onAssemblySelectionFinish"
+		cancel=""
+		multiSelect="true"
+		items="{
+			path : '/asmDetails'
+		}">
+		<ColumnListItem vAlign="Middle">
+			<cells>
+				<!-- Primary Characteristic Info -->
+				<ObjectIdentifier 
+					title="{ASSEMBLY_DESC}" 
+					text="{ASSEMBLY_DESC}" />
+				
+				<!-- Characteristic Value Info -->
+				<!-- <ObjectIdentifier 
+					title="{CHARVAL_DESC}" 
+					text="{CHAR_VALUE}" /> -->
+			</cells>
+		</ColumnListItem>
+		
+		<columns>
+			<!-- Characteristic Column -->
+			<Column width="10em">
+				<header>
+					<Text text="Assembly" />
+				</header>
+			</Column>
+			
+			<!-- Value Column -->
+			<!-- <Column width="10em">
+				<header>
+					<Text text="Value" />
+				</header>
+			</Column> -->
+		</columns>
+	</TableSelectDialog>
+</core:FragmentDefinition>

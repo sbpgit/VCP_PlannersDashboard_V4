@@ -195,7 +195,7 @@ body {
     border-radius: 8px 8px 0 0;
     padding: 0.7rem 1.4rem;
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-    z-index: 1000;
+    z-index: 0;
     cursor: pointer;
     transition: all 0.3s ease;
 }
@@ -459,4 +459,25 @@ div[id$="MyCardId2"] {
     margin-left:  0px !important;
     margin-right:  0px !important;
     border-radius: .75rem;
+}
+
+/*For Forecast accuracy*/
+.mainDivClass {
+    position: relative;
+    height: auto;
+    overflow: auto;
+}
+
+.mainDivClass table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    border-top: 0;
+}
+
+.mainDivClass thead {
+    position: sticky;
+    top: 0.1px;
+    background-color: #fff;
+    z-index: 100;
 }

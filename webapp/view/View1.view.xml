@@ -7,7 +7,9 @@
     xmlns:card="sap.ui.integration.widgets"
     xmlns:viz="sap.viz.ui5.controls"
     xmlns:viz.data="sap.viz.ui5.data"
+    xmlns:table="sap.ui.table"
     xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds"
+    xmlns:html="http://www.w3.org/1999/xhtml"
     height="100%">
 
     <uxap:ObjectPageLayout
@@ -75,7 +77,7 @@
                                         items="{locModel>/results1}"
                                         showSecondaryValues="true"
                                         selectionChange=".onLocationChange"
-                                        placeholder="Select Location">
+                                        placeholder="Select Location" required="true">
                                         <core:ListItem
                                             key="{locModel>DEMAND_LOC}"
                                             text="{locModel>DEMAND_DESC}"
@@ -90,7 +92,7 @@
                                         items="{prodModel>/results2}"
                                         showSecondaryValues="true"
                                         selectionChange=".onProductChange"
-                                        placeholder="Select Product">
+                                        placeholder="Select Product" required="true">
                                         <core:ListItem
                                             key="{prodModel>PRODUCT_ID}"
                                             text="{prodModel>PROD_DESC}"
@@ -168,8 +170,8 @@
                             <m:items>
 
                                 <!-- ASSEMBLY LAG -->
-                                <m:VBox width="49%" class="lag-box lag-assembly sapUiSmallMarginEnd sapUiSmallMarginBottom">
-                                    <m:Title text="Assembly Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
+                                <m:VBox width="99%" class="lag-box lag-assembly sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                    <m:Title text="Forecast Accuracy" level="H3" class="sapUiSmallMarginBottom" />
                                     <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
                                         <m:items>
                                             <m:VBox>
@@ -185,52 +187,54 @@
                                                 </m:ComboBox>
                                             </m:VBox>
                                             <m:VBox>
-                                                <m:Label id="idAss" text="Assembly" required="true"/>
-                                                <m:ComboBox id="cbAssembly"
-                                                          items="{assembly>/Assembly}"
+                                                <m:Label id="idAss" text="Start Month" required="true"/>
+                                                <m:ComboBox id="cbStartMonth"
+                                                          items="{calendarStart>/MONTHDATA}"
                                                           showSecondaryValues="true"
                                                           selectionChange=".onAssemblyChange"
-                                                          placeholder="Select Assembly">
-                                                    <core:ListItem key="{assembly>ASSEMBLY}" text="{assembly>ASSEMBLY}" />
+                                                          placeholder="Select Start Month">
+                                                    <core:ListItem key="{calendarStart>MONTH}" text="{calendarStart>MONTH}" />
                                                 </m:ComboBox>
                                             </m:VBox>
                                             <m:VBox>
-                                                <m:Label id="idMonth" text="Month" required="true"/>
-                                                <m:ComboBox id="cbMonth"
-                                                          items="{calendar>/MONTH}"
+                                                <m:Label id="idMonth" text="End Month" required="true"/>
+                                                <m:ComboBox id="cbEndMonth"
+                                                          items="{calendarEnd>/MONTHDATAEND}"
                                                           showSecondaryValues="true"
-                                                          selectionChange=".onAssemblyGo"
-                                                          placeholder="Select Month">
-                                                    <core:ListItem key="{calendar>MONTH}" text="{calendar>MONTH}" />
+                                                          selectionChange=".onGo"
+                                                          placeholder="Select End Month">
+                                                    <core:ListItem key="{calendarEnd>MONTH}" text="{calendarEnd>MONTH}" />
                                                 </m:ComboBox>
                                             </m:VBox>
                                         </m:items>
                                     </m:HBox>
 
-                                    <viz:VizFrame id="idWFModel"
-                                                  uiConfig="{applicationSet:'fiori'}"
-                                                  vizType="waterfall"
-                                                  height="400px"
-                                                  width="100%">
-                                        <viz:dataset>
-                                            <viz.data:FlattenedDataset data="{waterfallModel>/WaterfallData}">
-                                                <viz.data:dimensions>
-                                                    <viz.data:DimensionDefinition name="Lag Month" value="{waterfallModel>LAG_MONTH}" />
-                                                </viz.data:dimensions>
-                                                <viz.data:measures>
-                                                    <viz.data:MeasureDefinition name="Mape Qty" value="{waterfallModel>MAPE}" />
-                                                </viz.data:measures>
-                                            </viz.data:FlattenedDataset>
-                                        </viz:dataset>
-                                        <viz:feeds>
-                                            <vizFeeding:FeedItem uid="categoryAxis" type="Dimension" values="Lag Month" />
-                                            <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
-                                        </viz:feeds>
-                                    </viz:VizFrame>
+                                     <m:VBox id="pivotPageLag">
+                <m:OverflowToolbar id="idPivotToolBarLag" height="12%" visible="{= ${oGModel>/showPivot} }">
+                <m:Label text="Lags Type:" design="Bold"></m:Label>
+                    <m:ComboBox id="idTypeBox" selectedKey="Assembly" selectionChange="onChnageType">
+                        <core:Item key="Assembly" text="Assembly" />
+                        <core:Item key="Product" text="Product Demand" />
+                        <core:Item key="Restriction" text="Restriction" />
+                        <core:Item key="Characteristic" text="Characteristic" />
+                    </m:ComboBox>
+                    <m:Button id="idAsmBtn" text="Assembly" press="onOpenAsm" visible="false"></m:Button>
+                    <m:ToolbarSpacer />
+                    <m:RadioButtonGroup id="idMapTypeGroup" columns="3" selectedIndex="0" select="onSelectMapType">
+                        <m:RadioButton id="idMapBox" text="MAPE" />
+                        <m:RadioButton id="idLagQtyBox" text="Lag Quantity" />
+                        <m:RadioButton id="idMapQtyBox" text="MAPE Quantity" />
+                    </m:RadioButtonGroup>
+                </m:OverflowToolbar>
+
+                <table:Table id="myTableLag" visible="{= !${oGModel>/showPivot} }" width="100%">
+                </table:Table>
+                <html:div id="mainDivLag" class = "mainDivClass"/>
+            </m:VBox>
                                 </m:VBox>
 
                                 <!-- OPTION MIX LAG -->
-                                <m:VBox width="49%" class="lag-box lag-option sapUiSmallMarginBottom">
+                                <!-- <m:VBox width="49%" class="lag-box lag-option sapUiSmallMarginBottom">
                                     <m:Title text="Option Mix Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
                                     <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
                                         <m:items>
@@ -299,17 +303,17 @@
                                             <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
                                         </viz:feeds>
                                     </viz:VizFrame>
-                                </m:VBox>
+                                </m:VBox> -->
 
                             </m:items>
                         </m:HBox>
 
                         <!-- ROW 2: Restriction + Product Demand -->
-                        <m:HBox alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
-                            <m:items>
+                        <!-- <m:HBox alignItems="Start" justifyContent="SpaceBetween" wrap="Wrap">
+                            <m:items> -->
 
                                 <!-- RESTRICTION LAG -->
-                                <m:VBox width="49%" class="lag-box lag-restriction sapUiSmallMarginEnd sapUiSmallMarginBottom">
+                                <!-- <m:VBox width="49%" class="lag-box lag-restriction sapUiSmallMarginEnd sapUiSmallMarginBottom">
                                     <m:Title text="Restriction Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
                                     <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
                                         <m:items>
@@ -378,10 +382,10 @@
                                             <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
                                         </viz:feeds>
                                     </viz:VizFrame>
-                                </m:VBox>
+                                </m:VBox> -->
 
                                 <!-- PRODUCT DEMAND LAG -->
-                                <m:VBox width="49%" class="lag-box lag-demand sapUiSmallMarginBottom">
+                                <!-- <m:VBox width="49%" class="lag-box lag-demand sapUiSmallMarginBottom">
                                     <m:Title text="Product Demand Lag Analysis" level="H3" class="sapUiSmallMarginBottom" />
                                     <m:HBox alignItems="Center" justifyContent="Start" class="sapUiSmallMarginBottom">
                                         <m:items>
@@ -430,10 +434,10 @@
                                             <vizFeeding:FeedItem uid="valueAxis" type="Measure" values="Mape Qty" />
                                         </viz:feeds>
                                     </viz:VizFrame>
-                                </m:VBox>
+                                </m:VBox> -->
 
-                            </m:items>
-                        </m:HBox>
+                            <!-- </m:items>
+                        </m:HBox> -->
 
                     </m:VBox>
                         </uxap:blocks>
