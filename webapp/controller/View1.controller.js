@@ -1233,7 +1233,7 @@ sap.ui.define([
                     oRes = await that.callFunction("getPrdDmdLagFun", {
                         FACTORY_LOCATION: FLoc, LOCATION: Loc, PRODUCT: Prod, START_MONTH: Mstart, END_MONTH: MEnd
                     });
-                    data = JSON.parse(oRes.getPrdDmdLagFun);
+                    data = oRes;
                     that.staticColumns = ["Location", "Product", "Lag Month"]
                     that.byId("idAsmBtn").setVisible(false);
                 }
@@ -1241,7 +1241,7 @@ sap.ui.define([
                     oRes = await that.callFunction("getRestrictionLagFun", {
                         FACTORY_LOCATION: FLoc, LOCATION: Loc, START_MONTH: Mstart, END_MONTH: MEnd
                     });
-                    data = JSON.parse(oRes.getRestrictionLagFun);
+                    data = oRes;
                     that.staticColumns = ["Line", "Restriction", "Lag Month"]
                     that.byId("idAsmBtn").setVisible(false);
                 }
@@ -1249,7 +1249,7 @@ sap.ui.define([
                     oRes = await that.callFunction("getOptPercentLagFun", {
                         FACTORY_LOCATION: FLoc, LOCATION: Loc, PRODUCT: Prod, START_MONTH: Mstart, END_MONTH: MEnd
                     });
-                    data = JSON.parse(oRes.getOptPercentLagFun);
+                    data = oRes;
                     that.staticColumns = ["Characteristic", "Characteristic value", "Lag Month"]
                     that.byId("idAsmBtn").setVisible(false);
                 }

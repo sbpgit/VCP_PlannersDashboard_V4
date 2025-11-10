@@ -481,3 +481,18 @@ div[id$="MyCardId2"] {
     background-color: #fff;
     z-index: 100;
 }
+
+.sapUxAPObjectPageSection {
+    margin: 0 !important;
+    padding-top: 0.5rem !important;
+    padding-bottom: 0px !important;
+    border-bottom:  0px !important;
+}
+
+.sapUiRespGrid.sapUiRespGridHSpace1 {
+    padding: 0rem !important;
+}
+
+.sapUxAPObjectPageSubSection {
+    margin-bottom: 0rem !important;
+}
