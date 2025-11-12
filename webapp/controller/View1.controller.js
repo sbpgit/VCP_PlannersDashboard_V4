@@ -1190,14 +1190,14 @@ sap.ui.define([
                     );
 
                     if (index !== -1) {
-                        const endIndex = (index + 4 < aItems.length) ? index + 4 : aItems.length - 1;
+                        const endIndex = (index - 4 < aItems.length) ? index - 4 : aItems.length + 1;
 
-                        oCalendarStart.setSelectedKey(aItems[index].PERIODDESC);
-                        oCalendarEnd.setSelectedKey(aItems[endIndex].PERIODDESC);
+                        oCalendarStart.setSelectedKey(aItems[endIndex].PERIODDESC);
+                        oCalendarEnd.setSelectedKey(aItems[index].PERIODDESC);
 
                         // Fire selection events if required
                         // oCalendarStart.fireSelectionChange({ selectedItem: aItems[index] });
-                        oCalendarEnd.fireSelectionChange({ selectedItem: aItems[endIndex] });
+                        oCalendarEnd.fireSelectionChange({ selectedItem: aItems[index] });
                     }
                 }
             }, 200);
