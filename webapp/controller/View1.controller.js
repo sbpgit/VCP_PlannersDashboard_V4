@@ -243,8 +243,9 @@ sap.ui.define([
                     existingDiv.removeChild(existingDiv.firstChild);
                 }
             }
-            var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: [] });
-            this.getView().setModel(oModel, "wowVariance");
+            // var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: [] });
+            // this.getView().setModel(oModel, "wowVariance");
+            that.onFilterResetWOW();
             this.getLocProd();
             await this.loadAlertsCards();
 
@@ -949,7 +950,8 @@ sap.ui.define([
             console.log("Total records loaded:", aAllResults.length);
 
             if (aAllResults.length === 0) {
-                sap.m.MessageToast.show("No data available for selected Location & Product");
+                sap.m.MessageToast.show("No data available in WoW variance analysis for selected Location & Product");
+                that.onFilterResetWOW();
             } else {
                 const oWOWModel = new sap.ui.model.json.JSONModel({
                     options: [
@@ -1010,13 +1012,13 @@ sap.ui.define([
         onVarianceChange: function (oEvent) {
             var selectedType = that.byId("idWOW").getSelectedKey();
             var selectedVariance = oEvent.getSource().getSelectedKey();
-            var actualWOW = that.wowData.filter(id => id.COMP_TYPE === selectedType && id.PERCENT_DIFF_WOW > selectedVariance);
+            var actualWOW = that.wowData.filter(id => id.COMP_TYPE === selectedType && parseInt(id.PERCENT_DIFF_WOW) > parseInt(selectedVariance));
             this._setActualForecastCard(actualWOW);
         },
         onTypeChange: function (oEvent) {
             var selectedType = oEvent.getSource().getSelectedKey();
             var selectedVariance = that.byId("idVariance").getSelectedKey();
-            var actualWOW = that.wowData.filter(id => id.COMP_TYPE === selectedType && id.PERCENT_DIFF_WOW > selectedVariance);
+            var actualWOW = that.wowData.filter(id => id.COMP_TYPE === selectedType && parseInt(id.PERCENT_DIFF_WOW) > parseInt(selectedVariance));
             this._setActualForecastCard(actualWOW);
         },
         onFilterResetWOW: function () {
@@ -1134,7 +1136,22 @@ sap.ui.define([
             console.log("Total records loaded:", aAllResults.length);
 
             if (aAllResults.length === 0) {
-                sap.m.MessageToast.show("No data available for selected Location & Product");
+                sap.m.MessageToast.show("No data available in Forecast accuracy for selected Location & Product");
+                this.byId("cbFactory").setSelectedKey("");
+            this.byId("cbStartMonth").setSelectedKey("");
+            this.byId("cbEndMonth").setSelectedKey("");
+            that.keySettingData = undefined
+            // that.totalFilterData = undefined;
+            that.oGModel.setProperty("/showPivot", false);
+            that.oGModel.setProperty("/tableType", 'Table');
+            // sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
+            that.allData = [];
+            var existingDiv = document.querySelector('[id*="mainDivLag"]');
+            if (existingDiv.children.length > 0) {
+                while (existingDiv.firstChild) {
+                    existingDiv.removeChild(existingDiv.firstChild);
+                }
+            }
             } else {
                 that.totalAssemblyData = aAllResults;
                 var facLocation = that.removeDuplicates(aAllResults, "FACTORY_LOC");
@@ -1334,30 +1351,6 @@ sap.ui.define([
         },
         onChnageType() {
             that.onGo();
-        },
-        onPressKey() {
-            that.keyFrag.open();
-            const table = sap.ui.getCore().byId("idkeyTablelag");
-            that.table = table;
-            if (!that.keySettingData) {
-                that.keySettingData = [{
-                    field: "Assembly",
-                    select: true
-                },
-                {
-                    field: "MRP Group",
-                    select: false
-                },
-                {
-                    field: "Lag Month",
-                    select: true
-                }
-                ];
-                var oModel = new JSONModel({
-                    data: that.keySettingData,
-                });
-                table.setModel(oModel);
-            }
         },
         onPressKey() {
             that.keyFrag.open();

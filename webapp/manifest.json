@@ -105,6 +105,9 @@
         },
         {
           "uri": "css/pivot.css"
+        },
+         {
+          "uri": "css/filter.css"
         }
       ]
     },
