@@ -37,7 +37,7 @@ sap.ui.define([
             this.locationData = [];
             this.prodData = [];
             that.newChartData = [];
-            that.CalendarData = [], that.assemblyData = [], that.cardData = [],
+            that.CalendarData = [], that.assemblyData = [], that.cardData = [], that.noAssemblyData = [],
                 that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
             that.rtrLineData = [], that.prdDmdData = [], that.wowData = [], that._aSelectedWidgets = [];
             that.oGModel.setProperty("/showPivot", false);
@@ -48,6 +48,7 @@ sap.ui.define([
             ];
             that.loadFragments();
             this.getLocProd();
+            that.getAssemblyDesc();
             // this._showEmptyAlertsCard("WOW Variance", "MyCardIdFore");
             await this.loadAlertsCards();
             this.getVariantData();
@@ -97,6 +98,35 @@ sap.ui.define([
                 sap.m.MessageToast.show("No data available for all Locations");
             } else {
                 that.oGModel.setProperty("/fullLocData", aAllResults);
+            }
+        },
+        getAssemblyDesc: async function () {
+            const iPageSize = 5000; // tune this depending on your service
+            let iSkip = 0;
+            let aAllResults = [];
+            let bHasMore = true;
+
+            while (bHasMore) {
+                const aContexts = await this.oModel
+                    .bindList("/getAssemblyDesc")
+                    .requestContexts(iSkip, iPageSize);
+
+                const aPageResults = aContexts.map(ctx => ctx.getObject());
+
+                aAllResults = aAllResults.concat(aPageResults);
+
+                // If we got less than requested, it's the last page
+                if (aPageResults.length < iPageSize) {
+                    bHasMore = false;
+                } else {
+                    iSkip += iPageSize;
+                }
+            }
+            console.log("Total records loaded:", aAllResults.length);
+            if (aAllResults.length === 0) {
+                sap.m.MessageToast.show("No assembly data available for all Locations");
+            } else {
+                that.oGModel.setProperty("/fullAssemblyData", aAllResults);
             }
         },
         getIBPCalendarWeek: async function () {
@@ -287,11 +317,15 @@ sap.ui.define([
                     console.warn("[V4 Alerts] No data received -> show empty cards");
                     sap.ui.core.BusyIndicator.hide();
                     that._setEmptyAlertCards();
+                    that.noAssemblyData = [];
+                    that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
                 }
             }).catch(function (oError) {
                 console.error("[V4 Alerts] Error loading data:", oError);
                 sap.ui.core.BusyIndicator.hide();
                 that._setEmptyAlertCards();
+                that.noAssemblyData = [];
+                that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
             });
         },
 
@@ -315,6 +349,8 @@ sap.ui.define([
                 console.warn("[V4 Alerts] No alerts -> show empty cards");
                 sap.ui.core.BusyIndicator.hide();
                 that._setEmptyAlertCards();
+                that.noAssemblyData = [];
+                that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
                 return;
             }
 
@@ -325,6 +361,8 @@ sap.ui.define([
 
             if (vcAlerts.length === 0) {
                 that._setEmptyAlertCards();
+                that.noAssemblyData = [];
+                that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
                 return;
             }
 
@@ -344,7 +382,18 @@ sap.ui.define([
             var exceptionalAlerts = vcAlerts.filter(function (a) {
                 return a.MSGGRP === "DATA";
             });
-
+            if (exceptionalAlerts.length > 0) {
+                var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0].MSGTXT;
+                that.noAssemblyData = noAssemblyData.match(/'([^']+)'/g)
+                    .map(s => ({ assembly: s.replace(/'/g, '') }));
+                var assemblyDesc = that.oGModel.getProperty("/fullAssemblyData");
+                var assemblies = that.getMergedArray(that.noAssemblyData, assemblyDesc);
+                this.getView().setModel(new sap.ui.model.json.JSONModel({ assemblies }), "assemblyModel");
+            }
+            else {
+                that.noAssemblyData = [];
+                that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
+            }
             // EXCEPTIONAL ALERTS: Only MSGGRP = "EXCEPTIONAL"
             var interfaceAlerts = vcAlerts.filter(function (a) {
                 return a.MSGGRP === "INTERFACE";
@@ -386,7 +435,7 @@ sap.ui.define([
                 var displayNameMap = {
                     "PROCESS_JOBS": "Process Jobs",
                     "INTERFACE": "Interface",
-                    "RESTRICTIONS": "Restrictions"
+                    "RESTRICTIONS": "Resource Consumption"
                 };
 
                 return {
@@ -431,7 +480,15 @@ sap.ui.define([
             // Bind to all three cards
             that._bindAlertsToCardsExact(dataAlertsCardData, systemAlertsCardData, exceptionalAlertsCardData, interfaceAlertsCardData);
         },
+        getMergedArray: function (arr1, arr2) {
+            const lookup = new Map(arr2.map(a => [a.MAT_CHILD, a.PROD_DESC]));
 
+            // Append desc to array1
+            return arr1.map(item => ({
+                ...item,
+                desc: lookup.get(item.assembly) || null
+            }));
+        },
         // Binding method for all three cards
         _bindAlertsToCardsExact: function (dataAlertsCardData, systemAlertsCardData, exceptionalAlertsCardData, interfaceAlertsCardData) {
             var that = this;
@@ -500,6 +557,8 @@ sap.ui.define([
             } catch (error) {
                 console.error("[V4 Alerts] Error binding cards:", error);
                 that._setEmptyAlertCards();
+                that.noAssemblyData = [];
+                that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
                 sap.ui.core.BusyIndicator.hide();
             }
         },
@@ -531,7 +590,7 @@ sap.ui.define([
                     },
                     "header": {
                         "title": "System Alerts",
-                        "subTitle": "Process, Interface & Restriction Status",
+                        "subTitle": "Process, Interface & Resource Consumption Status",
                         "icon": {
                             "src": "sap-icon://process"
                         },
@@ -1138,20 +1197,20 @@ sap.ui.define([
             if (aAllResults.length === 0) {
                 sap.m.MessageToast.show("No data available in Forecast accuracy for selected Location & Product");
                 this.byId("cbFactory").setSelectedKey("");
-            this.byId("cbStartMonth").setSelectedKey("");
-            this.byId("cbEndMonth").setSelectedKey("");
-            that.keySettingData = undefined
-            // that.totalFilterData = undefined;
-            that.oGModel.setProperty("/showPivot", false);
-            that.oGModel.setProperty("/tableType", 'Table');
-            // sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
-            that.allData = [];
-            var existingDiv = document.querySelector('[id*="mainDivLag"]');
-            if (existingDiv.children.length > 0) {
-                while (existingDiv.firstChild) {
-                    existingDiv.removeChild(existingDiv.firstChild);
+                this.byId("cbStartMonth").setSelectedKey("");
+                this.byId("cbEndMonth").setSelectedKey("");
+                that.keySettingData = undefined
+                // that.totalFilterData = undefined;
+                that.oGModel.setProperty("/showPivot", false);
+                that.oGModel.setProperty("/tableType", 'Table');
+                // sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
+                that.allData = [];
+                var existingDiv = document.querySelector('[id*="mainDivLag"]');
+                if (existingDiv.children.length > 0) {
+                    while (existingDiv.firstChild) {
+                        existingDiv.removeChild(existingDiv.firstChild);
+                    }
                 }
-            }
             } else {
                 that.totalAssemblyData = aAllResults;
                 var facLocation = that.removeDuplicates(aAllResults, "FACTORY_LOC");
@@ -1290,6 +1349,14 @@ sap.ui.define([
                 }
                 if (type === "Characteristic") {
                     oRes = await that.callFunction("getOptPercentLagFun", {
+                        FACTORY_LOCATION: FLoc, LOCATION: Loc, PRODUCT: Prod, START_MONTH: Mstart, END_MONTH: MEnd
+                    });
+                    data = oRes;
+                    that.staticColumns = ["Characteristic", "Characteristic value", "Lag Month"]
+                    that.byId("idkeyFig").setVisible(false);
+                }
+                if (type === "StatFore") {
+                    oRes = await that.callFunction("getStatForecast", {
                         FACTORY_LOCATION: FLoc, LOCATION: Loc, PRODUCT: Prod, START_MONTH: Mstart, END_MONTH: MEnd
                     });
                     data = oRes;
@@ -1435,6 +1502,9 @@ sap.ui.define([
                 } else if (type === "Restriction") {
                     key = `${o.LINE_ID}_${o.RESTRICTION}_${o.SELECTED_MONTH}`;
                 } else if (type === "Characteristic") {
+                    key = `${o.CHAR_DESC}_${o.CHARVAL_DESC}_${o.SELECTED_MONTH}`;
+                }
+                else if (type === "Statastical Forecast") {
                     key = `${o.CHAR_DESC}_${o.CHARVAL_DESC}_${o.SELECTED_MONTH}`;
                 }
 

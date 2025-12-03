@@ -10,6 +10,7 @@
     xmlns:table="sap.ui.table"
     xmlns:vizFeeding="sap.viz.ui5.controls.common.feeds"
     xmlns:html="http://www.w3.org/1999/xhtml"
+    xmlns:f="sap.f"
     height="100%">
 
     <uxap:ObjectPageLayout
@@ -168,7 +169,7 @@
                               justifyContent="SpaceBetween"
                               wrap="Wrap">
                             <m:items>
-
+                           
                                 <!-- ASSEMBLY LAG -->
                                 <m:VBox width="99%" class="lag-box lag-assembly sapUiSmallMarginEnd sapUiSmallMarginBottom">
                                     <m:Title text="Forecast Accuracy" level="H3" class="sapUiSmallMarginBottom" />
@@ -208,6 +209,7 @@
                                             </m:VBox>
                                         </m:items>
                                     </m:HBox>
+                                    
 
                                      <m:VBox id="pivotPageLag">
                 <m:OverflowToolbar id="idPivotToolBarLag" height="12%" visible="{= ${oGModel>/showPivot} }">
@@ -215,8 +217,9 @@
                     <m:ComboBox id="idTypeBox" selectedKey="Assembly" selectionChange="onChnageType">
                         <core:Item key="Assembly" text="Assembly" />
                         <core:Item key="Product" text="Product Demand" />
-                        <core:Item key="Restriction" text="Restriction" />
+                        <core:Item key="Restriction" text="Resource Consumption" />
                         <core:Item key="Characteristic" text="Characteristic" />
+                        <core:Item key="StatFore" text="Statastical Forecast" />
                     </m:ComboBox>
                     <m:CheckBox id="idFilterCheck" selected="false" text="Show Filter" select="onFilter"></m:CheckBox>
                     <m:Button text="Key Figure" id="idkeyFig" press="onPressKey"></m:Button>
@@ -232,6 +235,39 @@
                 </table:Table>
                 <html:div id="mainDivLag" class = "mainDivClass"/>
             </m:VBox>
+             <!-- 🟦 Assembly Planner List -->
+<m:VBox class="sapUiSmallMarginBottom">
+    <m:Title text="Assemblies without Planning" level="H4" class="sapUiSmallMarginBottom"/>
+
+    <f:GridList
+        id="assemblyGrid"
+        items="{assemblyModel>/assemblies}"
+        mode="None">
+
+        <!-- NOTE: CustomListItem is in sap.m namespace -> use m:CustomListItem -->
+        <m:CustomListItem>
+            <m:HBox
+                class="sapUiTinyMargin sapUiSmallMarginEnd"
+                alignItems="Center"
+                justifyContent="SpaceBetween"
+                width="220px">
+
+                <m:VBox>
+                    <m:ObjectIdentifier
+                        title="{assemblyModel>assembly}"
+                    />
+                    <m:ObjectStatus
+                        state="Error"
+                        text="{assemblyModel>desc}"
+                    />
+                </m:VBox>
+
+            </m:HBox>
+        </m:CustomListItem>
+
+    </f:GridList>
+</m:VBox>
+
                                 </m:VBox>
 
                                 <!-- OPTION MIX LAG -->
