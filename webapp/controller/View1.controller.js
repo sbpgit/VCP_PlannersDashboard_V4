@@ -15,9 +15,6 @@ sap.ui.define([
         formatter: formatter,
         onInit: function () {
             this.oModel = this.getOwnerComponent().getModel();
-            this.data = [];
-            this.locationData = [];
-            this.prodData = [];
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
             this.getLocationData();
@@ -25,8 +22,7 @@ sap.ui.define([
             this.getView().setModel(new sap.ui.model.json.JSONModel({ items12: [] }), "viewDetails");
         },
         onAfterRendering: async function () {
-            sap.ui.core.BusyIndicator.show()
-            that = this;
+            that = this;      
             that.oGModel = that.getOwnerComponent().getModel("oGModel");
             sap.ui.core.BusyIndicator.show();
             that.viewDetails = new JSONModel();
@@ -38,21 +34,16 @@ sap.ui.define([
             this.prodData = [];
             that.newChartData = [];
             that.CalendarData = [], that.assemblyData = [], that.cardData = [], that.noAssemblyData = [],
-                that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
+            that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
             that.rtrLineData = [], that.prdDmdData = [], that.wowData = [], that._aSelectedWidgets = [];
             that.oGModel.setProperty("/showPivot", false);
             that.oGModel.setProperty("/tableType", 'Table');
             that.staticColumns = ["Assembly", "Lag Month"];
-            const afilter = [
-                new Filter("LEVEL", FilterOperator.EQ, "M")
-            ];
             that.loadFragments();
             this.getLocProd();
             that.getAssemblyDesc();
-            // this._showEmptyAlertsCard("WOW Variance", "MyCardIdFore");
             await this.loadAlertsCards();
             this.getVariantData();
-            //  this.addStyleClass("vcpHelpPopover");
         },
         loadFragments: function () {
             that.oHBox = new sap.m.HBox({
@@ -65,7 +56,6 @@ sap.ui.define([
                     })
                 ]
             });
-
             if (!that.keyFrag) {
                 that.keyFrag = sap.ui.xmlfragment("vcp.vcplannerdashboard.fragments.keyFigure", that);
                 that.getView().addDependent(that.keyFrag);
@@ -76,16 +66,12 @@ sap.ui.define([
             let iSkip = 0;
             let aAllResults = [];
             let bHasMore = true;
-
             while (bHasMore) {
                 const aContexts = await this.oModel
                     .bindList("/getLocation")
                     .requestContexts(iSkip, iPageSize);
-
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
-
                 aAllResults = aAllResults.concat(aPageResults);
-
                 // If we got less than requested, it's the last page
                 if (aPageResults.length < iPageSize) {
                     bHasMore = false;
@@ -105,16 +91,12 @@ sap.ui.define([
             let iSkip = 0;
             let aAllResults = [];
             let bHasMore = true;
-
             while (bHasMore) {
                 const aContexts = await this.oModel
                     .bindList("/getAssemblyDesc")
                     .requestContexts(iSkip, iPageSize);
-
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
-
                 aAllResults = aAllResults.concat(aPageResults);
-
                 // If we got less than requested, it's the last page
                 if (aPageResults.length < iPageSize) {
                     bHasMore = false;
@@ -139,11 +121,8 @@ sap.ui.define([
                 const aContexts = await this.oModel
                     .bindList("/getIBPCalenderWeek", null, null, [oFilter])
                     .requestContexts(iSkip, iPageSize);
-
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
-
                 aAllResults = aAllResults.concat(aPageResults);
-
                 // If we got less than requested, it's the last page
                 if (aPageResults.length < iPageSize) {
                     bHasMore = false;
@@ -164,12 +143,10 @@ sap.ui.define([
             let iSkip = 0;
             let aAllResults = [];
             let bHasMore = true;
-
             while (bHasMore) {
                 const aContexts = await this.oModel
                     .bindList("/getfactorylocdesc")
                     .requestContexts(iSkip, iPageSize);
-
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
                 aAllResults = aAllResults.concat(aPageResults);
                 // If we got less than requested, it's the last page
@@ -193,27 +170,18 @@ sap.ui.define([
             // Remove duplicates and sort
             this.locationData = this.removeDuplicates(results, "DEMAND_LOC");
             this.locationData.sort((a, b) => a.DEMAND_DESC.localeCompare(b.DEMAND_DESC));
-
             this.prodData = this.removeDuplicates(results, "PRODUCT_ID");
             this.prodData.sort((a, b) => a.PROD_DESC.localeCompare(b.PROD_DESC));
-
             // Set models
-            this.getView().setModel(
-                new sap.ui.model.json.JSONModel({ results1: this.locationData }),
-                "locModel"
-            );
-            this.getView().setModel(
-                new sap.ui.model.json.JSONModel({ results2: this.prodData }),
-                "prodModel"
-            );
-
+            const oJSONLoc = new sap.ui.model.json.JSONModel({  results1: this.locationData });
+            oJSONLoc.setSizeLimit(5000);   // allow >100 items in binding
+            this.getView().setModel(oJSONLoc, "locModel");
+            const oJSONProd = new sap.ui.model.json.JSONModel({ results2: this.prodData });
+            oJSONProd.setSizeLimit(5000);   // allow >100 items in binding
+            this.getView().setModel(oJSONProd, "prodModel");
             // Clear selections
             this.byId("LocationSelect").setSelectedKey("");
             this.byId("productSelect").setSelectedKey("");
-
-            // Load cards
-            // this._loadForecastCard();
-            // this.loadProcessAlertsCard();
         },
 
         // Remove duplicates based on a specific key
@@ -232,6 +200,7 @@ sap.ui.define([
             var selectedData = this.byId("LocationSelect").getSelectedKey();
             var filteredProdData = this.prodData.filter(a => a.DEMAND_LOC === selectedData);
             var oJSONProduct = new sap.ui.model.json.JSONModel({ results2: filteredProdData });
+            oJSONProduct.setSizeLimit(5000);
             this.getView().setModel(oJSONProduct, "prodModel");
             if (selectedData !== this.oGModel.getProperty("/defaultLocation")) {
                 that.byId("idMatListVPD").setModified(true);
@@ -262,10 +231,8 @@ sap.ui.define([
             this.byId("cbStartMonth").setSelectedKey("");
             this.byId("cbEndMonth").setSelectedKey("");
             that.keySettingData = undefined
-            // that.totalFilterData = undefined;
             that.oGModel.setProperty("/showPivot", false);
             that.oGModel.setProperty("/tableType", 'Table');
-            // sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
             that.allData = [];
             var existingDiv = document.querySelector('[id*="mainDivLag"]');
             if (existingDiv.children.length > 0) {
@@ -273,12 +240,9 @@ sap.ui.define([
                     existingDiv.removeChild(existingDiv.firstChild);
                 }
             }
-            // var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: [] });
-            // this.getView().setModel(oModel, "wowVariance");
             that.onFilterResetWOW();
             this.getLocProd();
             await this.loadAlertsCards();
-
         },
 
         // Main method to Data alerts using V4 OData
@@ -287,32 +251,25 @@ sap.ui.define([
             var oModel = this.getOwnerComponent().getModel(); // V4 OData model
             const locSelectedKey = this.byId("LocationSelect").getSelectedKey();
             const prodSelectedKey = this.byId("productSelect").getSelectedKey();
-
             // Build filter array for OData V4
             const aFilters = [];
-
             if (locSelectedKey) {
                 aFilters.push(new sap.ui.model.Filter("LOCATION_ID", "EQ", locSelectedKey));
             }
-
             if (prodSelectedKey) {
                 aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", "EQ", prodSelectedKey));
             }
-
             // Use bindList and requestContexts for V4 OData
             oModel.bindList("/getPlannerAlerts", null, [], aFilters).requestContexts().then(function (aContexts) {
                 console.log("[V4 Alerts] Received contexts:", aContexts);
-
                 if (aContexts && aContexts.length > 0) {
                     // Extract data from V4 contexts
                     var rawData = aContexts.map(function (oContext) {
                         return oContext.getObject();
                     });
                     console.log("[V4 Alerts] Raw data:", rawData);
-
                     // Process the data using your existing logic
                     that._processAlertsDataV4(rawData);
-
                 } else {
                     console.warn("[V4 Alerts] No data received -> show empty cards");
                     sap.ui.core.BusyIndicator.hide();
@@ -333,18 +290,14 @@ sap.ui.define([
         // V4 OData data processing with all three cards
         _processAlertsDataV4: function (oData) {
             var that = this;
-
             // Normalize incoming V4 payload
-            var results = [];
-            try {
+            var results = [];            try {
                 results = Array.isArray(oData) ? oData : (oData.value || []);
             } catch (e) {
                 console.error("[V4 Alerts] Error parsing data:", e);
                 results = [];
             }
-
             console.log("[V4 Alerts] raw results length:", results.length);
-
             if (!results || results.length === 0) {
                 console.warn("[V4 Alerts] No alerts -> show empty cards");
                 sap.ui.core.BusyIndicator.hide();
@@ -353,34 +306,28 @@ sap.ui.define([
                 that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
                 return;
             }
-
             // Keep only VCPLANNER alerts
             var vcAlerts = results.filter(function (it) {
                 return it && it.APPL === "VCPLANNER";
             });
-
             if (vcAlerts.length === 0) {
                 that._setEmptyAlertCards();
                 that.noAssemblyData = [];
                 that.getView().setModel(new sap.ui.model.json.JSONModel([]), "assemblyModel");
                 return;
             }
-
             console.log("[V4 Alerts] All VCPLANNER alerts:", vcAlerts);
-
             // DATA ALERTS: Only MSGGRP = "DATA"
             var dataAlerts = vcAlerts.filter(function (a) {
                 return a.MSGGRP === "PROCESS_JOBS";
             });
-
             // SYSTEM ALERTS: PROCESS_JOBS, INTERFACE, RESTRICTIONS
             var systemAlerts = vcAlerts.filter(function (a) {
                 return a.MSGGRP === "PROCESS_JOBS" || a.MSGGRP === "INTERFACE" || a.MSGGRP === "RESTRICTIONS";
             });
-
             // EXCEPTIONAL ALERTS: Only MSGGRP = "EXCEPTIONAL"
             var exceptionalAlerts = vcAlerts.filter(function (a) {
-                return a.MSGGRP === "DATA";
+                return a.MSGGRP === "DATA"||a.MSGGRP === "RESTRICTIONS";
             });
             if (exceptionalAlerts.length > 0) {
                 var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0].MSGTXT;
@@ -398,9 +345,7 @@ sap.ui.define([
             var interfaceAlerts = vcAlerts.filter(function (a) {
                 return a.MSGGRP === "INTERFACE";
             });
-
             console.log("[V4 Alerts] Filtered - Data:", dataAlerts.length, "System:", systemAlerts.length, "Exception:", exceptionalAlerts.length);
-
             // Process DATA ALERTS card data - show individual messages
             var dataAlertsCardData = dataAlerts.map(function (a, idx) {
                 return {
@@ -411,14 +356,12 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-
             // Process SYSTEM ALERTS card data - show grouped counts
             var systemGroups = {
                 "PROCESS_JOBS": { count: 0, success: 0, warning: 0, error: 0 },
                 "INTERFACE": { count: 0, success: 0, warning: 0, error: 0 },
                 "RESTRICTIONS": { count: 0, success: 0, warning: 0, error: 0 }
             };
-
             systemAlerts.forEach(function (a) {
                 var group = a.MSGGRP;
                 if (systemGroups[group]) {
@@ -428,7 +371,6 @@ sap.ui.define([
                     systemGroups[group].error += Number(a.ERROR_COUNT || 0);
                 }
             });
-
             // Convert to array format for the card
             var systemAlertsCardData = Object.keys(systemGroups).map(function (group) {
                 var data = systemGroups[group];
@@ -437,7 +379,6 @@ sap.ui.define([
                     "INTERFACE": "Interface",
                     "RESTRICTIONS": "Resource Consumption"
                 };
-
                 return {
                     category: displayNameMap[group] || group,
                     count: data.count,
@@ -451,7 +392,6 @@ sap.ui.define([
             }).filter(function (item) {
                 return item.count > 0; // Only show groups with alerts
             });
-
             // Process EXCEPTIONAL ALERTS card data - show individual messages
             var exceptionalAlertsCardData = exceptionalAlerts.map(function (a, idx) {
                 return {
@@ -462,7 +402,6 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-
             var interfaceAlertsCardData = interfaceAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("interface-" + idx),
@@ -472,17 +411,14 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-
             console.log("[V4 Alerts] System groups data:", systemAlertsCardData);
             console.log("[V4 Alerts] Exception alerts:", exceptionalAlertsCardData);
             console.log("[V4 Alerts] Interface alerts:", interfaceAlertsCardData);
-
             // Bind to all three cards
             that._bindAlertsToCardsExact(dataAlertsCardData, systemAlertsCardData, exceptionalAlertsCardData, interfaceAlertsCardData);
         },
         getMergedArray: function (arr1, arr2) {
             const lookup = new Map(arr2.map(a => [a.MAT_CHILD, a.PROD_DESC]));
-
             // Append desc to array1
             return arr1.map(item => ({
                 ...item,
@@ -492,7 +428,6 @@ sap.ui.define([
         // Binding method for all three cards
         _bindAlertsToCardsExact: function (dataAlertsCardData, systemAlertsCardData, exceptionalAlertsCardData, interfaceAlertsCardData) {
             var that = this;
-
             // Get card references
             var oSystemCard = that.byId("MyCardId");     // System Alerts (700px)
             var oDataCard = that.byId("MyCardId1");      // Data Alerts (350px)
@@ -551,7 +486,6 @@ sap.ui.define([
                         console.log("[V4 Alerts] Exception card bound with", interfaceAlertsCardData.length, "alerts");
                     }
                 }
-
                 console.log("[V4 Alerts] All three cards updated successfully");
                 sap.ui.core.BusyIndicator.hide();
             } catch (error) {
@@ -573,7 +507,6 @@ sap.ui.define([
                 // item.targetApp = await this._getTargetForCategory(item.category);
                 item.targetApp = item.category;
             });
-
             return {
                 "sap.app": {
                     "id": "vcp.v4card.systemalerts",
@@ -631,8 +564,6 @@ sap.ui.define([
         // DATA ALERTS CARD - Show individual messages
         _createDataAlertsCardManifestExact: function (data) {
             var safeData = data || [];
-
-
             return {
                 "sap.app": {
                     "id": "vcp.v4card.dataalerts",
@@ -682,7 +613,6 @@ sap.ui.define([
         // EXCEPTIONAL ALERTS CARD - Show individual messages with severity
         _createExceptionalAlertsCardManifest: function (data) {
             var safeData = data || [];
-
             return {
                 "sap.app": {
                     "id": "vcp.v4card.exceptionalalerts",
@@ -715,12 +645,8 @@ sap.ui.define([
                         "item": {
                             "title": "{title}",
                             "description": "{description}",
-                            // "icon": { "src": "{icon}" },
                             "highlight": "{severity}"
-                            // "info": {
-                            //     "value": "{severity}",
-                            //     "state": "{= ${severity} === 'High' ? 'Error' : ${severity} === 'Medium' ? 'Warning' : 'Information' }"
-                            // }
+                           
                         }
                     },
                     "footer": {
@@ -735,7 +661,6 @@ sap.ui.define([
         // INTERFACE ALERTS CARD - Show individual messages 
         _createInterfaceAlertsCardManifest: function (data) {
             var safeData = data || [];
-
             return {
                 "sap.app": {
                     "id": "vcp.v4card.exceptionalalerts",
@@ -767,7 +692,6 @@ sap.ui.define([
                         "item": {
                             "title": "{title}",
                             "description": "{description}",
-                            // "icon": { "src": "{icon}" },
                             "highlight": "{severity}"
                         }
                     },
@@ -783,7 +707,6 @@ sap.ui.define([
         // Determine severity for exceptional alerts
         _determineExceptionalSeverity: function (message) {
             if (!message) return "Information";
-
             var lowerMessage = message.toLowerCase();
             if (lowerMessage.includes('error') || lowerMessage.includes('failed') ||
                 lowerMessage.includes('critical') || lowerMessage.includes('fatal') ||
@@ -829,8 +752,7 @@ sap.ui.define([
             var oSystemCard = that.byId("MyCardId");
             var oDataCard = that.byId("MyCardId1");
             var oExceptionalCard = that.byId("MyCardId3");
-            var oInterfaceCard = that.byId("MyCardId4")
-
+            var oInterfaceCard = that.byId("MyCardId4");
             if (oSystemCard) that._showEmptyAlertsCard("System Alerts", "MyCardId");
             if (oDataCard) that._showEmptyAlertsCard("Data Alerts", "MyCardId1");
             if (oExceptionalCard) that._showEmptyAlertsCard("Exception Alerts", "MyCardId3");
@@ -874,7 +796,6 @@ sap.ui.define([
                     }
                 }
             };
-
             var oCard = that.byId(id);
             if (oCard) {
                 oCard.setManifest(oEmptyManifest);
@@ -890,29 +811,23 @@ sap.ui.define([
                 vUser = email ? email : "";
             }
             return vUser;
-
         },
         onCardAction: async function (oEvent) {
             const oParams = oEvent.getParameters();
             const oAction = oParams.action || {}; // fallback
             const actionParams = oAction.parameters || oParams.parameters || {}; // safe fallback
             const actionId = actionParams.actionId;
-
             console.log("Card action triggered:", actionId);
-
             switch (actionId) {
                 case "PROCESS_JOBS":
                     await this._navigateToProcessJobs();
                     break;
-
                 case "INTERFACE":
                     await this._navigateToInterface();
                     break;
-
                 case "RESTRICTIONS":
                     sap.m.MessageToast.show("Restriction alert clicked");
                     break;
-
                 default:
                     sap.m.MessageToast.show("Unknown card action: " + actionId);
             }
@@ -949,8 +864,6 @@ sap.ui.define([
                             action: "display"
                         }
                     })) || "";
-                    var oStorage = jQuery.sap.storage(jQuery.sap.storage.Type.local);
-                    oStorage.put("nodeId", 58);
                     //Generate a  URL for the second application
                     var url = window.location.href.split('#')[0] + hash;
                     //Navigate to second app
@@ -976,28 +889,21 @@ sap.ui.define([
             if (locSelectedKey) {
                 aFilters.push(new sap.ui.model.Filter("LOCATION_ID", "EQ", locSelectedKey));
             }
-
             if (prodSelectedKey) {
                 aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", "EQ", prodSelectedKey));
             }
-
             const aFilters1 = Array.isArray(aFilters) ? aFilters : [];
-
             const iPageSize = 5000; // tune this depending on your service
             let iSkip = 0;
             let aAllResults = [];
             let bHasMore = true;
-
             while (bHasMore) {
                 // var url = `/getDMDAnalytical?$filter=LOCATION_ID eq '1600'`
                 const aContexts = await this.oModel
                     .bindList("/getDMDAnalytical", null, [], aFilters1)
                     .requestContexts(iSkip, iPageSize);
-
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
-
                 aAllResults = aAllResults.concat(aPageResults);
-
                 // If we got less than requested, it's the last page
                 if (aPageResults.length < iPageSize) {
                     bHasMore = false;
@@ -1005,9 +911,7 @@ sap.ui.define([
                     iSkip += iPageSize;
                 }
             }
-
             console.log("Total records loaded:", aAllResults.length);
-
             if (aAllResults.length === 0) {
                 sap.m.MessageToast.show("No data available in WoW variance analysis for selected Location & Product");
                 that.onFilterResetWOW();
@@ -1130,7 +1034,6 @@ sap.ui.define([
                         var semanticObject = "vcpvendergoodcapacity",
                             action = "display";
                         break;
-
                     default:
                         break;
                 }
@@ -1165,25 +1068,19 @@ sap.ui.define([
             if (locSelectedKey) {
                 aFilters.push(new sap.ui.model.Filter("LOCATION_ID", sap.ui.model.FilterOperator.EQ, locSelectedKey));
             }
-
             if (prodSelectedKey) {
                 aFilters.push(new sap.ui.model.Filter("PRODUCT_ID", sap.ui.model.FilterOperator.EQ, prodSelectedKey));
             }
-
             const iPageSize = 5000; // tune this depending on your service
             let iSkip = 0;
             let aAllResults = [];
             let bHasMore = true;
-
             while (bHasMore) {
                 const aContexts = await this.oModel
                     .bindList("/getAssemblyData", null, null, aFilters)
                     .requestContexts(iSkip, iPageSize);
-
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
-
                 aAllResults = aAllResults.concat(aPageResults);
-
                 // If we got less than requested, it's the last page
                 if (aPageResults.length < iPageSize) {
                     bHasMore = false;
@@ -1191,19 +1088,15 @@ sap.ui.define([
                     iSkip += iPageSize;
                 }
             }
-
             console.log("Total records loaded:", aAllResults.length);
-
             if (aAllResults.length === 0) {
                 sap.m.MessageToast.show("No data available in Forecast accuracy for selected Location & Product");
                 this.byId("cbFactory").setSelectedKey("");
                 this.byId("cbStartMonth").setSelectedKey("");
                 this.byId("cbEndMonth").setSelectedKey("");
                 that.keySettingData = undefined
-                // that.totalFilterData = undefined;
                 that.oGModel.setProperty("/showPivot", false);
                 that.oGModel.setProperty("/tableType", 'Table');
-                // sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel([]));
                 that.allData = [];
                 var existingDiv = document.querySelector('[id*="mainDivLag"]');
                 if (existingDiv.children.length > 0) {
@@ -1220,7 +1113,6 @@ sap.ui.define([
                     acc[curr.LOCATION_ID] = curr.LOCATION_DESC;
                     return acc;
                 }, {});
-
                 // Add LOCATION_DESC to each object in facLocation
                 const facLocationWithDesc = facLocation.map(item => ({
                     ...item,
@@ -1240,13 +1132,10 @@ sap.ui.define([
                     }
                 }, 0);
             }
-
         },
         onFacLocChange: async function (oEvent) {
             sap.ui.core.BusyIndicator.show();
-            // var calendarDate = that.totalAssemblyData.filter(id => id.FACTORY_LOC === oEvent.getParameters().selectedItem.getKey());
             var calendarDate = that.oGModel.getProperty("/CalendarData");
-            // calendarDate = that.removeDuplicates(that.totalAssemblyData, "MONTH");
             var calendarDateEnd = calendarDate;
             const calendarModelStart = new sap.ui.model.json.JSONModel({ MONTHDATA: calendarDate });
             that.getView().setModel(calendarModelStart, "calendarStart");
@@ -1264,42 +1153,17 @@ sap.ui.define([
                     const index = aItems.findIndex(id =>
                         id.WEEK_STARTDATE <= local && id.WEEK_ENDDATE >= local
                     );
-
                     if (index !== -1) {
                         const endIndex = (index - 4 < aItems.length) ? index - 4 : aItems.length + 1;
-
                         oCalendarStart.setSelectedKey(aItems[endIndex].PERIODDESC);
                         oCalendarEnd.setSelectedKey(aItems[index].PERIODDESC);
-
                         // Fire selection events if required
-                        // oCalendarStart.fireSelectionChange({ selectedItem: aItems[index] });
                         oCalendarEnd.fireSelectionChange({ selectedItem: aItems[index] });
                     }
                 }
             }, 200);
             sap.ui.core.BusyIndicator.hide();
         },
-        // onAssemblyChange: function (oEvent) {
-        //     var startSelected = oEvent.getParameters().selectedItem.getKey();
-        //     var facLoc = that.byId("cbFactory").getSelectedKey();
-        //     var aAllResults = that.totalAssemblyData.filter(id => id.FACTORY_LOC === facLoc);
-        //     aAllResults = that.removeDuplicates(aAllResults, "MONTH");
-        //     function parseFiscalMonth(fm) {
-        //         const [, year, period] = fm.match(/FY(\d{2}) P(\d{2})/) || [];
-        //         return year && period ? Number(year) * 100 + Number(period) : 0;
-        //     }
-        //     aAllResults = aAllResults.filter(d => parseFiscalMonth(d.MONTH) >= parseFiscalMonth(startSelected));
-        //     const calendarModelEnd = new sap.ui.model.json.JSONModel({ MONTHDATAEND: aAllResults });
-        //     that.getView().setModel(calendarModelEnd, "calendarEnd");
-        //     var oCalendar = this.byId("cbEndMonth");
-        //     setTimeout(() => {
-        //         var aItems = aAllResults;
-        //         if (aItems.length > 0) {
-        //             oCalendar.setSelectedKey(aItems[0].MONTH);
-        //             oCalendar.fireSelectionChange({ selectedItem: aItems[0] });
-        //         }
-        //     }, 200);
-        // },
 
         onGo: async function () {
             try {
@@ -1313,11 +1177,9 @@ sap.ui.define([
                     that.getView().setBusy(false)
                     return MessageToast.show("Select Required Filter");
                 }
-                let oRes, data, val;
-
+                let oRes, data;
                 that.ActualQty = [];
                 that.NormalQty = [];
-                const assembly = [];
                 that.allData = [];
                 const type = that.byId("idTypeBox").getSelectedKey();
                 if (type === "Assembly") {
@@ -1363,15 +1225,8 @@ sap.ui.define([
                     that.staticColumns = ["Characteristic", "Characteristic value", "Lag Month"]
                     that.byId("idkeyFig").setVisible(false);
                 }
-                that.allData = data;
-                // that.allData.forEach(o => {
-                //     if (o.ASSEMBLY_DESC)
-                //         if (!assembly.includes(o.ASSEMBLY_DESC))
-                //             assembly.push(o.ASSEMBLY_DESC);
-                // })
+                that.allData = data;                
                 that.updateQty();
-                // if (type === "Assembly")
-                //     sap.ui.getCore().byId("asmDetailsDialog").setModel(new JSONModel({ asmDetails: assembly.map(a => { return { ASSEMBLY_DESC: a } }) }));
                 that.loadPivotTable(that.allData);
                 that.getView().setBusy(false);
             } catch (error) {
@@ -1383,24 +1238,19 @@ sap.ui.define([
             try {
                 // Bind to the function import
                 const oFunction = this.oModel.bindContext(`/${entity}(...)`);
-
                 // Set each parameter dynamically
                 for (const [key, value] of Object.entries(oParameters)) {
                     oFunction.setParameter(key, value);
                 }
-
                 // Execute the function
                 await oFunction.execute();
-
                 // Get bound context
                 const oCtx = oFunction.getBoundContext();
                 if (!oCtx) {
                     console.warn(`⚠️ No response context for ${sFunctionName}`);
                     return null;
                 }
-
                 const oResult = oCtx.getObject();
-
                 // Auto-parse JSON results (if backend returns stringified JSON)
                 if (oResult?.value) {
                     try {
@@ -1409,7 +1259,6 @@ sap.ui.define([
                         return oResult.value;
                     }
                 }
-
                 return oResult;
             } catch (err) {
                 console.error(`❌ Function call failed: ${sFunctionName}`, err);
@@ -1476,7 +1325,6 @@ sap.ui.define([
         updateQty() {
             that.ActualQty = [];
             that.NormalQty = [];
-
             let text = that.byId("idMapTypeGroup").getSelectedButton().getText();
             let val;
             if (text === "MAPE") {
@@ -1486,13 +1334,10 @@ sap.ui.define([
             } else if (text === "Lag Quantity") {
                 val = "LAG_QTY";
             }
-
             const type = that.byId("idTypeBox").getSelectedKey();
-
             // Using Maps to aggregate values by key
             const actualMap = new Map();
             const normalMap = new Map();
-
             that.allData.forEach(o => {
                 let key;
                 if (type === "Assembly") {
@@ -1507,9 +1352,7 @@ sap.ui.define([
                 else if (type === "Statastical Forecast") {
                     key = `${o.CHAR_DESC}_${o.CHARVAL_DESC}_${o.SELECTED_MONTH}`;
                 }
-
                 const value = o[val] || 0;
-
                 if (o.LAG_MONTH == 0) {
                     // Sum values for ActualQty
                     actualMap.set(key, (actualMap.get(key) || 0) + value);
@@ -1518,7 +1361,6 @@ sap.ui.define([
                     normalMap.set(key, (normalMap.get(key) || 0) + value);
                 }
             });
-
             // Convert Maps to arrays
             that.ActualQty = Array.from(actualMap.values());
             that.NormalQty = Array.from(normalMap.values());
@@ -1627,7 +1469,6 @@ sap.ui.define([
                 }
                 return MessageToast.show("No Data in Forecast accuracy for the selections");
             }
-
             that.oGModel.setProperty("/showPivot", true);
             that.isTableBarChart = true;
             var newDiv = document.createElement("div");
@@ -1646,17 +1487,11 @@ sap.ui.define([
                 const tableType = that.oGModel.getProperty("/tableType");
                 const isTableType = tableType.includes('Table') ||
                     tableType.includes('Heatmap');
-                // var pivotDiv = that.byId("mainDivLag").getDomRef();
-
                 const pivotData = that.jsonToPivotData(data);
-
                 if (!rows) {
                     var rows = that.staticColumns;
                 }
                 that.staticColumns = rows;
-                // if (!val) {
-                //     var val = ["MAPE"];
-                // }
                 let text = that.byId("idMapTypeGroup").getSelectedButton().getText()
                 let val;
                 if (text === "MAPE") {
@@ -1669,9 +1504,7 @@ sap.ui.define([
                     val = [text]
                 }
                 that.value = val;
-                let
-                    // cols = ["Telescopic Week", "Actual Quantity"]
-                    cols = ["Telescopic Week"];
+                let cols = ["Telescopic Week"];
                 const labels = [
                     "Characteristic",
                     "Characteristic value",
@@ -1692,15 +1525,12 @@ sap.ui.define([
                     "Lag Month",
                     "Actual Month"
                 ];
-
                 const remaainlabel = labels.filter(l => !rows.includes(l) && !cols.includes(l));
-
                 remaainlabel.push("Lag Quantity",
                     "Actual Quantity",
                     "MAPE",
                     "MAPE Quantity (Absolute)",
                     "MAPE Quantity");
-
                 $(pivotDiv).pivotUI(pivotData, {
                     rows: rows,
                     cols: cols,
@@ -1708,15 +1538,9 @@ sap.ui.define([
                     aggregatorName: "Sum",
                     rendererName: "Heatmap",
                     showUI: that.byId("idFilterCheck").getSelected(),
-                    // hiddenAttributes: remaainlabel,
-                    // onRefresh: function (config) {
-
-                    // },
                     hiddenFromDragDrop: remaainlabel,
                     sorters: {
-                        // [cols]: () => 0
                     },
-
                     renderers: $.extend(
                         $.pivotUtilities.renderers,
                         $.pivotUtilities.plotly_renderers
@@ -1730,29 +1554,21 @@ sap.ui.define([
                             colorScaleGenerator: function (values) {
                                 const ignoreValues = that.ActualQty;
                                 const normalValue = that.NormalQty;
-
                                 var filteredValues = values.filter(function (v) {
                                     if (v === null || v === undefined) return false;
-
                                     const inIgnore = ignoreValues.includes(v);
                                     const inNormal = normalValue.includes(v);
-
                                     // If in both arrays, keep it (don't ignore)
                                     if (inIgnore && inNormal) return true;
-
                                     // If only in ignore array, filter it out
                                     if (inIgnore && !inNormal) return false;
-
                                     // Otherwise, keep it
                                     return true;
                                 });
-
                                 if (filteredValues.length === 0) return Plotly.d3.scale.linear();
-
                                 var min = Math.min.apply(Math, filteredValues);
                                 var max = Math.max.apply(Math, filteredValues);
                                 var mid = (min + max) / 2;
-
                                 return Plotly.d3.scale.linear()
                                     .domain([min, mid, max])
                                     .range(["#B3E5FC", "#2196F3", "#0D47A1"]);
@@ -1777,40 +1593,31 @@ sap.ui.define([
             $(".pvtTable").ready(function () {
                 setTimeout(function () {
                     // Handle chart renderer control
-
-
                     // Hide last row (totals row)
                     // $(".pvtTable").find("tr:last").hide();
                     // $(".pvtTable").find('thead:first tr:first th:last-child').hide();
-
                     // Adjust vertical alignment for headers with large rowspan
                     $(".pvtTable").find('th[rowspan]').each(function () {
                         if (parseInt($(this).attr('rowspan')) > 7) {
                             $(this).css('vertical-align', 'top');
                         }
                     });
-
                     $(".pvtTable").find('th').each(function () {
                         const text = $(this).text().trim();
-
                         // Replace '0' with 'Actual'
                         if (text === '0') {
                             $(this).html("Actual");
                         }
-
                         // Highlight the header that matches curWeek
                         if (text === that.curWeek) {
                             $(this).css("background-color", "#ffe08a"); // light yellow highlight
                         }
                     });
-
                     const allWeek = $(".mainDivClass .pvtTable").find("thead tr:first th");
-
                     if (that.calWeekData && that.calWeekData.length)
                         $(allWeek).each(function (e) {
                             const cellText = $(this).text();
                             $(this).addClass("weekHeader");
-
                             const popoverHtml = `
                     <div class="popover">
                         <div class="popover-content">
@@ -1834,81 +1641,12 @@ sap.ui.define([
                             });
                         });
 
-
-
-                    // $(".pvtTable").find('tbody tr').each(function () {
-                    //     var hasEmptyCell = false;
-                    //     $(this).find('th').each(function (e) {
-                    //         if ($(this).text().trim() === "") {
-                    //             hasEmptyCell = true;
-                    //         }
-                    //     });
-                    //     if (hasEmptyCell) {
-                    //         $(this).find('td').each(function (e) {
-                    //             $(this).addClass('highlight-row');
-                    //         });
-                    //     }
-                    //     // $(this).find('td:last').remove();
-                    // })
-
-                    // if (that.weekType === "TELESCOPIC_WEEK") {
-                    // const allWeek = $(".pvtTable").find('thead tr:first th');
-                    // $(allWeek).each(function (e) {
-                    //     const cellText = $(this).text();
-                    //     if (that.weekType === "TELESCOPIC_WEEK") {
-
-                    //         if (that.telMonth.includes(cellText))
-                    //             $(this).css('background-color', '#ced4da');
-
-                    //         if (that.telQ.includes(cellText))
-                    //             $(this).css('background-color', '#adb5bd');
-
-                    //         if (e === allWeek.length - 1)
-                    //             $(this).css('background-color', '#adb5bd');
-                    //     }
-
-                    //     $(this).addClass('weekHeader');
-
-
-                    //     const popoverHtml = `<div class="popover">
-                    //         <div class="popover-content">
-                    //             <div class="date-row">
-                    //                 <span class="date-label">From:</span>
-                    //                 <span class="From${cellText}">28 April 2025</span>
-                    //             </div>
-                    //             <div class="date-row">
-                    //                 <span class="date-label">To:</span>
-                    //                 <span class="To${cellText}">05 May 2025</span>
-                    //             </div>
-                    //         </div>
-                    //     </div>`;
-
-                    //     // Add popover to body
-                    //     $(this).append(popoverHtml);
-
-                    //     $(this).hover(
-                    //         function () {
-                    //             // Mouse enters
-                    //             that.updateDate(cellText);
-                    //         }
-                    //         // ,
-                    //         // function () {
-                    //         //     // Mouse leaves
-                    //         //     yourFunctionOut();
-                    //         // }
-                    //     );
-                    // });
-
-
-                    // }
-
                     // Freeze columns in thead
                     function freezeHeaderColumns() {
                         // Process first row of thead
                         const firstHeadRow = $(".pvtTable").find('thead tr:first');
                         if (firstHeadRow.length) {
                             let widthsHead = [0];
-
                             // Calculate cumulative widths for first 3 columns (Location, Product, Assembly)
                             const columnsToFreeze = Math.min(2, firstHeadRow.find('th').length);
                             // const columnsToFreeze = 2;
@@ -1923,7 +1661,6 @@ sap.ui.define([
                                     widthsHead.push(widthsHead[i] + width);
                                 }
                             }
-
                             // Apply freeze positioning
                             firstHeadRow.find('th').each(function (index) {
                                 if (index < columnsToFreeze) {
@@ -1932,14 +1669,12 @@ sap.ui.define([
                                 }
                             });
                         }
-
                         // Process second row of thead (axis labels)
                         const secondHeadRow = $(".pvtTable").find('thead tr:eq(1)');
                         if (secondHeadRow.length) {
                             let widthsHead2 = [0];
                             const thElements = secondHeadRow.find('th');
-                            const columnsToFreeze = thElements.length
-
+                            const columnsToFreeze = thElements.length;
                             // Calculate widths for columns to freeze
                             for (let i = 0; i < columnsToFreeze; i++) {
                                 const th = thElements.eq(i);
@@ -1950,7 +1685,6 @@ sap.ui.define([
                                 const width = parseFloat(th.css("width") || '0') + borderWidth + paddingWidth;
                                 widthsHead2.push(widthsHead2[i] + width);
                             }
-
                             // Apply freeze positioning
                             thElements.each(function (index) {
                                 if (index < columnsToFreeze) {
@@ -1960,16 +1694,13 @@ sap.ui.define([
                             });
                         }
                     }
-
                     // Freeze columns in tbody
                     function freezeBodyColumns() {
                         const tbody = $(".pvtTable").find('tbody');
                         if (!tbody.length) return;
-
                         // Find row with most th elements to use as reference
                         let maxThCount = 0;
                         let referenceRow = null;
-
                         tbody.find('tr').each(function () {
                             const thCount = $(this).find('th').length;
                             if (thCount > maxThCount) {
@@ -1977,9 +1708,7 @@ sap.ui.define([
                                 referenceRow = $(this);
                             }
                         });
-
                         if (!referenceRow || maxThCount === 0) return;
-
                         // Calculate cumulative widths for the columns to freeze
                         let widths = [0];
                         for (let i = 0; i < maxThCount; i++) {
@@ -1993,7 +1722,6 @@ sap.ui.define([
                                 widths.push(widths[i] + width);
                             }
                         }
-
                         // Apply freeze positioning to each row
                         tbody.find('tr').each(function () {
                             const thElements = $(this).find('th');
@@ -2103,7 +1831,6 @@ sap.ui.define([
                 }
                 return;
             }
-
             // ✅ Load fragment first time
             sap.ui.core.Fragment.load({
                 id: oView.getId(),
@@ -2112,21 +1839,17 @@ sap.ui.define([
             }).then(function (oPopover) {
                 oView.addDependent(oPopover);
                 that._oWidgetPopover = oPopover;
-
                 // Mock widget data
                 const widgetNames = ["Alerts", "Forecast Accuracy", "WoW Variance"];
                 const aWidgets = widgetNames.map((name, i) => ({ ID: i + 1, Name: name }));
-
                 const oWidgetModel = new sap.ui.model.json.JSONModel({
                     widgetCollection: aWidgets
                 });
                 oPopover.setModel(oWidgetModel);
-
                 // Attach afterOpen for first-time rendering
                 oPopover.attachAfterOpen(function () {
                     applyWidgetSelections(oPopover);
                 });
-
                 oPopover.openBy(oButton);
             }).catch(function (oError) {
                 console.error("Failed to load AdaptWidgets fragment:", oError);
@@ -2137,7 +1860,6 @@ sap.ui.define([
             const sQuery = oEvent.getParameter("newValue");
             const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
             const oBinding = oTable.getBinding("items");
-
             if (sQuery) {
                 const oFilter = new sap.ui.model.Filter("Name", sap.ui.model.FilterOperator.Contains, sQuery);
                 oBinding.filter([oFilter]);
@@ -2149,23 +1871,18 @@ sap.ui.define([
         onSelectWidget: function () {
             const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
             const aSelectedItems = oTable.getSelectedItems();
-
             // Extract selected widget objects
             const aSelectedWidgets = aSelectedItems.map(function (item) {
                 return item.getBindingContext().getObject();
             });
-
             // ✅ Save confirmed selection for persistence
             this._aSelectedWidgets = aSelectedWidgets;
-
             // Extract names
             const aNames = aSelectedWidgets.map(w => w.Name);
-
             // --- Visibility logic ---
             const oAlerts = this.byId("alertsPanel");
             const oLags = this.byId("lagsPanel");
             const oForecast = this.byId("idRow4");
-
             oAlerts.setVisible(aNames.includes("Alerts"));
             oLags.setVisible(aNames.includes("Forecast Accuracy"));
             oForecast.setVisible(aNames.includes("WoW Variance"));
@@ -2219,10 +1936,8 @@ sap.ui.define([
         },
         onCloseWidget: function (oEvent) {
             const oTable = Fragment.byId(this.getView().getId(), "idWidgetTable");
-
             // ✅ Restore last confirmed selections
             oTable.removeSelections();
-
             if (this._aSelectedWidgets && this._aSelectedWidgets.length > 0) {
                 oTable.getItems().forEach(item => {
                     const oData = item.getBindingContext().getObject();
@@ -2231,7 +1946,6 @@ sap.ui.define([
                     }
                 });
             }
-
             // Close popover
             if (this._oWidgetPopover) {
                 this._oWidgetPopover.close();
