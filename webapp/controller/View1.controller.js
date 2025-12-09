@@ -22,7 +22,7 @@ sap.ui.define([
             this.getView().setModel(new sap.ui.model.json.JSONModel({ items12: [] }), "viewDetails");
         },
         onAfterRendering: async function () {
-            that = this;      
+            that = this;
             that.oGModel = that.getOwnerComponent().getModel("oGModel");
             sap.ui.core.BusyIndicator.show();
             that.viewDetails = new JSONModel();
@@ -34,7 +34,7 @@ sap.ui.define([
             this.prodData = [];
             that.newChartData = [];
             that.CalendarData = [], that.assemblyData = [], that.cardData = [], that.noAssemblyData = [],
-            that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
+                that.totalAssemblyData = [], that.forecastData = [], that.totalOptMixData = [], that.monthData = [];
             that.rtrLineData = [], that.prdDmdData = [], that.wowData = [], that._aSelectedWidgets = [];
             that.oGModel.setProperty("/showPivot", false);
             that.oGModel.setProperty("/tableType", 'Table');
@@ -173,7 +173,7 @@ sap.ui.define([
             this.prodData = this.removeDuplicates(results, "PRODUCT_ID");
             this.prodData.sort((a, b) => a.PROD_DESC.localeCompare(b.PROD_DESC));
             // Set models
-            const oJSONLoc = new sap.ui.model.json.JSONModel({  results1: this.locationData });
+            const oJSONLoc = new sap.ui.model.json.JSONModel({ results1: this.locationData });
             oJSONLoc.setSizeLimit(5000);   // allow >100 items in binding
             this.getView().setModel(oJSONLoc, "locModel");
             const oJSONProd = new sap.ui.model.json.JSONModel({ results2: this.prodData });
@@ -291,7 +291,7 @@ sap.ui.define([
         _processAlertsDataV4: function (oData) {
             var that = this;
             // Normalize incoming V4 payload
-            var results = [];            try {
+            var results = []; try {
                 results = Array.isArray(oData) ? oData : (oData.value || []);
             } catch (e) {
                 console.error("[V4 Alerts] Error parsing data:", e);
@@ -327,12 +327,17 @@ sap.ui.define([
             });
             // EXCEPTIONAL ALERTS: Only MSGGRP = "EXCEPTIONAL"
             var exceptionalAlerts = vcAlerts.filter(function (a) {
-                return a.MSGGRP === "DATA"||a.MSGGRP === "RESTRICTIONS";
+                return a.MSGGRP === "DATA" || a.MSGGRP === "RESTRICTIONS";
             });
             if (exceptionalAlerts.length > 0) {
                 var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0].MSGTXT;
-                that.noAssemblyData = noAssemblyData.match(/'([^']+)'/g)
-                    .map(s => ({ assembly: s.replace(/'/g, '') }));
+                that.noAssemblyData = noAssemblyData
+                    .match(/'([^']+)'/g)
+                    .map(s => {
+                        const cleaned = s.replace(/'/g, '')       // remove single quotes
+                            .replace(/\(.*\)/, '');  // remove everything from (
+                        return { assembly: cleaned.trim() };
+                    });
                 var assemblyDesc = that.oGModel.getProperty("/fullAssemblyData");
                 var assemblies = that.getMergedArray(that.noAssemblyData, assemblyDesc);
                 this.getView().setModel(new sap.ui.model.json.JSONModel({ assemblies }), "assemblyModel");
@@ -646,7 +651,7 @@ sap.ui.define([
                             "title": "{title}",
                             "description": "{description}",
                             "highlight": "{severity}"
-                           
+
                         }
                     },
                     "footer": {
@@ -1225,7 +1230,7 @@ sap.ui.define([
                     that.staticColumns = ["Characteristic", "Characteristic value", "Lag Month"]
                     that.byId("idkeyFig").setVisible(false);
                 }
-                that.allData = data;                
+                that.allData = data;
                 that.updateQty();
                 that.loadPivotTable(that.allData);
                 that.getView().setBusy(false);
