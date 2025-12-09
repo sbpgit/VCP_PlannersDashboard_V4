@@ -233,7 +233,7 @@
                 class="sapUiTinyMargin sapUiSmallMarginEnd"
                 alignItems="Center"
                 justifyContent="SpaceBetween"
-                width="220px">
+                width="100%">
                 <m:VBox>
                     <m:ObjectIdentifier
                         title="{assemblyModel>assembly}"
