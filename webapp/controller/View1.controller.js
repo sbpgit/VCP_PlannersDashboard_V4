@@ -361,6 +361,7 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
+            dataAlertsCardData= sortBySeverity(dataAlertsCardData);
             // Process SYSTEM ALERTS card data - show grouped counts
             var systemGroups = {
                 "PROCESS_JOBS": { count: 0, success: 0, warning: 0, error: 0 },
@@ -407,6 +408,7 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
+            exceptionalAlertsCardData= sortBySeverity(exceptionalAlertsCardData);
             var interfaceAlertsCardData = interfaceAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("interface-" + idx),
@@ -416,11 +418,25 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
+            interfaceAlertsCardData= sortBySeverity(interfaceAlertsCardData);
             console.log("[V4 Alerts] System groups data:", systemAlertsCardData);
             console.log("[V4 Alerts] Exception alerts:", exceptionalAlertsCardData);
             console.log("[V4 Alerts] Interface alerts:", interfaceAlertsCardData);
             // Bind to all three cards
             that._bindAlertsToCardsExact(dataAlertsCardData, systemAlertsCardData, exceptionalAlertsCardData, interfaceAlertsCardData);
+
+            function sortBySeverity(data) {
+                const severityOrder = {
+                    "Success":1,
+                    "Error": 4,
+                    "Warning": 3,
+                    "Information": 2
+                };
+
+                return data.sort((a, b) => {
+                    return severityOrder[a.severity] - severityOrder[b.severity];
+                });
+            }
         },
         getMergedArray: function (arr1, arr2) {
             const lookup = new Map(arr2.map(a => [a.MAT_CHILD, a.PROD_DESC]));
@@ -650,8 +666,8 @@ sap.ui.define([
                         "item": {
                             "title": "{title}",
                             "description": "{description}",
-                            "highlight": "{severity}"
-
+                            "highlight": "{severity}",
+                            "displayStyle": "standard"
                         }
                     },
                     "footer": {
