@@ -511,9 +511,9 @@ div[id$="MyCardId2"] {
 }
 
 .sapUiSizeCompact .sapUiIntLCI.sapUiIntLCIOneLine .sapUiIntLCIIconAndLines {
-    height: auto;
+    height: auto !important;
 }
 
 .sapUiIntLCI .sapUiIntLCIContent>* {
-    padding: 0 1rem 5rem 1rem;
+    padding: 0 1rem 5rem 1rem !important;
 }
