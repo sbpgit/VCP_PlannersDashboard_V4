@@ -502,7 +502,7 @@ div[id$="MyCardId2"] {
     color: black !important;
 }
 
-
+/*Adjusting text display in cards for long texts*/
 .sapUiIntLCITitle, .sapUiIntLCIDescription, .sapUiIntLCIInfo {
     line-height: 1.2rem !important;
     font-family: var(--sapFontFamily);
