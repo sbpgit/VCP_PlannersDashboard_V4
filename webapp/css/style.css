@@ -517,3 +517,8 @@ div[id$="MyCardId2"] {
 .sapUiIntLCI .sapUiIntLCIContent>* {
     padding: 0 1rem 5rem 1rem !important;
 }
+
+.sapUiIntLCI .sapUiIntLCITitleWrapper, .sapUiIntLCI .sapUiIntLCIDescriptionWrapper {
+    padding-top: 0.5rem !important;
+    display: flex;
+}
