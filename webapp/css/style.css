@@ -509,3 +509,11 @@ div[id$="MyCardId2"] {
     white-space: normal !important;
     overflow: hidden;
 }
+
+.sapUiSizeCompact .sapUiIntLCI.sapUiIntLCIOneLine .sapUiIntLCIIconAndLines {
+    height: auto;
+}
+
+.sapUiIntLCI .sapUiIntLCIContent>* {
+    padding: 0 1rem 5rem 1rem;
+}
