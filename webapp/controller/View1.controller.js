@@ -352,6 +352,7 @@ sap.ui.define([
             });
             console.log("[V4 Alerts] Filtered - Data:", dataAlerts.length, "System:", systemAlerts.length, "Exception:", exceptionalAlerts.length);
             // Process DATA ALERTS card data - show individual messages
+            dataAlerts= sortbyLOGID(dataAlerts);
             var dataAlertsCardData = dataAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("data-" + idx),
@@ -361,7 +362,7 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-            dataAlertsCardData= sortBySeverity(dataAlertsCardData);
+            
             // Process SYSTEM ALERTS card data - show grouped counts
             var systemGroups = {
                 "PROCESS_JOBS": { count: 0, success: 0, warning: 0, error: 0 },
@@ -399,6 +400,7 @@ sap.ui.define([
                 return item.count > 0; // Only show groups with alerts
             });
             // Process EXCEPTIONAL ALERTS card data - show individual messages
+            exceptionalAlerts= sortbyLOGID(exceptionalAlerts);
             var exceptionalAlertsCardData = exceptionalAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("exceptional-" + idx),
@@ -408,7 +410,7 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-            exceptionalAlertsCardData= sortBySeverity(exceptionalAlertsCardData);
+            interfaceAlerts= sortbyLOGID(interfaceAlerts);
             var interfaceAlertsCardData = interfaceAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("interface-" + idx),
@@ -418,23 +420,16 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-            interfaceAlertsCardData= sortBySeverity(interfaceAlertsCardData);
+            
             console.log("[V4 Alerts] System groups data:", systemAlertsCardData);
             console.log("[V4 Alerts] Exception alerts:", exceptionalAlertsCardData);
             console.log("[V4 Alerts] Interface alerts:", interfaceAlertsCardData);
             // Bind to all three cards
             that._bindAlertsToCardsExact(dataAlertsCardData, systemAlertsCardData, exceptionalAlertsCardData, interfaceAlertsCardData);
 
-            function sortBySeverity(data) {
-                const severityOrder = {
-                    "Success":1,
-                    "Error": 4,
-                    "Warning": 3,
-                    "Information": 2
-                };
-
+            function sortbyLOGID(data) {
                 return data.sort((a, b) => {
-                    return severityOrder[a.severity] - severityOrder[b.severity];
+                    return b.LOG_ID - a.LOG_ID;
                 });
             }
         },
