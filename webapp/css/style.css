@@ -508,6 +508,7 @@ div[id$="MyCardId2"] {
     font-family: var(--sapFontFamily);
     white-space: normal !important;
     overflow: auto !important;
+    text-overflow: clip !important;
 }
 
 .sapUiSizeCompact .sapUiIntLCI.sapUiIntLCIOneLine .sapUiIntLCIIconAndLines {
