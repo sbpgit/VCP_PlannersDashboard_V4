@@ -522,3 +522,10 @@ div[id$="MyCardId2"] {
     padding-top: 0.5rem !important;
     display: flex;
 }
+
+/*Gap in between gridlist*/
+.sapFGridListDefault {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+    grid-gap: 0.5rem 0.75rem !important;
+}
