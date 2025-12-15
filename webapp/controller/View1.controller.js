@@ -732,7 +732,7 @@ sap.ui.define([
                 return "Warning";
             }
             else if (lowerMessage.includes('success') || lowerMessage.includes('good')
-                || lowerMessage.includes('yes')) {
+                || lowerMessage.includes('yes') || lowerMessage.includes('completed')) {
                 return "Success";
             }
             return "Information";
