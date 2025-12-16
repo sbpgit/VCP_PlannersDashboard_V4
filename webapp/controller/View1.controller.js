@@ -42,7 +42,7 @@ sap.ui.define([
             that.loadFragments();
             this.getLocProd();
             that.getAssemblyDesc();
-            await this.loadAlertsCards();
+            // await this.loadAlertsCards();
             this.getVariantData();
         },
         loadFragments: function () {
@@ -144,9 +144,14 @@ sap.ui.define([
             let aAllResults = [];
             let bHasMore = true;
             while (bHasMore) {
-                const aContexts = await this.oModel
-                    .bindList("/getfactorylocdesc")
-                    .requestContexts(iSkip, iPageSize);
+                // const aContexts = await this.oModel
+                //     .bindList("/getfactorylocdesc")
+                //     .requestContexts(iSkip, iPageSize);
+                 const oListBinding = this.oModel.bindList("/getPlannerLocProd");
+                    oListBinding.filter([
+                    new sap.ui.model.Filter("USER", sap.ui.model.FilterOperator.EQ, that.getUser())
+                ]);
+                const aContexts = await oListBinding.requestContexts(iSkip, iPageSize); 
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
                 aAllResults = aAllResults.concat(aPageResults);
                 // If we got less than requested, it's the last page
@@ -162,6 +167,7 @@ sap.ui.define([
             } else {
                 that.oGModel.setProperty("/fullLocProdData", aAllResults);
                 this.processData(aAllResults);
+                await this.loadAlertsCards();
                 sap.ui.core.BusyIndicator.hide();
             }
         },
@@ -298,6 +304,40 @@ sap.ui.define([
                 results = [];
             }
             console.log("[V4 Alerts] raw results length:", results.length);
+             var aCommonData=[],aLocProdData=[];
+                if(results && results.length >0){
+  results.forEach(f=>{
+                    if(f.LOCATION_ID =='*' && f.PRODUCT_ID == '*'){
+                        aCommonData.push(f);
+                    }
+                    else{
+                        aLocProdData.push(f);
+                    }
+                })
+                let aRolesData = that.oGModel.getProperty("/fullLocProdData");
+                const rolesProdSet = new Set(
+                aRolesData.map(item => `${item.PRODUCT_ID}`)
+                );
+                const rolesLocSet = new Set(
+                aRolesData.map(item => `${item.DEMAND_LOC}`)
+                );
+                const rolesLocProdSet = new Set(
+                aRolesData.map(item => `${item.DEMAND_LOC}|${item.PRODUCT_ID}`)
+                );
+                aLocProdData = aLocProdData.filter(el=>{
+                    if(el.LOCATION_ID == '*'){//check product 
+                         return rolesProdSet.has(`${el.PRODUCT_ID}`);
+                    }
+                    else if(el.PRODUCT_ID == '*'){//check Location
+                         return rolesLocSet.has(`${el.LOCATION_ID}`);
+                    }
+                    else{
+                        return rolesLocProdSet.has(`${el.LOCATION_ID}|${el.PRODUCT_ID}`);
+                    }
+                })
+                aCommonData = aCommonData.concat(aLocProdData);
+                }
+                results = aCommonData;
             if (!results || results.length === 0) {
                 console.warn("[V4 Alerts] No alerts -> show empty cards");
                 sap.ui.core.BusyIndicator.hide();
@@ -330,7 +370,8 @@ sap.ui.define([
                 return a.MSGGRP === "DATA" || a.MSGGRP === "RESTRICTIONS";
             });
             if (exceptionalAlerts.length > 0) {
-                var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0].MSGTXT;
+                var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0]?.MSGTXT;
+                 if(noAssemblyData){
                 that.noAssemblyData = noAssemblyData
                     .match(/'([^']+)'/g)
                     .map(s => {
@@ -341,6 +382,7 @@ sap.ui.define([
                 var assemblyDesc = that.oGModel.getProperty("/fullAssemblyData");
                 var assemblies = that.getMergedArray(that.noAssemblyData, assemblyDesc);
                 this.getView().setModel(new sap.ui.model.json.JSONModel({ assemblies }), "assemblyModel");
+                 }
             }
             else {
                 that.noAssemblyData = [];
@@ -825,6 +867,9 @@ sap.ui.define([
                     .getUser()
                     .getEmail();
                 vUser = email ? email : "";
+            }
+             if(!vUser){
+                vUser='null';
             }
             return vUser;
         },
