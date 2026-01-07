@@ -372,16 +372,18 @@ sap.ui.define([
             if (exceptionalAlerts.length > 0) {
                 var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0]?.MSGTXT;
                 if (noAssemblyData) {
-                    that.noAssemblyData = (noAssemblyData.match(/'[^']+'|[A-Za-z0-9._-]+\([^)]*\)/g) || [])
-                        .map(s => {
-                            const cleaned = s
-                                .replace(/'/g, '')     // remove quotes
-                                .replace(/\(.*\)/, ''); // remove (...) if present
+                    const quotedMatches = noAssemblyData.match(/'([^']+)'/g);
+                    const rawAssemblies = quotedMatches && quotedMatches.length
+                        ? quotedMatches                           // Case: quoted assemblies exist
+                        : (noAssemblyData.match(/[A-Za-z0-9._-]+\([^)]*\)|[A-Za-z0-9._-]+/g) || []);
+                    that.noAssemblyData = rawAssemblies.map(s => {
+                        const cleaned = s
+                            .replace(/'/g, '')      // remove quotes
+                            .replace(/\(.*\)/, '')  // remove everything from first '(' onward
+                            .trim();
 
-                            return { assembly: cleaned.trim() };
-                        });
-
-
+                        return { assembly: cleaned };
+                    });
                     var assemblyDesc = that.oGModel.getProperty("/fullAssemblyData");
                     var assemblies = that.getMergedArray(that.noAssemblyData, assemblyDesc);
                     this.getView().setModel(new sap.ui.model.json.JSONModel({ assemblies }), "assemblyModel");
