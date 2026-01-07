@@ -147,11 +147,11 @@ sap.ui.define([
                 // const aContexts = await this.oModel
                 //     .bindList("/getfactorylocdesc")
                 //     .requestContexts(iSkip, iPageSize);
-                 const oListBinding = this.oModel.bindList("/getPlannerLocProd");
-                    oListBinding.filter([
+                const oListBinding = this.oModel.bindList("/getPlannerLocProd");
+                oListBinding.filter([
                     new sap.ui.model.Filter("USER", sap.ui.model.FilterOperator.EQ, that.getUser())
                 ]);
-                const aContexts = await oListBinding.requestContexts(iSkip, iPageSize); 
+                const aContexts = await oListBinding.requestContexts(iSkip, iPageSize);
                 const aPageResults = aContexts.map(ctx => ctx.getObject());
                 aAllResults = aAllResults.concat(aPageResults);
                 // If we got less than requested, it's the last page
@@ -304,40 +304,40 @@ sap.ui.define([
                 results = [];
             }
             console.log("[V4 Alerts] raw results length:", results.length);
-             var aCommonData=[],aLocProdData=[];
-                if(results && results.length >0){
-  results.forEach(f=>{
-                    if(f.LOCATION_ID =='*' && f.PRODUCT_ID == '*'){
+            var aCommonData = [], aLocProdData = [];
+            if (results && results.length > 0) {
+                results.forEach(f => {
+                    if (f.LOCATION_ID == '*' && f.PRODUCT_ID == '*') {
                         aCommonData.push(f);
                     }
-                    else{
+                    else {
                         aLocProdData.push(f);
                     }
                 })
                 let aRolesData = that.oGModel.getProperty("/fullLocProdData");
                 const rolesProdSet = new Set(
-                aRolesData.map(item => `${item.PRODUCT_ID}`)
+                    aRolesData.map(item => `${item.PRODUCT_ID}`)
                 );
                 const rolesLocSet = new Set(
-                aRolesData.map(item => `${item.DEMAND_LOC}`)
+                    aRolesData.map(item => `${item.DEMAND_LOC}`)
                 );
                 const rolesLocProdSet = new Set(
-                aRolesData.map(item => `${item.DEMAND_LOC}|${item.PRODUCT_ID}`)
+                    aRolesData.map(item => `${item.DEMAND_LOC}|${item.PRODUCT_ID}`)
                 );
-                aLocProdData = aLocProdData.filter(el=>{
-                    if(el.LOCATION_ID == '*'){//check product 
-                         return rolesProdSet.has(`${el.PRODUCT_ID}`);
+                aLocProdData = aLocProdData.filter(el => {
+                    if (el.LOCATION_ID == '*') {//check product 
+                        return rolesProdSet.has(`${el.PRODUCT_ID}`);
                     }
-                    else if(el.PRODUCT_ID == '*'){//check Location
-                         return rolesLocSet.has(`${el.LOCATION_ID}`);
+                    else if (el.PRODUCT_ID == '*') {//check Location
+                        return rolesLocSet.has(`${el.LOCATION_ID}`);
                     }
-                    else{
+                    else {
                         return rolesLocProdSet.has(`${el.LOCATION_ID}|${el.PRODUCT_ID}`);
                     }
                 })
                 aCommonData = aCommonData.concat(aLocProdData);
-                }
-                results = aCommonData;
+            }
+            results = aCommonData;
             if (!results || results.length === 0) {
                 console.warn("[V4 Alerts] No alerts -> show empty cards");
                 sap.ui.core.BusyIndicator.hide();
@@ -371,18 +371,21 @@ sap.ui.define([
             });
             if (exceptionalAlerts.length > 0) {
                 var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0]?.MSGTXT;
-                 if(noAssemblyData){
-                that.noAssemblyData = noAssemblyData
-                    .match(/'([^']+)'/g)
-                    .map(s => {
-                        const cleaned = s.replace(/'/g, '')       // remove single quotes
-                            .replace(/\(.*\)/, '');  // remove everything from (
-                        return { assembly: cleaned.trim() };
-                    });
-                var assemblyDesc = that.oGModel.getProperty("/fullAssemblyData");
-                var assemblies = that.getMergedArray(that.noAssemblyData, assemblyDesc);
-                this.getView().setModel(new sap.ui.model.json.JSONModel({ assemblies }), "assemblyModel");
-                 }
+                if (noAssemblyData) {
+                    that.noAssemblyData = (noAssemblyData.match(/'[^']+'|[A-Za-z0-9._-]+\([^)]*\)/g) || [])
+                        .map(s => {
+                            const cleaned = s
+                                .replace(/'/g, '')     // remove quotes
+                                .replace(/\(.*\)/, ''); // remove (...) if present
+
+                            return { assembly: cleaned.trim() };
+                        });
+
+
+                    var assemblyDesc = that.oGModel.getProperty("/fullAssemblyData");
+                    var assemblies = that.getMergedArray(that.noAssemblyData, assemblyDesc);
+                    this.getView().setModel(new sap.ui.model.json.JSONModel({ assemblies }), "assemblyModel");
+                }
             }
             else {
                 that.noAssemblyData = [];
@@ -394,7 +397,7 @@ sap.ui.define([
             });
             console.log("[V4 Alerts] Filtered - Data:", dataAlerts.length, "System:", systemAlerts.length, "Exception:", exceptionalAlerts.length);
             // Process DATA ALERTS card data - show individual messages
-            dataAlerts= sortbyLOGID(dataAlerts);
+            dataAlerts = sortbyLOGID(dataAlerts);
             var dataAlertsCardData = dataAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("data-" + idx),
@@ -404,7 +407,7 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-            
+
             // Process SYSTEM ALERTS card data - show grouped counts
             var systemGroups = {
                 "PROCESS_JOBS": { count: 0, success: 0, warning: 0, error: 0 },
@@ -442,7 +445,7 @@ sap.ui.define([
                 return item.count > 0; // Only show groups with alerts
             });
             // Process EXCEPTIONAL ALERTS card data - show individual messages
-            exceptionalAlerts= sortbyLOGID(exceptionalAlerts);
+            exceptionalAlerts = sortbyLOGID(exceptionalAlerts);
             var exceptionalAlertsCardData = exceptionalAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("exceptional-" + idx),
@@ -452,7 +455,7 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-            interfaceAlerts= sortbyLOGID(interfaceAlerts);
+            interfaceAlerts = sortbyLOGID(interfaceAlerts);
             var interfaceAlertsCardData = interfaceAlerts.map(function (a, idx) {
                 return {
                     id: a.PROCESS_ID || a.MSGID || ("interface-" + idx),
@@ -462,7 +465,7 @@ sap.ui.define([
                     severity: that._determineExceptionalSeverity(a.MSGTXT)
                 };
             });
-            
+
             console.log("[V4 Alerts] System groups data:", systemAlertsCardData);
             console.log("[V4 Alerts] Exception alerts:", exceptionalAlertsCardData);
             console.log("[V4 Alerts] Interface alerts:", interfaceAlertsCardData);
@@ -868,8 +871,8 @@ sap.ui.define([
                     .getEmail();
                 vUser = email ? email : "";
             }
-             if(!vUser){
-                vUser='null';
+            if (!vUser) {
+                vUser = 'null';
             }
             return vUser;
         },
