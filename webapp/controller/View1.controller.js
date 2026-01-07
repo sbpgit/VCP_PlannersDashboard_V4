@@ -372,18 +372,27 @@ sap.ui.define([
             if (exceptionalAlerts.length > 0) {
                 var noAssemblyData = exceptionalAlerts.filter(id => id.MSGID === "S05")[0]?.MSGTXT;
                 if (noAssemblyData) {
-                    const quotedMatches = noAssemblyData.match(/'([^']+)'/g);
-                    const rawAssemblies = quotedMatches && quotedMatches.length
-                        ? quotedMatches                           // Case: quoted assemblies exist
-                        : (noAssemblyData.match(/[A-Za-z0-9._-]+\([^)]*\)|[A-Za-z0-9._-]+/g) || []);
-                    that.noAssemblyData = rawAssemblies.map(s => {
-                        const cleaned = s
-                            .replace(/'/g, '')      // remove quotes
-                            .replace(/\(.*\)/, '')  // remove everything from first '(' onward
-                            .trim();
+                    function extractAssemblies(message) {
+                        let assemblies = [];
 
-                        return { assembly: cleaned };
-                    });
+                        // Case 1: Quoted assemblies exist
+                        const quoted = message.match(/'([^']+)'/g);
+                        if (quoted && quoted.length) {
+                            assemblies = quoted.map(s =>
+                                s.replace(/'/g, '').replace(/\(.*\)/, '').trim()
+                            );
+                        } else {
+                            // Case 2: Unquoted assembly with parentheses
+                            const match = message.match(/assemblies:\s*([A-Za-z0-9._-]+)\s*\(/i);
+                            if (match) {
+                                assemblies = [match[1]];
+                            }
+                        }
+
+                        // Deduplicate + map to model
+                        return [...new Set(assemblies)].map(a => ({ assembly: a }));
+                    }
+                    that.noAssemblyData = extractAssemblies(noAssemblyData);
                     var assemblyDesc = that.oGModel.getProperty("/fullAssemblyData");
                     var assemblies = that.getMergedArray(that.noAssemblyData, assemblyDesc);
                     this.getView().setModel(new sap.ui.model.json.JSONModel({ assemblies }), "assemblyModel");
