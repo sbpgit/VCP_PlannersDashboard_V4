@@ -109,6 +109,9 @@ sap.ui.define([
                 sap.m.MessageToast.show("No assembly data available for all Locations");
             } else {
                 that.oGModel.setProperty("/fullAssemblyData", aAllResults);
+                sap.ui.core.BusyIndicator.show();
+                 await this.loadAlertsCards();
+                sap.ui.core.BusyIndicator.hide();
             }
         },
         getIBPCalendarWeek: async function () {
@@ -167,7 +170,7 @@ sap.ui.define([
             } else {
                 that.oGModel.setProperty("/fullLocProdData", aAllResults);
                 this.processData(aAllResults);
-                await this.loadAlertsCards();
+                // await this.loadAlertsCards();
                 sap.ui.core.BusyIndicator.hide();
             }
         },
