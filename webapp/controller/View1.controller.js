@@ -15,6 +15,7 @@ sap.ui.define([
         formatter: formatter,
         onInit: function () {
             this.oModel = this.getOwnerComponent().getModel();
+            
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
             this.getLocationData();
