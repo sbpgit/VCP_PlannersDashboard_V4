@@ -44,7 +44,7 @@ sap.ui.define([
             this.getLocProd();
             that.getAssemblyDesc();
             // await this.loadAlertsCards();
-            this.getVariantData();
+            // this.getVariantData();
         },
         loadFragments: function () {
             that.oHBox = new sap.m.HBox({

@@ -35,7 +35,7 @@
                                     <m:Text text="Sales &amp; Operations Planning for Configurable Products" />
                                 </m:VBox>
                                 <!-- === Variant Management === -->
-                                <m:VariantManagement
+                                <!-- <m:VariantManagement
                                     id="idMatListVPD"
                                     select="handleSelectPress"
                                     save="onCreate"
@@ -62,7 +62,7 @@
                                             rename="false"
                                             enabled="{path:'viewDetails>ENABLE', formatter:'.formatter.formatEnable'}" />
                                     </m:items>
-                                </m:VariantManagement>
+                                </m:VariantManagement> -->
                             </m:HBox>
                             <!-- === Filters and Buttons === -->
                             <m:HBox class="controls" alignItems="Center" justifyContent="End">
