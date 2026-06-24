@@ -213,13 +213,13 @@ sap.ui.define([
             oJSONProduct.setSizeLimit(5000);
             this.getView().setModel(oJSONProduct, "prodModel");
             if (selectedData !== this.oGModel.getProperty("/defaultLocation")) {
-                that.byId("idMatListVPD").setModified(true);
+                // that.byId("idMatListVPD").setModified(true);
             }
         },
         onProductChange: function () {
             var selectedProd = this.byId("productSelect").getSelectedKey();
             if (selectedProd !== this.oGModel.getProperty("/defaultProduct")) {
-                that.byId("idMatListVPD").setModified(true);
+                // that.byId("idMatListVPD").setModified(true);
             }
         },
         onGetData: function () {
@@ -1971,7 +1971,7 @@ sap.ui.define([
             if (
                 JSON.stringify(that._aSelectedWidgets) !== JSON.stringify(defaultWidgets)
             ) {
-                that.byId("idMatListVPD").setModified(true);
+                // that.byId("idMatListVPD").setModified(true);
             }
             // Close popover
             if (this._oWidgetPopover) {
