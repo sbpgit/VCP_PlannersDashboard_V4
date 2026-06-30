@@ -15,7 +15,8 @@ sap.ui.define([
         formatter: formatter,
         onInit: function () {
             this.oModel = this.getOwnerComponent().getModel();
-            
+            that = this;
+            that.oGModel = that.getOwnerComponent().getModel("oGModel");
             var sRootPath = jQuery.sap.getModulePath("vcp/vcplannerdashboard", "/");
             this.byId("idHeaderImage").setSrc(sRootPath + "image/logo.png");
             this.getLocationData();
@@ -23,8 +24,6 @@ sap.ui.define([
             this.getView().setModel(new sap.ui.model.json.JSONModel({ items12: [] }), "viewDetails");
         },
         onAfterRendering: async function () {
-            that = this;
-            that.oGModel = that.getOwnerComponent().getModel("oGModel");
             sap.ui.core.BusyIndicator.show();
             that.viewDetails = new JSONModel();
             that.viewDetails.setSizeLimit(5000);
@@ -225,7 +224,7 @@ sap.ui.define([
         onGetData: function () {
             this.loadAlertsCards();
             that.loadAllLags();
-            this._loadCharCards();
+            // this._loadCharCards();
         },
         onResetData: async function () {
             sap.ui.core.BusyIndicator.show();
@@ -250,7 +249,7 @@ sap.ui.define([
                     existingDiv.removeChild(existingDiv.firstChild);
                 }
             }
-            that.onFilterResetWOW();
+            // that.onFilterResetWOW();
             this.getLocProd();
             await this.loadAlertsCards();
         },
@@ -318,7 +317,7 @@ sap.ui.define([
                         aLocProdData.push(f);
                     }
                 })
-                let aRolesData = that.oGModel.getProperty("/fullLocProdData");
+                let aRolesData = that.oGModel.getProperty("/fullLocProdData") || [];
                 const rolesProdSet = new Set(
                     aRolesData.map(item => `${item.PRODUCT_ID}`)
                 );
@@ -992,8 +991,8 @@ sap.ui.define([
             }
             console.log("Total records loaded:", aAllResults.length);
             if (aAllResults.length === 0) {
-                sap.m.MessageToast.show("No data available in WoW variance analysis for selected Location & Product");
-                that.onFilterResetWOW();
+                // sap.m.MessageToast.show("No data available in WoW variance analysis for selected Location & Product");
+                // that.onFilterResetWOW();
             } else {
                 const oWOWModel = new sap.ui.model.json.JSONModel({
                     options: [
@@ -1063,12 +1062,12 @@ sap.ui.define([
             var actualWOW = that.wowData.filter(id => id.COMP_TYPE === selectedType && parseInt(id.PERCENT_DIFF_WOW) > parseInt(selectedVariance));
             this._setActualForecastCard(actualWOW);
         },
-        onFilterResetWOW: function () {
-            that.byId("idVariance").setSelectedKey("Actual WoW");
-            that.byId("idWOW").setSelectedKey("0.10");
-            var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: [] });
-            this.getView().setModel(oModel, "wowVariance");
-        },
+        // onFilterResetWOW: function () {
+        //     that.byId("idVariance").setSelectedKey("Actual WoW");
+        //     that.byId("idWOW").setSelectedKey("0.10");
+        //     var oModel = new sap.ui.model.json.JSONModel({ wowVarianceType: [] });
+        //     this.getView().setModel(oModel, "wowVariance");
+        // },
 
         handleCloseButton: function (oEvent) {
             this.byId("myPopover").close();
@@ -1919,7 +1918,8 @@ sap.ui.define([
                 oView.addDependent(oPopover);
                 that._oWidgetPopover = oPopover;
                 // Mock widget data
-                const widgetNames = ["Alerts", "Forecast Accuracy", "WoW Variance"];
+                const widgetNames = ["Alerts", "Forecast Accuracy"];
+                // const widgetNames = ["Alerts", "Forecast Accuracy", "WoW Variance"];
                 const aWidgets = widgetNames.map((name, i) => ({ ID: i + 1, Name: name }));
                 const oWidgetModel = new sap.ui.model.json.JSONModel({
                     widgetCollection: aWidgets
@@ -1961,18 +1961,18 @@ sap.ui.define([
             // --- Visibility logic ---
             const oAlerts = this.byId("alertsPanel");
             const oLags = this.byId("lagsPanel");
-            const oForecast = this.byId("idRow4");
+            // const oForecast = this.byId("idRow4");
             oAlerts.setVisible(aNames.includes("Alerts"));
             oLags.setVisible(aNames.includes("Forecast Accuracy"));
-            oForecast.setVisible(aNames.includes("WoW Variance"));
-            var defaultWidgets = that.oGModel.getProperty("/defaultWidgets");
-            defaultWidgets = defaultWidgets.sort(that.dynamicSortMultiple("ID"));
-            that._aSelectedWidgets = that._aSelectedWidgets.sort(that.dynamicSortMultiple("ID"));
-            if (
-                JSON.stringify(that._aSelectedWidgets) !== JSON.stringify(defaultWidgets)
-            ) {
-                // that.byId("idMatListVPD").setModified(true);
-            }
+            // oForecast.setVisible(aNames.includes("WoW Variance"));
+            // var defaultWidgets = that.oGModel.getProperty("/defaultWidgets");
+            // defaultWidgets = defaultWidgets.sort(that.dynamicSortMultiple("ID"));
+            // that._aSelectedWidgets = that._aSelectedWidgets.sort(that.dynamicSortMultiple("ID"));
+            // if (
+            //     JSON.stringify(that._aSelectedWidgets) !== JSON.stringify(defaultWidgets)
+            // ) {
+            //     // that.byId("idMatListVPD").setModified(true);
+            // }
             // Close popover
             if (this._oWidgetPopover) {
                 this._oWidgetPopover.close();
